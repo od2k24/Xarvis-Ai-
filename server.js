@@ -1,26 +1,22 @@
-import 'dotenv/config'; // ✅ Must be FIRST line
+import 'dotenv/config';
 import express from 'express';
 import cors from 'cors';
-import Groq from 'groq-sdk'; // ✅ Correct import
+import Groq from 'groq-sdk';
 
 const app = express();
 const PORT = process.env.PORT || 3001;
 
-// ✅ Middleware
 app.use(cors());
 app.use(express.json());
 
-// ✅ Groq client — uses GROQ_API_KEY from .env automatically
 const groq = new Groq();
 
-// ✅ Health check — visit http://localhost:3001/ to confirm server is running
 app.get('/', (req, res) => {
   res.json({ status: 'Xarvis AI backend is running ✅' });
 });
 
-// ✅ Main chat endpoint
 app.post('/api/chat', async (req, res) => {
-  const { message, history = [] } = req.body;
+  const { message, history = [], systemPrompt } = req.body;
 
   if (!message) {
     return res.status(400).json({ error: 'No message provided' });
@@ -30,7 +26,7 @@ app.post('/api/chat', async (req, res) => {
     const messages = [
       {
         role: 'system',
-        content: 'You are Xarvis, an elite AI co-founder and personal intelligence system. Be sharp, direct, and powerful.'
+        content: systemPrompt || 'You are Xarvis, an elite AI co-founder and personal intelligence system. Be sharp, direct, and powerful.'
       },
       ...history,
       { role: 'user', content: message }
@@ -51,15 +47,13 @@ app.post('/api/chat', async (req, res) => {
   }
 });
 
-// ✅ SSE Streaming endpoint
 app.post('/api/chat/stream', async (req, res) => {
-  const { message, history = [] } = req.body;
+  const { message, history = [], systemPrompt } = req.body;
 
   if (!message) {
     return res.status(400).json({ error: 'No message provided' });
   }
 
-  // Set SSE headers
   res.setHeader('Content-Type', 'text/event-stream');
   res.setHeader('Cache-Control', 'no-cache');
   res.setHeader('Connection', 'keep-alive');
@@ -69,7 +63,7 @@ app.post('/api/chat/stream', async (req, res) => {
     const messages = [
       {
         role: 'system',
-        content: 'You are Xarvis, an elite AI co-founder and personal intelligence system. Be sharp, direct, and powerful.'
+        content: systemPrompt || 'You are Xarvis, an elite AI co-founder and personal intelligence system. Be sharp, direct, and powerful.'
       },
       ...history,
       { role: 'user', content: message }
@@ -99,7 +93,6 @@ app.post('/api/chat/stream', async (req, res) => {
   }
 });
 
-// ✅ Start server
 app.listen(PORT, () => {
   console.log(`✅ Xarvis AI backend running on http://localhost:${PORT}`);
 });
