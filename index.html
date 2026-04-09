@@ -1,0 +1,809 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Xarvis AI — Your AI Co-Founder for Content Creators</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg: #05050a;
+      --surface: #0d0d1a;
+      --surface2: #12121f;
+      --border: rgba(255,255,255,0.07);
+      --accent: #7b5cf5;
+      --accent2: #a78bfa;
+      --accent3: #06b6d4;
+      --text: #f0f0ff;
+      --muted: #8888aa;
+      --glow: rgba(123,92,245,0.3);
+    }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; }
+    body {
+      font-family: 'Inter', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.6;
+      overflow-x: hidden;
+    }
+    /* NOISE OVERLAY */
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.03'/%3E%3C/svg%3E");
+      pointer-events: none;
+      z-index: 0;
+      opacity: 0.4;
+    }
+
+    /* NAV */
+    nav {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      z-index: 100;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 1rem 2rem;
+      background: rgba(5,5,10,0.85);
+      backdrop-filter: blur(20px);
+      border-bottom: 1px solid var(--border);
+    }
+    .nav-logo {
+      font-family: 'Syne', sans-serif;
+      font-weight: 800;
+      font-size: 1.4rem;
+      background: linear-gradient(135deg, var(--accent2), var(--accent3));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    .nav-links {
+      display: flex;
+      gap: 2rem;
+      list-style: none;
+    }
+    .nav-links a {
+      color: var(--muted);
+      text-decoration: none;
+      font-size: 0.9rem;
+      transition: color 0.2s;
+    }
+    .nav-links a:hover { color: var(--text); }
+    .nav-cta {
+      background: var(--accent);
+      color: white;
+      border: none;
+      padding: 0.6rem 1.4rem;
+      border-radius: 8px;
+      font-family: 'Syne', sans-serif;
+      font-weight: 600;
+      cursor: pointer;
+      text-decoration: none;
+      font-size: 0.9rem;
+      transition: all 0.2s;
+    }
+    .nav-cta:hover { background: var(--accent2); transform: translateY(-1px); }
+
+    /* HERO */
+    .hero {
+      position: relative;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      padding: 8rem 2rem 4rem;
+      overflow: hidden;
+    }
+    .hero-glow {
+      position: absolute;
+      width: 600px;
+      height: 600px;
+      background: radial-gradient(circle, rgba(123,92,245,0.15) 0%, transparent 70%);
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      pointer-events: none;
+    }
+    .hero-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      background: rgba(123,92,245,0.15);
+      border: 1px solid rgba(123,92,245,0.3);
+      color: var(--accent2);
+      padding: 0.4rem 1rem;
+      border-radius: 100px;
+      font-size: 0.8rem;
+      font-weight: 500;
+      margin-bottom: 2rem;
+      animation: fadeUp 0.6s ease both;
+    }
+    .hero h1 {
+      font-family: 'Syne', sans-serif;
+      font-size: clamp(2.5rem, 7vw, 5rem);
+      font-weight: 800;
+      line-height: 1.1;
+      margin-bottom: 1.5rem;
+      animation: fadeUp 0.6s ease 0.1s both;
+    }
+    .hero h1 span {
+      background: linear-gradient(135deg, var(--accent2), var(--accent3));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    .hero p {
+      font-size: 1.15rem;
+      color: var(--muted);
+      max-width: 600px;
+      margin: 0 auto 2.5rem;
+      animation: fadeUp 0.6s ease 0.2s both;
+    }
+    .hero-buttons {
+      display: flex;
+      gap: 1rem;
+      flex-wrap: wrap;
+      justify-content: center;
+      animation: fadeUp 0.6s ease 0.3s both;
+    }
+    .btn-primary {
+      background: linear-gradient(135deg, var(--accent), #5b3fd4);
+      color: white;
+      border: none;
+      padding: 0.9rem 2rem;
+      border-radius: 10px;
+      font-family: 'Syne', sans-serif;
+      font-weight: 700;
+      font-size: 1rem;
+      cursor: pointer;
+      text-decoration: none;
+      transition: all 0.3s;
+      box-shadow: 0 0 30px rgba(123,92,245,0.3);
+    }
+    .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 0 50px rgba(123,92,245,0.5); }
+    .btn-secondary {
+      background: transparent;
+      color: var(--text);
+      border: 1px solid var(--border);
+      padding: 0.9rem 2rem;
+      border-radius: 10px;
+      font-family: 'Syne', sans-serif;
+      font-weight: 600;
+      font-size: 1rem;
+      cursor: pointer;
+      text-decoration: none;
+      transition: all 0.3s;
+    }
+    .btn-secondary:hover { border-color: var(--accent); color: var(--accent2); }
+
+    /* STATS */
+    .stats {
+      display: flex;
+      justify-content: center;
+      gap: 3rem;
+      flex-wrap: wrap;
+      padding: 3rem 2rem;
+      border-top: 1px solid var(--border);
+      border-bottom: 1px solid var(--border);
+      animation: fadeUp 0.6s ease 0.4s both;
+    }
+    .stat { text-align: center; }
+    .stat-number {
+      font-family: 'Syne', sans-serif;
+      font-size: 2.2rem;
+      font-weight: 800;
+      background: linear-gradient(135deg, var(--accent2), var(--accent3));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    .stat-label { font-size: 0.85rem; color: var(--muted); margin-top: 0.25rem; }
+
+    /* SECTIONS */
+    section { padding: 6rem 2rem; position: relative; }
+    .section-label {
+      font-size: 0.75rem;
+      font-weight: 600;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: var(--accent2);
+      margin-bottom: 1rem;
+    }
+    h2 {
+      font-family: 'Syne', sans-serif;
+      font-size: clamp(1.8rem, 4vw, 2.8rem);
+      font-weight: 800;
+      margin-bottom: 1rem;
+    }
+    .section-sub { color: var(--muted); font-size: 1.05rem; max-width: 560px; }
+    .container { max-width: 1100px; margin: 0 auto; }
+
+    /* FEATURES GRID */
+    .features-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 1.5rem;
+      margin-top: 3rem;
+    }
+    .feature-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 1.8rem;
+      transition: all 0.3s;
+      position: relative;
+      overflow: hidden;
+    }
+    .feature-card::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(135deg, rgba(123,92,245,0.05), transparent);
+      opacity: 0;
+      transition: opacity 0.3s;
+    }
+    .feature-card:hover { border-color: rgba(123,92,245,0.3); transform: translateY(-4px); }
+    .feature-card:hover::before { opacity: 1; }
+    .feature-icon { font-size: 2rem; margin-bottom: 1rem; }
+    .feature-card h3 { font-family: 'Syne', sans-serif; font-size: 1.1rem; font-weight: 700; margin-bottom: 0.5rem; }
+    .feature-card p { color: var(--muted); font-size: 0.9rem; line-height: 1.6; }
+    .feature-tag {
+      display: inline-block;
+      margin-top: 0.8rem;
+      font-size: 0.75rem;
+      color: var(--accent2);
+      background: rgba(123,92,245,0.1);
+      padding: 0.2rem 0.6rem;
+      border-radius: 4px;
+    }
+
+    /* HOW IT WORKS */
+    .steps { display: flex; flex-direction: column; gap: 2rem; margin-top: 3rem; max-width: 700px; }
+    .step { display: flex; gap: 1.5rem; align-items: flex-start; }
+    .step-num {
+      flex-shrink: 0;
+      width: 44px;
+      height: 44px;
+      background: linear-gradient(135deg, var(--accent), var(--accent3));
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: 'Syne', sans-serif;
+      font-weight: 800;
+      font-size: 1rem;
+    }
+    .step-content h3 { font-family: 'Syne', sans-serif; font-weight: 700; margin-bottom: 0.4rem; }
+    .step-content p { color: var(--muted); font-size: 0.95rem; }
+
+    /* DEMO CHAT */
+    .demo-section { background: var(--surface); }
+    .demo-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 4rem; align-items: center; }
+    .demo-features { list-style: none; display: flex; flex-direction: column; gap: 0.8rem; margin-top: 2rem; }
+    .demo-features li {
+      display: flex;
+      align-items: center;
+      gap: 0.7rem;
+      color: var(--muted);
+      font-size: 0.95rem;
+    }
+    .demo-features li::before { content: '✓'; color: var(--accent2); font-weight: 700; }
+    .demo-chat-preview {
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      overflow: hidden;
+      box-shadow: 0 30px 80px rgba(0,0,0,0.5);
+    }
+    .chat-header {
+      background: var(--surface2);
+      padding: 1rem 1.5rem;
+      display: flex;
+      align-items: center;
+      gap: 0.8rem;
+      border-bottom: 1px solid var(--border);
+    }
+    .chat-avatar {
+      width: 36px;
+      height: 36px;
+      background: linear-gradient(135deg, var(--accent), var(--accent3));
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: 'Syne', sans-serif;
+      font-weight: 800;
+      font-size: 0.85rem;
+    }
+    .chat-name { font-family: 'Syne', sans-serif; font-weight: 700; font-size: 0.9rem; }
+    .chat-status { font-size: 0.75rem; color: #22c55e; }
+    .chat-messages { padding: 1.5rem; display: flex; flex-direction: column; gap: 1rem; min-height: 280px; }
+    .msg { max-width: 85%; }
+    .msg-ai {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 0 14px 14px 14px;
+      padding: 0.8rem 1rem;
+      font-size: 0.85rem;
+      line-height: 1.5;
+    }
+    .msg-user {
+      background: linear-gradient(135deg, var(--accent), #5b3fd4);
+      border-radius: 14px 14px 0 14px;
+      padding: 0.8rem 1rem;
+      font-size: 0.85rem;
+      margin-left: auto;
+    }
+    .chat-input-bar {
+      padding: 1rem 1.5rem;
+      border-top: 1px solid var(--border);
+      display: flex;
+      gap: 0.5rem;
+    }
+    .chat-input-bar input {
+      flex: 1;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 0.6rem 0.9rem;
+      color: var(--text);
+      font-size: 0.85rem;
+      outline: none;
+    }
+    .chat-send-btn {
+      background: var(--accent);
+      border: none;
+      border-radius: 8px;
+      padding: 0.6rem 1rem;
+      color: white;
+      cursor: pointer;
+      font-size: 0.85rem;
+    }
+
+    /* TESTIMONIALS */
+    .testimonials-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 1.5rem;
+      margin-top: 3rem;
+    }
+    .testimonial-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 1.8rem;
+    }
+    .stars { color: #f59e0b; margin-bottom: 1rem; font-size: 0.9rem; }
+    .testimonial-text { color: var(--muted); font-size: 0.95rem; line-height: 1.7; margin-bottom: 1.2rem; }
+    .testimonial-author { display: flex; align-items: center; gap: 0.8rem; }
+    .author-avatar {
+      width: 40px;
+      height: 40px;
+      background: linear-gradient(135deg, var(--accent), var(--accent3));
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: 'Syne', sans-serif;
+      font-weight: 800;
+      font-size: 0.8rem;
+    }
+    .author-name { font-family: 'Syne', sans-serif; font-weight: 700; font-size: 0.9rem; }
+    .author-handle { font-size: 0.8rem; color: var(--muted); }
+
+    /* PRICING */
+    .pricing-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 1.5rem;
+      margin-top: 3rem;
+      align-items: start;
+    }
+    .pricing-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 2rem;
+      position: relative;
+      transition: all 0.3s;
+    }
+    .pricing-card.popular {
+      border-color: var(--accent);
+      box-shadow: 0 0 40px rgba(123,92,245,0.2);
+    }
+    .popular-badge {
+      position: absolute;
+      top: -12px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: linear-gradient(135deg, var(--accent), var(--accent3));
+      color: white;
+      font-size: 0.7rem;
+      font-weight: 700;
+      font-family: 'Syne', sans-serif;
+      padding: 0.3rem 1rem;
+      border-radius: 100px;
+      white-space: nowrap;
+    }
+    .plan-name { font-family: 'Syne', sans-serif; font-weight: 700; font-size: 1rem; color: var(--muted); }
+    .plan-price {
+      font-family: 'Syne', sans-serif;
+      font-size: 2.8rem;
+      font-weight: 800;
+      margin: 0.5rem 0;
+    }
+    .plan-price span { font-size: 1rem; font-weight: 400; color: var(--muted); }
+    .plan-desc { color: var(--muted); font-size: 0.9rem; margin-bottom: 1.5rem; }
+    .plan-features { list-style: none; display: flex; flex-direction: column; gap: 0.7rem; margin-bottom: 1.8rem; }
+    .plan-features li { display: flex; gap: 0.7rem; font-size: 0.9rem; align-items: flex-start; }
+    .plan-features li::before { content: '✓'; color: var(--accent2); font-weight: 700; flex-shrink: 0; }
+    .plan-features li.locked { color: var(--muted); }
+    .plan-features li.locked::before { content: '✗'; color: #555; }
+    .plan-btn {
+      width: 100%;
+      padding: 0.8rem;
+      border-radius: 10px;
+      font-family: 'Syne', sans-serif;
+      font-weight: 700;
+      font-size: 0.95rem;
+      cursor: pointer;
+      transition: all 0.3s;
+      text-decoration: none;
+      display: block;
+      text-align: center;
+    }
+    .plan-btn-primary { background: linear-gradient(135deg, var(--accent), #5b3fd4); color: white; border: none; }
+    .plan-btn-primary:hover { transform: translateY(-2px); box-shadow: 0 10px 30px rgba(123,92,245,0.4); }
+    .plan-btn-outline { background: transparent; color: var(--text); border: 1px solid var(--border); }
+    .plan-btn-outline:hover { border-color: var(--accent); color: var(--accent2); }
+
+    /* CTA */
+    .cta-section {
+      text-align: center;
+      padding: 8rem 2rem;
+      position: relative;
+      overflow: hidden;
+    }
+    .cta-section::before {
+      content: '';
+      position: absolute;
+      width: 600px;
+      height: 600px;
+      background: radial-gradient(circle, rgba(6,182,212,0.1) 0%, transparent 70%);
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+    }
+    .cta-section h2 { font-size: clamp(2rem, 5vw, 3.5rem); margin-bottom: 1rem; }
+    .cta-section p { color: var(--muted); max-width: 500px; margin: 0 auto 2rem; }
+    .cta-list {
+      display: flex;
+      gap: 1.5rem;
+      flex-wrap: wrap;
+      justify-content: center;
+      margin-bottom: 2.5rem;
+    }
+    .cta-list span { color: var(--muted); font-size: 0.9rem; display: flex; align-items: center; gap: 0.4rem; }
+    .cta-list span::before { content: '✅'; }
+
+    /* FOOTER */
+    footer {
+      border-top: 1px solid var(--border);
+      padding: 2rem;
+      text-align: center;
+      color: var(--muted);
+      font-size: 0.85rem;
+    }
+    footer .footer-logo {
+      font-family: 'Syne', sans-serif;
+      font-weight: 800;
+      font-size: 1.1rem;
+      background: linear-gradient(135deg, var(--accent2), var(--accent3));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      margin-bottom: 0.5rem;
+    }
+    .footer-links { display: flex; gap: 1.5rem; justify-content: center; flex-wrap: wrap; margin-top: 1rem; }
+    .footer-links a { color: var(--muted); text-decoration: none; font-size: 0.85rem; transition: color 0.2s; }
+    .footer-links a:hover { color: var(--text); }
+
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* RESPONSIVE */
+    @media (max-width: 768px) {
+      .nav-links { display: none; }
+      .demo-grid { grid-template-columns: 1fr; }
+      .stats { gap: 1.5rem; }
+    }
+  </style>
+</head>
+<body>
+
+<nav>
+  <div class="nav-logo">Xarvis AI</div>
+  <ul class="nav-links">
+    <li><a href="#features">Features</a></li>
+    <li><a href="#howitworks">How It Works</a></li>
+    <li><a href="#pricing">Pricing</a></li>
+    <li><a href="#testimonials">Reviews</a></li>
+  </ul>
+  <a href="app.html" class="nav-cta">Launch App →</a>
+</nav>
+
+<!-- HERO -->
+<section class="hero">
+  <div class="hero-glow"></div>
+  <div class="hero-badge">🎯 Creators onboarded directly — no waitlist games</div>
+  <h1>Your <span>Second Brain</span><br/>for Going Viral.</h1>
+  <p>Xarvis AI is the AI co-founder every creator needs — writing your hooks, planning your content, building your growth engine. No team required.</p>
+  <div class="hero-buttons">
+    <a href="app.html" class="btn-primary">🚀 Get Started with Xarvis AI</a>
+    <a href="#demo" class="btn-secondary">See the Demo ↓</a>
+  </div>
+</section>
+
+<!-- STATS -->
+<div class="stats">
+  <div class="stat"><div class="stat-number">94%</div><div class="stat-label">Virality Prediction Accuracy</div></div>
+  <div class="stat"><div class="stat-number">12hrs</div><div class="stat-label">Saved Per Creator Weekly</div></div>
+  <div class="stat"><div class="stat-number">4.2×</div><div class="stat-label">Avg Engagement Increase</div></div>
+  <div class="stat"><div class="stat-number">8,000+</div><div class="stat-label">Creators Already Onboarded</div></div>
+</div>
+
+<!-- FEATURES -->
+<section id="features">
+  <div class="container">
+    <div class="section-label">What Xarvis AI Does</div>
+    <h2>Your AI Co-Founder for Content</h2>
+    <p class="section-sub">Every tool you need to scale your content — powered by an AI that thinks like a full creative team.</p>
+    <div class="features-grid">
+      <div class="feature-card">
+        <div class="feature-icon">🎬</div>
+        <h3>Clip Virality Analysis</h3>
+        <p>Identify your strongest hooks, peak engagement moments, and optimal cut points — automatically.</p>
+        <span class="feature-tag">⚡ Results in &lt; 30 seconds</span>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">📊</div>
+        <h3>Viral % Prediction</h3>
+        <p>See your exact viral probability score before posting. Know which clips to push and which to rework.</p>
+        <span class="feature-tag">🎯 87% avg score on top clips</span>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">✍️</div>
+        <h3>Auto-Generated Scripts & Hooks</h3>
+        <p>Platform-optimized captions, irresistible hooks, viral scripts, trending hashtags — ready to post instantly.</p>
+        <span class="feature-tag">🔥 Copy-paste ready</span>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">🔮</div>
+        <h3>Next Viral Content Planner</h3>
+        <p>Xarvis monitors live trending data in your niche and tells you exactly what to create next.</p>
+        <span class="feature-tag">📈 Before your competitors</span>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">📱</div>
+        <h3>Platform Strategy & Timing</h3>
+        <p>TikTok, Instagram Reels, YouTube Shorts — optimal platforms, posting times, and format recommendations.</p>
+        <span class="feature-tag">🎯 Multi-platform optimized</span>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">💰</div>
+        <h3>Monetization Frameworks</h3>
+        <p>Sponsorship scripts, offer creation, product launch strategies — turn your audience into income.</p>
+        <span class="feature-tag">🚀 Revenue-focused</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- HOW IT WORKS -->
+<section id="howitworks" style="background: var(--surface);">
+  <div class="container">
+    <div class="section-label">The Xarvis Process</div>
+    <h2>Three Steps to Viral</h2>
+    <p class="section-sub">No complex setup. No learning curve. Operational in minutes.</p>
+    <div class="steps">
+      <div class="step">
+        <div class="step-num">1</div>
+        <div class="step-content">
+          <h3>Tell Xarvis Your Niche & Goals</h3>
+          <p>Share your niche, platform, and what you're trying to achieve. Xarvis adapts to your voice and audience from day one.</p>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-num">2</div>
+        <div class="step-content">
+          <h3>Xarvis Builds Your Strategy</h3>
+          <p>In seconds, get scripts, hooks, content calendars, growth plans, and monetization frameworks — all personalized to you.</p>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-num">3</div>
+        <div class="step-content">
+          <h3>Post, Scale, & Monetize</h3>
+          <p>Execute the plan. Track growth. Come back daily for new content, new strategies, and a second brain that never sleeps.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- DEMO -->
+<section id="demo">
+  <div class="container">
+    <div class="demo-grid">
+      <div>
+        <div class="section-label">Live Demo</div>
+        <h2>Meet Xarvis — Your AI Content Co-Founder</h2>
+        <p class="section-sub">Ask Xarvis anything about your content. Get instant scripts, hooks, strategies, and viral roadmaps.</p>
+        <ul class="demo-features">
+          <li>Instant virality scoring for any clip</li>
+          <li>Hook and script generation in seconds</li>
+          <li>Platform-specific posting strategy</li>
+          <li>Content calendar & growth planning</li>
+          <li>Monetization frameworks & offer creation</li>
+        </ul>
+        <br/>
+        <a href="app.html" class="btn-primary" style="display:inline-block; margin-top:1rem;">🚀 Try Xarvis Now</a>
+      </div>
+      <div class="demo-chat-preview">
+        <div class="chat-header">
+          <div class="chat-avatar">X</div>
+          <div>
+            <div class="chat-name">Xarvis AI</div>
+            <div class="chat-status">● Online — Ready to work</div>
+          </div>
+        </div>
+        <div class="chat-messages">
+          <div class="msg msg-ai">Hey! I'm Xarvis 👋 — your AI co-founder for content. Tell me your niche and I'll start building your growth engine right now.</div>
+          <div class="msg msg-user">I'm a fitness creator on TikTok with 12k followers. I want to hit 100k in 90 days.</div>
+          <div class="msg msg-ai">
+            <strong>🔥 Goal:</strong> 100K in 90 days<br/>
+            <strong>⚡ Plan:</strong> 3-video/day strategy with proven fitness hooks<br/>
+            <strong>🧠 Hook #1:</strong> "The gym routine nobody tells beginners" — Post 7PM EST Tuesday<br/>
+            <strong>🎯 Your first viral clip:</strong> Film a before/after transition in 30 seconds. That format is getting 8M+ views in fitness right now.
+          </div>
+        </div>
+        <div class="chat-input-bar">
+          <input type="text" placeholder="Ask Xarvis anything..." readonly />
+          <button class="chat-send-btn" onclick="window.location.href='app.html'">→</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- TESTIMONIALS -->
+<section id="testimonials" style="background: var(--surface);">
+  <div class="container">
+    <div class="section-label">Creator Stories</div>
+    <h2>Creators Are Already Winning</h2>
+    <p class="section-sub">From solo creators to full-time influencers — Xarvis AI is changing how content gets made and monetized.</p>
+    <div class="testimonials-grid">
+      <div class="testimonial-card">
+        <div class="stars">★★★★★</div>
+        <p class="testimonial-text">"Xarvis AI literally predicted which clip would go viral and it hit 2.1M views. I've never had that confidence posting before. It's like having a data scientist on my team."</p>
+        <div class="testimonial-author">
+          <div class="author-avatar">AK</div>
+          <div><div class="author-name">Alex Kim</div><div class="author-handle">@alexkim.creates · 890K followers</div></div>
+        </div>
+      </div>
+      <div class="testimonial-card">
+        <div class="stars">★★★★★</div>
+        <p class="testimonial-text">"I went from 3 hours on captions to 10 minutes. Xarvis writes better hooks than I do honestly. My engagement is up 340% in 6 weeks — with the same posting frequency."</p>
+        <div class="testimonial-author">
+          <div class="author-avatar">SR</div>
+          <div><div class="author-name">Sofia Reyes</div><div class="author-handle">@sofiareyes · 1.2M followers</div></div>
+        </div>
+      </div>
+      <div class="testimonial-card">
+        <div class="stars">★★★★★</div>
+        <p class="testimonial-text">"The trending content suggestions are insane. Xarvis told me to post a specific format 2 days before it blew up everywhere. It's like having a team of strategists who never sleep."</p>
+        <div class="testimonial-author">
+          <div class="author-avatar">JM</div>
+          <div><div class="author-name">Jake Monroe</div><div class="author-handle">@jakemonroefitness · 450K followers</div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- PRICING -->
+<section id="pricing">
+  <div class="container" style="text-align:center;">
+    <div class="section-label">Pricing</div>
+    <h2>Simple, Creator-First Pricing</h2>
+    <p class="section-sub" style="margin: 0 auto;">Start free, scale when you're ready. Cancel anytime.</p>
+    <div class="pricing-grid">
+      <!-- Starter -->
+      <div class="pricing-card">
+        <div class="plan-name">🟢 Starter</div>
+        <div class="plan-price">$0<span>/month</span></div>
+        <p class="plan-desc">Perfect for getting started and testing Xarvis.</p>
+        <ul class="plan-features">
+          <li>10 messages per day</li>
+          <li>Basic Creator AI access</li>
+          <li>Hook & caption generation</li>
+          <li class="locked">No memory / second brain</li>
+          <li class="locked">No content calendar</li>
+          <li class="locked">No monetization strategies</li>
+        </ul>
+        <a href="app.html?plan=starter" class="plan-btn plan-btn-outline">Get Started Free</a>
+      </div>
+      <!-- Creator Pro -->
+      <div class="pricing-card popular">
+        <div class="popular-badge">⚡ Most Popular</div>
+        <div class="plan-name">🔵 Creator Pro</div>
+        <div class="plan-price">$12<span>/month</span></div>
+        <p class="plan-desc">For serious creators who want to grow fast.</p>
+        <ul class="plan-features">
+          <li>Unlimited chat</li>
+          <li>Full Creator AI (scripts, hooks, plans)</li>
+          <li>Memory / Second Brain</li>
+          <li>Content calendar generation</li>
+          <li>Growth strategies</li>
+          <li class="locked">No advanced monetization</li>
+        </ul>
+        <a href="app.html?plan=pro" class="plan-btn plan-btn-primary">Start Creator Pro</a>
+      </div>
+      <!-- Creator Elite -->
+      <div class="pricing-card">
+        <div class="plan-name">🟣 Creator Elite</div>
+        <div class="plan-price">$39<span>/month</span></div>
+        <p class="plan-desc">For creators building a full creator business.</p>
+        <ul class="plan-features">
+          <li>Everything in Creator Pro</li>
+          <li>Advanced growth strategies</li>
+          <li>Full monetization frameworks</li>
+          <li>Done-for-you content systems</li>
+          <li>Sponsorship pitch scripts</li>
+          <li>Priority AI performance</li>
+        </ul>
+        <a href="app.html?plan=elite" class="plan-btn plan-btn-primary" style="background: linear-gradient(135deg, #7c3aed, #06b6d4);">Go Elite</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- CTA -->
+<section id="cta" class="cta-section">
+  <div class="section-label">Limited Creator Access</div>
+  <h2>Ready to <span style="background: linear-gradient(135deg, var(--accent2), var(--accent3)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;">Scale Your Content?</span></h2>
+  <p>Join thousands of creators using Xarvis AI as their unfair advantage. Start free today.</p>
+  <div class="cta-list">
+    <span>Instant onboarding</span>
+    <span>No credit card required</span>
+    <span>Cancel anytime</span>
+    <span>Real AI responses</span>
+  </div>
+  <a href="app.html" class="btn-primary" style="font-size: 1.1rem; padding: 1rem 2.5rem;">🚀 Join Xarvis AI Today</a>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <div class="footer-logo">Xarvis AI</div>
+  <p>© 2026 Xarvis AI · Built for creators who are done playing small.</p>
+  <div class="footer-links">
+    <a href="#features">Features</a>
+    <a href="#howitworks">How It Works</a>
+    <a href="#pricing">Pricing</a>
+    <a href="#testimonials">Reviews</a>
+    <a href="app.html">Launch App</a>
+  </div>
+</footer>
+
+</body>
+</html>

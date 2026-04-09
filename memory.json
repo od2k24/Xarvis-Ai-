@@ -1,0 +1,16 @@
+{
+  "user1": {
+    "history": [
+      {
+        "role": "user",
+        "content": "hi"
+      },
+      {
+        "role": "user",
+        "content": "hi"
+      }
+    ],
+    "goal": null,
+    "plan": null
+  }
+}
