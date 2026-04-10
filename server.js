@@ -1,15 +1,16 @@
 import 'dotenv/config';
 import express from 'express';
 import cors from 'cors';
-import Groq from 'groq-sdk';
 
 const app = express();
 const PORT = process.env.PORT || 3001;
 
-app.use(cors());
+app.use(cors({
+  origin: '*',
+  methods: ['GET', 'POST', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization']
+}));
 app.use(express.json());
-
-const groq = new Groq();
 
 app.get('/', (req, res) => {
   res.json({ status: 'Xarvis AI backend is running ✅' });
@@ -17,82 +18,65 @@ app.get('/', (req, res) => {
 
 app.post('/api/chat', async (req, res) => {
   const { message, history = [], systemPrompt } = req.body;
-
-  if (!message) {
-    return res.status(400).json({ error: 'No message provided' });
-  }
+  if (!message) return res.status(400).json({ error: 'No message provided' });
 
   try {
-    const messages = [
+    const GEMINI_KEY = process.env.GEMINI_API_KEY;
+    const contents = [];
+    for (const msg of history) {
+      contents.push({
+        role: msg.role === 'assistant' ? 'model' : 'user',
+        parts: [{ text: msg.content }]
+      });
+    }
+    contents.push({ role: 'user', parts: [{ text: message }] });
+
+    const response = await fetch(
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${GEMINI_KEY}`,
       {
-        role: 'system',
-        content: systemPrompt || 'You are Xarvis, an elite AI co-founder and personal intelligence system. Be sharp, direct, and powerful.'
-      },
-      ...history,
-      { role: 'user', content: message }
-    ];
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          system_instruction: {
+            parts: [{ text: systemPrompt || 'You are Xarvis Creator AI — an elite AI co-founder for content creators. Be direct, actionable, and focused on growth and monetization.' }]
+          },
+          contents,
+          generationConfig: { maxOutputTokens: 1024, temperature: 0.8 }
+        })
+      }
+    );
 
-    const completion = await groq.chat.completions.create({
-      model: 'llama-3.3-70b-versatile',
-      messages,
-      max_tokens: 1024,
-    });
+    if (!response.ok) {
+      const errData = await response.json();
+      throw new Error(errData.error?.message || `Gemini error ${response.status}`);
+    }
 
-    const reply = completion.choices[0]?.message?.content || 'No response';
+    const data = await response.json();
+    const reply = data.candidates?.[0]?.content?.parts?.[0]?.text || 'No response generated.';
     res.json({ reply });
 
   } catch (err) {
-    console.error('Groq error:', err.message);
-    res.status(500).json({ error: 'AI request failed', detail: err.message });
-  }
-});
-
-app.post('/api/chat/stream', async (req, res) => {
-  const { message, history = [], systemPrompt } = req.body;
-
-  if (!message) {
-    return res.status(400).json({ error: 'No message provided' });
-  }
-
-  res.setHeader('Content-Type', 'text/event-stream');
-  res.setHeader('Cache-Control', 'no-cache');
-  res.setHeader('Connection', 'keep-alive');
-  res.flushHeaders();
-
-  try {
-    const messages = [
-      {
-        role: 'system',
-        content: systemPrompt || 'You are Xarvis, an elite AI co-founder and personal intelligence system. Be sharp, direct, and powerful.'
-      },
-      ...history,
-      { role: 'user', content: message }
-    ];
-
-    const stream = await groq.chat.completions.create({
-      model: 'llama-3.3-70b-versatile',
-      messages,
-      max_tokens: 1024,
-      stream: true,
-    });
-
-    for await (const chunk of stream) {
-      const token = chunk.choices[0]?.delta?.content || '';
-      if (token) {
-        res.write(`data: ${JSON.stringify({ token })}\n\n`);
-      }
+    console.error('Gemini error:', err.message);
+    try {
+      const groqRes = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${process.env.GROQ_API_KEY}` },
+        body: JSON.stringify({
+          model: 'llama-3.1-8b-instant',
+          messages: [
+            { role: 'system', content: systemPrompt || 'You are Xarvis, an elite AI co-founder for creators.' },
+            ...history,
+            { role: 'user', content: message }
+          ],
+          max_tokens: 1024,
+        })
+      });
+      const groqData = await groqRes.json();
+      res.json({ reply: groqData.choices?.[0]?.message?.content || 'No response' });
+    } catch (fallbackErr) {
+      res.status(500).json({ error: 'AI request failed', detail: err.message });
     }
-
-    res.write('data: [DONE]\n\n');
-    res.end();
-
-  } catch (err) {
-    console.error('Stream error:', err.message);
-    res.write(`data: ${JSON.stringify({ error: err.message })}\n\n`);
-    res.end();
   }
 });
 
-app.listen(PORT, () => {
-  console.log(`✅ Xarvis AI backend running on http://localhost:${PORT}`);
-});
+app.listen(PORT, () => console.log(`✅ Xarvis AI backend running on port ${PORT}`));
