@@ -1,15 +1,8 @@
-[project]
-name = "xarvis-ai"
-type = "nodejs"
-
 [phases.install]
 cmds = ["npm install"]
 
 [phases.build]
 cmds = []
 
-[phases.start]
-cmds = ["node server.js"]
-
-[runtime]
-nodejs = "20"
+[start]
+cmd = "node server.js"
