@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Xarvis AI — Operator Dashboard</title>
+
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+
+<style>
+:root {
+  --bg:#05050a;
+  --surface:#0d0d1a;
+  --surface2:#12121f;
+  --accent:#7b5cf5;
+  --accent2:#a78bfa;
+  --accent3:#06b6d4;
+  --text:#f0f0ff;
+  --muted:#8a8aa8;
+  --border:rgba(255,255,255,0.08);
+}
+
+*{margin:0;padding:0;box-sizing:border-box}
+body{
+  font-family:Inter;
+  background:var(--bg);
+  color:var(--text);
+  height:100vh;
+  display:flex;
+  flex-direction:column;
+}
+
+/* TOP */
+.topbar{
+  display:flex;
+  justify-content:space-between;
+  padding:12px 20px;
+  background:var(--surface);
+  border-bottom:1px solid var(--border);
+}
+.logo{
+  font-family:Syne;
+  font-weight:800;
+  background:linear-gradient(135deg,var(--accent2),var(--accent3));
+  -webkit-text-fill-color:transparent;
+  -webkit-background-clip:text;
+}
+.badge{color:var(--accent2);font-size:12px}
+
+/* MAIN */
+.container{flex:1;display:flex;overflow:hidden}
+
+/* CHAT */
+.chat{
+  flex:1;
+  display:flex;
+  flex-direction:column;
+}
+
+.messages{
+  flex:1;
+  overflow:auto;
+  padding:20px;
+  display:flex;
+  flex-direction:column;
+  gap:12px;
+}
+
+.msg{
+  max-width:70%;
+  padding:12px 14px;
+  border-radius:12px;
+  line-height:1.5;
+  white-space:pre-wrap;
+}
+
+.user{
+  align-self:flex-end;
+  background:linear-gradient(135deg,var(--accent),#5b3fd4);
+}
+
+.ai{
+  align-self:flex-start;
+  background:var(--surface2);
+  border:1px solid var(--border);
+}
+
+/* INPUT */
+.input{
+  display:flex;
+  padding:12px;
+  border-top:1px solid var(--border);
+  background:var(--surface);
+}
+textarea{
+  flex:1;
+  background:transparent;
+  border:none;
+  color:white;
+  outline:none;
+  resize:none;
+  font-size:14px;
+}
+button{
+  margin-left:10px;
+  background:var(--accent);
+  border:none;
+  color:white;
+  padding:10px 14px;
+  border-radius:8px;
+  cursor:pointer;
+}
+button:disabled{opacity:.5}
+
+/* LOADING */
+.typing{
+  font-size:12px;
+  color:var(--muted);
+}
+</style>
+</head>
+
+<body>
+
+<div class="topbar">
+  <div class="logo">Xarvis AI Operator</div>
+  <div class="badge" id="plan">Starter</div>
+</div>
+
+<div class="container">
+
+  <div class="chat">
+
+    <div class="messages" id="messages"></div>
+
+    <div class="input">
+      <textarea id="input" placeholder="Ask Xarvis Operator..."></textarea>
+      <button id="sendBtn" onclick="send()">Send</button>
+    </div>
+
+  </div>
+
+</div>
+
+<script>
+
+// =========================
+// CONFIG
+// =========================
+const BACKEND_URL = "https://xarvis-ai.up.railway.app";
+const API_KEY = "xarvis-dev-key-change-me"; // MUST match server env
+
+// =========================
+// STATE
+// =========================
+let messages = [];
+let plan = "starter";
+let loading = false;
+
+// =========================
+// SYSTEM PROMPT (UPGRADED)
+// =========================
+function systemPrompt(){
+return `
+You are XARVIS OPERATOR AI.
+
+You are not a chatbot.
+
+You are a content growth operator that:
+- Builds viral content systems
+- Gives step-by-step execution plans
+- Focuses on money, growth, and results
+- Thinks like MrBeast + Alex Hormozi + David Goggins combined
+
+FORMAT EVERY RESPONSE:
+
+🔥 Goal:
+⚡ Strategy:
+🧠 Steps:
+🎯 Example:
+🚀 Edge:
+
+Rules:
+- No fluff
+- No vague advice
+- Always actionable TODAY
+- Prioritize virality + monetization
+`;
+}
+
+// =========================
+// UI
+// =========================
+function render(){
+const el = document.getElementById("messages");
+el.innerHTML = "";
+
+messages.forEach(m=>{
+  const div = document.createElement("div");
+  div.className = "msg " + m.role;
+  div.innerText = m.content;
+  el.appendChild(div);
+});
+
+if(loading){
+  const t = document.createElement("div");
+  t.className = "typing";
+  t.innerText = "Xarvis is thinking...";
+  el.appendChild(t);
+}
+
+el.scrollTop = el.scrollHeight;
+}
+
+// =========================
+// SEND MESSAGE
+// =========================
+async function send(){
+
+const input = document.getElementById("input");
+const text = input.value.trim();
+if(!text || loading) return;
+
+input.value = "";
+
+messages.push({role:"user", content:text});
+loading = true;
+render();
+
+try{
+
+const history = messages.slice(-12).map(m=>({
+role: m.role === "user" ? "user" : "assistant",
+content: m.content
+}));
+
+const res = await fetch(`${BACKEND_URL}/api/chat`, {
+method:"POST",
+headers:{
+"Content-Type":"application/json",
+"x-api-key": API_KEY
+},
+body: JSON.stringify({
+message: text,
+history,
+systemPrompt: systemPrompt(),
+plan
+})
+});
+
+if(!res.ok){
+throw new Error("Server error " + res.status);
+}
+
+const data = await res.json();
+
+messages.push({role:"ai", content:data.reply});
+
+}catch(err){
+messages.push({role:"ai", content:"Error: " + err.message});
+}
+
+loading = false;
+render();
+}
+
+// =========================
+// ENTER KEY SUPPORT
+// =========================
+document.getElementById("input").addEventListener("keydown",(e)=>{
+if(e.key==="Enter" && !e.shiftKey){
+e.preventDefault();
+send();
+}
+});
+
+render();
+
+</script>
+
+</body>
+</html>
