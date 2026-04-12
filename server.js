@@ -198,7 +198,7 @@ async function tryGroq(message, history, systemPrompt) {
 // ============================================================
 // START
 // ============================================================
-app.listen(PORT, () => {
+app.listen(PORT, '0.0.0.0', () => {
   console.log(`✅ Xarvis AI backend running on port ${PORT}`);
   console.log(`   Gemini key: ${process.env.GEMINI_API_KEY ? '✅ set' : '❌ MISSING'}`);
   console.log(`   Groq key:   ${process.env.GROQ_API_KEY ? '✅ set' : '❌ MISSING'}`);
