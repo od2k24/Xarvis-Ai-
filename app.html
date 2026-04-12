@@ -31,7 +31,7 @@
       display: flex;
       flex-direction: column;
     }
-
+ 
     /* TOP BAR */
     .topbar {
       display: flex;
@@ -85,14 +85,14 @@
     }
     .topbar-btn:hover { border-color: var(--accent); color: var(--accent2); }
     .topbar-btn.active { background: rgba(123,92,245,0.15); border-color: var(--accent); color: var(--accent2); }
-
+ 
     /* MAIN LAYOUT */
     .app-layout {
       display: flex;
       flex: 1;
       overflow: hidden;
     }
-
+ 
     /* SIDEBAR */
     .sidebar {
       width: 260px;
@@ -133,7 +133,7 @@
       gap: 0.6rem;
     }
     .new-chat-btn:hover { opacity: 0.9; transform: translateY(-1px); }
-
+ 
     /* Quick prompts */
     .quick-prompts { display: flex; flex-direction: column; gap: 0.4rem; }
     .quick-prompt {
@@ -148,7 +148,7 @@
       text-align: left;
     }
     .quick-prompt:hover { border-color: var(--accent); color: var(--text); background: rgba(123,92,245,0.05); }
-
+ 
     /* Chat history */
     .chat-history { flex: 1; overflow-y: auto; padding: 0.75rem; display: flex; flex-direction: column; gap: 0.3rem; }
     .history-item {
@@ -167,7 +167,7 @@
     }
     .history-item:hover { background: var(--surface2); color: var(--text); }
     .history-item.active { background: rgba(123,92,245,0.1); color: var(--accent2); }
-
+ 
     /* Sidebar footer */
     .sidebar-footer { padding: 1rem; border-top: 1px solid var(--border); }
     .upgrade-card {
@@ -192,7 +192,7 @@
       transition: opacity 0.2s;
     }
     .upgrade-card a:hover { opacity: 0.9; }
-
+ 
     /* MAIN CHAT */
     .chat-main {
       flex: 1;
@@ -200,7 +200,7 @@
       flex-direction: column;
       overflow: hidden;
     }
-
+ 
     /* Messages */
     .messages-container {
       flex: 1;
@@ -213,7 +213,7 @@
     .messages-container::-webkit-scrollbar { width: 6px; }
     .messages-container::-webkit-scrollbar-track { background: transparent; }
     .messages-container::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
-
+ 
     /* Welcome screen */
     .welcome-screen {
       flex: 1;
@@ -261,7 +261,7 @@
     .suggestion-card .icon { font-size: 1.3rem; margin-bottom: 0.4rem; }
     .suggestion-card h4 { font-family: 'Syne', sans-serif; font-size: 0.85rem; font-weight: 700; margin-bottom: 0.2rem; }
     .suggestion-card p { font-size: 0.75rem; color: var(--muted); }
-
+ 
     /* Message bubbles */
     .message-row { display: flex; gap: 0.8rem; max-width: 800px; margin: 0 auto; width: 100%; }
     .message-row.user { flex-direction: row-reverse; }
@@ -304,7 +304,7 @@
     .msg-bubble p:last-child { margin-bottom: 0; }
     .msg-time { font-size: 0.7rem; color: var(--muted); margin-top: 0.3rem; padding: 0 0.2rem; }
     .message-row.user .msg-time { text-align: right; }
-
+ 
     /* Thinking indicator */
     .thinking-row { display: flex; gap: 0.8rem; max-width: 800px; margin: 0 auto; width: 100%; }
     .thinking-bubble {
@@ -332,7 +332,7 @@
       0%, 100% { transform: translateY(0); opacity: 0.5; }
       50% { transform: translateY(-4px); opacity: 1; }
     }
-
+ 
     /* Limit warning */
     .limit-banner {
       background: rgba(245, 158, 11, 0.1);
@@ -344,7 +344,7 @@
       display: none;
     }
     .limit-banner a { color: #f59e0b; text-decoration: underline; cursor: pointer; }
-
+ 
     /* INPUT AREA */
     .input-area {
       padding: 1rem 1.5rem 1.5rem;
@@ -415,7 +415,7 @@
     .send-btn:hover { transform: translateY(-1px); box-shadow: 0 4px 15px rgba(123,92,245,0.4); }
     .send-btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
     .input-hint { font-size: 0.73rem; color: var(--muted); margin-top: 0.5rem; text-align: center; }
-
+ 
     /* VOICE PANEL */
     .voice-panel {
       display: none;
@@ -458,7 +458,7 @@
       font-family: 'Syne', sans-serif;
       font-weight: 600;
     }
-
+ 
     /* MODAL */
     .modal-overlay {
       display: none;
@@ -510,7 +510,7 @@
       margin-bottom: 0.5rem;
     }
     .modal-close { background: none; border: none; color: var(--muted); cursor: pointer; width: 100%; text-align: center; font-size: 0.85rem; padding: 0.4rem; }
-
+ 
     /* TTS indicator */
     .tts-playing {
       display: inline-flex;
@@ -520,7 +520,7 @@
       color: var(--accent3);
       margin-top: 0.4rem;
     }
-
+ 
     @media (max-width: 640px) {
       .sidebar { display: none; }
       .welcome-suggestions { grid-template-columns: 1fr; }
@@ -528,7 +528,7 @@
   </style>
 </head>
 <body>
-
+ 
 <!-- TOP BAR -->
 <div class="topbar">
   <a href="index.html" class="topbar-logo">Xarvis AI</a>
@@ -541,15 +541,15 @@
     <button class="topbar-btn" onclick="clearChat()">+ New Chat</button>
   </div>
 </div>
-
+ 
 <!-- LIMIT BANNER -->
 <div class="limit-banner" id="limitBanner">
   ⚠️ You've used <span id="limitCount">10</span>/10 messages today on the free plan. <a onclick="openUpgradeModal()">Upgrade to Creator Pro</a> for unlimited chat.
 </div>
-
+ 
 <!-- APP LAYOUT -->
 <div class="app-layout">
-
+ 
   <!-- SIDEBAR -->
   <div class="sidebar">
     <div class="sidebar-section">
@@ -578,7 +578,7 @@
       </div>
     </div>
   </div>
-
+ 
   <!-- CHAT MAIN -->
   <div class="chat-main">
     <!-- Welcome screen (shown when no messages) -->
@@ -609,11 +609,11 @@
         </div>
       </div>
     </div>
-
+ 
     <!-- Messages -->
     <div class="messages-container" id="messagesContainer" style="display: none;">
     </div>
-
+ 
     <!-- Input -->
     <div class="input-area">
       <div class="input-wrapper">
@@ -636,9 +636,9 @@
       </div>
     </div>
   </div>
-
+ 
 </div>
-
+ 
 <!-- VOICE PANEL -->
 <div class="voice-panel" id="voicePanel">
   <div class="voice-orb">🎤</div>
@@ -646,7 +646,7 @@
   <div class="voice-transcript" id="voiceTranscript">Speak your message</div>
   <button class="voice-close" onclick="stopVoice()">Stop & Send</button>
 </div>
-
+ 
 <!-- UPGRADE MODAL -->
 <div class="modal-overlay" id="upgradeModal">
   <div class="modal">
@@ -672,13 +672,13 @@
     <button class="modal-close" onclick="closeUpgradeModal()">Maybe later</button>
   </div>
 </div>
-
+ 
 <script>
 // ============================================================
 // CONFIG — ✅ YOUR RAILWAY BACKEND URL
 // ============================================================
 const BACKEND_URL = 'https://xarvis-ai.up.railway.app';
-
+ 
 // ============================================================
 // STATE
 // ============================================================
@@ -691,7 +691,7 @@ let state = {
   selectedUpgradePlan: 'pro',
   isThinking: false,
 };
-
+ 
 function loadState() {
   const saved = localStorage.getItem('xarvis_state');
   if (saved) {
@@ -709,7 +709,7 @@ function loadState() {
   const urlPlan = new URLSearchParams(window.location.search).get('plan');
   if (urlPlan && PLANS[urlPlan]) state.plan = urlPlan;
 }
-
+ 
 function saveState() {
   localStorage.setItem('xarvis_state', JSON.stringify({
     plan: state.plan,
@@ -719,7 +719,7 @@ function saveState() {
     ttsEnabled: state.ttsEnabled,
   }));
 }
-
+ 
 // ============================================================
 // UI
 // ============================================================
@@ -728,7 +728,7 @@ function updatePlanBadge() {
   const upgradeCard = document.getElementById('sidebarUpgradeCard');
   upgradeCard.style.display = state.plan === 'starter' ? 'block' : 'none';
 }
-
+ 
 function updateLimitBanner() {
   const banner = document.getElementById('limitBanner');
   const limit = PLANS[state.plan]?.limit || 10;
@@ -742,7 +742,7 @@ function updateLimitBanner() {
     banner.style.display = 'none';
   }
 }
-
+ 
 function renderMessages() {
   const welcome = document.getElementById('welcomeScreen');
   const container = document.getElementById('messagesContainer');
@@ -757,7 +757,7 @@ function renderMessages() {
     scrollToBottom();
   }
 }
-
+ 
 function appendMessageToDOM(msg) {
   const container = document.getElementById('messagesContainer');
   const row = document.createElement('div');
@@ -774,7 +774,7 @@ function appendMessageToDOM(msg) {
   `;
   container.appendChild(row);
 }
-
+ 
 function formatAIResponse(text) {
   let html = text
     .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
@@ -788,16 +788,16 @@ function formatAIResponse(text) {
   if (!html.startsWith('<')) html = `<p>${html}</p>`;
   return html;
 }
-
+ 
 function escapeHtml(t) {
   return t.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
 }
-
+ 
 function scrollToBottom() {
   const c = document.getElementById('messagesContainer');
   c.scrollTop = c.scrollHeight;
 }
-
+ 
 function showThinking() {
   const container = document.getElementById('messagesContainer');
   const row = document.createElement('div');
@@ -813,12 +813,12 @@ function showThinking() {
   container.appendChild(row);
   scrollToBottom();
 }
-
+ 
 function hideThinking() {
   const row = document.getElementById('thinkingRow');
   if (row) row.remove();
 }
-
+ 
 // ============================================================
 // CHAT
 // ============================================================
@@ -826,39 +826,39 @@ async function sendMessage(overrideText) {
   const input = document.getElementById('chatInput');
   const text = overrideText || input.value.trim();
   if (!text || state.isThinking) return;
-
+ 
   const limit = PLANS[state.plan]?.limit || 10;
   if (state.messageCount >= limit) {
     openUpgradeModal();
     return;
   }
-
+ 
   document.getElementById('welcomeScreen').style.display = 'none';
   document.getElementById('messagesContainer').style.display = 'flex';
-
+ 
   if (!overrideText) { input.value = ''; autoResize(input); }
-
+ 
   const time = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
   const userMsg = { role: 'user', content: text, time };
   state.messages.push(userMsg);
   appendMessageToDOM(userMsg);
-
+ 
   state.messageCount++;
   state.isThinking = true;
   document.getElementById('sendBtn').disabled = true;
-
+ 
   showThinking();
   scrollToBottom();
-
+ 
   try {
     const reply = await callXarvisAI(text);
     hideThinking();
-
+ 
     const aiMsg = { role: 'ai', content: reply, time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) };
     state.messages.push(aiMsg);
     appendMessageToDOM(aiMsg);
     scrollToBottom();
-
+ 
     if (state.ttsEnabled) speakText(reply);
     updateChatHistory();
   } catch (err) {
@@ -868,71 +868,74 @@ async function sendMessage(overrideText) {
     appendMessageToDOM(errMsg);
     scrollToBottom();
   }
-
+ 
   state.isThinking = false;
   document.getElementById('sendBtn').disabled = false;
   updateLimitBanner();
   saveState();
 }
-
+ 
 async function callXarvisAI(userMessage) {
   const history = state.messages.slice(-10).map(m => ({
     role: m.role === 'ai' ? 'assistant' : 'user',
     content: m.content
   }));
   if (history[history.length - 1]?.role === 'user') history.pop();
-
+ 
   const systemPrompt = `You are Xarvis Creator AI — an elite AI co-founder for content creators.
 Your job is NOT to give generic advice. Your job is to help the user grow fast, get results, and make money.
-
+ 
 You must always:
 1. Be extremely practical and actionable — give step-by-step instructions, no vague advice
 2. Focus on outcomes — growth (views, followers), monetization (money, offers, products)
 3. Think like a top creator strategist — viral creators, marketing psychology, content systems
 4. Structure every response like this:
-
+ 
 🔥 **Goal:**
 (What the user will achieve)
-
+ 
 ⚡ **Plan:**
 (Simple high-level strategy)
-
+ 
 🧠 **Execution Steps:**
 (Clear numbered steps they can follow TODAY)
-
+ 
 🎯 **Example:**
 (Give a real example: script, hook, idea, etc.)
-
+ 
 🚀 **Bonus:**
 (Extra tactic most people don't know)
-
+ 
 5. Be slightly intense and direct — push the user to act, no fluff, no filler
 6. Personalize responses — use previous messages (memory), adapt to their niche and goals
 7. Always prioritize speed — what gets results FAST, not theory
-
+ 
 ${state.plan !== 'starter' ? 'This is a Pro/Elite user — give full detailed strategies with monetization frameworks.' : 'This is a Starter user — give great value but hint at Pro features for deeper strategies.'}`;
-
+ 
   // ✅ Calls your Railway backend
   const response = await fetch(`${BACKEND_URL}/api/chat`, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ message: userMessage, history, systemPrompt })
+    headers: {
+      'Content-Type': 'application/json',
+      'x-api-key': 'xarvis-secret-2026'
+    },
+    body: JSON.stringify({ message: userMessage, history, systemPrompt, plan: state.plan })
   });
-
+ 
   if (!response.ok) {
     const err = await response.json().catch(() => ({}));
     throw new Error(err.error || `Server error ${response.status}`);
   }
-
+ 
   const data = await response.json();
   return data.reply;
 }
-
+ 
 function sendQuickPrompt(text) {
   document.getElementById('chatInput').value = text;
   sendMessage();
 }
-
+ 
 function clearChat() {
   state.messages = [];
   saveState();
@@ -941,19 +944,19 @@ function clearChat() {
   document.getElementById('welcomeScreen').style.display = 'flex';
   updateChatHistory();
 }
-
+ 
 function handleKeyDown(e) {
   if (e.key === 'Enter' && !e.shiftKey) {
     e.preventDefault();
     sendMessage();
   }
 }
-
+ 
 function autoResize(el) {
   el.style.height = 'auto';
   el.style.height = Math.min(el.scrollHeight, 150) + 'px';
 }
-
+ 
 // ============================================================
 // CHAT HISTORY
 // ============================================================
@@ -970,7 +973,7 @@ function updateChatHistory() {
     container.insertBefore(item, container.firstChild.nextSibling);
   }
 }
-
+ 
 // ============================================================
 // TTS
 // ============================================================
@@ -986,7 +989,7 @@ function speakText(text) {
   if (preferred) utterance.voice = preferred;
   window.speechSynthesis.speak(utterance);
 }
-
+ 
 function toggleTTS() {
   state.ttsEnabled = !state.ttsEnabled;
   const btn = document.getElementById('ttsToggleBtn');
@@ -995,13 +998,13 @@ function toggleTTS() {
   if (!state.ttsEnabled) window.speechSynthesis?.cancel();
   saveState();
 }
-
+ 
 // ============================================================
 // VOICE INPUT
 // ============================================================
 let recognition = null;
 let isRecording = false;
-
+ 
 function toggleVoice() {
   if (isRecording) { stopVoice(); return; }
   if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
@@ -1013,13 +1016,13 @@ function toggleVoice() {
   recognition.continuous = false;
   recognition.interimResults = true;
   recognition.lang = 'en-US';
-
+ 
   document.getElementById('voicePanel').classList.add('active');
   document.getElementById('micBtn').classList.add('recording');
   document.getElementById('voiceStatus').textContent = 'Listening...';
   document.getElementById('voiceTranscript').textContent = 'Speak your message';
   isRecording = true;
-
+ 
   recognition.onresult = (e) => {
     const transcript = Array.from(e.results).map(r => r[0].transcript).join('');
     document.getElementById('voiceTranscript').textContent = transcript;
@@ -1033,14 +1036,14 @@ function toggleVoice() {
   recognition.onend = () => { if (isRecording) stopVoice(); };
   recognition.start();
 }
-
+ 
 function stopVoice() {
   if (recognition) recognition.stop();
   isRecording = false;
   document.getElementById('voicePanel').classList.remove('active');
   document.getElementById('micBtn').classList.remove('recording');
 }
-
+ 
 // ============================================================
 // UPGRADE MODAL
 // ============================================================
@@ -1058,7 +1061,7 @@ function mockSubscribe() {
   updatePlanBadge();
   updateLimitBanner();
   closeUpgradeModal();
-
+ 
   const intro = { role: 'ai', content: `🎉 **Welcome to ${PLANS[state.plan].name}!**\n\nYou now have access to:\n- **Unlimited chat** with Xarvis\n- **Full Creator AI** — scripts, hooks, calendars, strategies\n- **Memory** — I remember your niche and goals across sessions\n- **Monetization frameworks** — turn your audience into income\n\nNow let's get to work. Tell me your niche and your current biggest challenge — I'll build you a plan TODAY.`, time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) };
   state.messages.push(intro);
   document.getElementById('welcomeScreen').style.display = 'none';
@@ -1067,7 +1070,7 @@ function mockSubscribe() {
   saveState();
   if (state.ttsEnabled) speakText('Welcome! Your plan is now active. Tell me your niche and I will build your strategy.');
 }
-
+ 
 // ============================================================
 // INIT
 // ============================================================
@@ -1076,11 +1079,11 @@ updatePlanBadge();
 updateLimitBanner();
 renderMessages();
 updateChatHistory();
-
+ 
 if (window.speechSynthesis) {
   window.speechSynthesis.onvoiceschanged = () => window.speechSynthesis.getVoices();
 }
-
+ 
 document.getElementById('ttsToggleBtn').textContent = `🔊 TTS: ${state.ttsEnabled ? 'ON' : 'OFF'}`;
 if (state.ttsEnabled) document.getElementById('ttsToggleBtn').classList.add('active');
 </script>
