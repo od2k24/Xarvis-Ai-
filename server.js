@@ -202,5 +202,11 @@ app.listen(PORT, '0.0.0.0', () => {
   console.log(`✅ Xarvis AI backend running on port ${PORT}`);
   console.log(`   Gemini key: ${process.env.GEMINI_API_KEY ? '✅ set' : '❌ MISSING'}`);
   console.log(`   Groq key:   ${process.env.GROQ_API_KEY ? '✅ set' : '❌ MISSING'}`);
-  console.log(`   Auth key:   ${process.env.XARVIS_API_KEY ? '✅ set' : '⚠️  using dev default'}`);
+  console.log(`   Auth key:   ${process.env.XARVIS_API_KEY ? '✅ set' : '⚠️  using dev default'}`);process.on('uncaughtException', err => {
+  console.error('UNCAUGHT EXCEPTION:', err);
+});
+
+process.on('unhandledRejection', err => {
+  console.error('UNHANDLED REJECTION:', err);
+});
 });
