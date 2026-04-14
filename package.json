@@ -1,18 +1,14 @@
 {
   "name": "xarvis-ai",
   "version": "1.0.0",
-  "description": "Xarvis AI — Your Elite Creator Co-Founder",
-  "main": "server.js",
   "type": "module",
+  "main": "server.js",
   "scripts": {
     "start": "node server.js"
   },
   "dependencies": {
+    "express": "^4.18.2",
     "cors": "^2.8.5",
-    "dotenv": "^16.3.1",
-    "express": "^4.18.2"
-  },
-  "devDependencies": {
-    "nodemon": "^3.0.3"
+    "dotenv": "^16.0.0"
   }
 }
