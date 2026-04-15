@@ -675,23 +675,19 @@
 
 <script>
 // ============================================================
-// CONFIG — ✅ YOUR RAILWAY BACKEND URL
-// ============================================================
-const BACKEND_URL = 'https://xarvis-ai.up.railway.app';
-
-// ============================================================
 // STATE
 // ============================================================
 const PLANS = { starter: { name: '🟢 Starter', limit: 10 }, pro: { name: '🔵 Creator Pro', limit: Infinity }, elite: { name: '🟣 Creator Elite', limit: Infinity } };
 let state = {
   plan: 'starter',
   messageCount: 0,
-  messages: [],
+  messages: [], // { role, content, time }
   ttsEnabled: true,
   selectedUpgradePlan: 'pro',
   isThinking: false,
 };
 
+// Load from localStorage
 function loadState() {
   const saved = localStorage.getItem('xarvis_state');
   if (saved) {
@@ -700,12 +696,14 @@ function loadState() {
       state.plan = parsed.plan || 'starter';
       state.messages = parsed.messages || [];
       state.ttsEnabled = parsed.ttsEnabled !== undefined ? parsed.ttsEnabled : true;
+      // Reset daily count
       const today = new Date().toDateString();
       if (parsed.countDate === today) {
         state.messageCount = parsed.messageCount || 0;
       }
     } catch(e) {}
   }
+  // Check URL param for plan
   const urlPlan = new URLSearchParams(window.location.search).get('plan');
   if (urlPlan && PLANS[urlPlan]) state.plan = urlPlan;
 }
@@ -713,7 +711,7 @@ function loadState() {
 function saveState() {
   localStorage.setItem('xarvis_state', JSON.stringify({
     plan: state.plan,
-    messages: state.messages.slice(-50),
+    messages: state.messages.slice(-50), // keep last 50
     messageCount: state.messageCount,
     countDate: new Date().toDateString(),
     ttsEnabled: state.ttsEnabled,
@@ -762,9 +760,11 @@ function appendMessageToDOM(msg) {
   const container = document.getElementById('messagesContainer');
   const row = document.createElement('div');
   row.className = `message-row ${msg.role}`;
+
   const avatarText = msg.role === 'ai' ? 'X' : '👤';
   const bubbleClass = msg.role === 'ai' ? 'ai' : 'user';
   const formattedContent = msg.role === 'ai' ? formatAIResponse(msg.content) : escapeHtml(msg.content);
+
   row.innerHTML = `
     <div class="msg-avatar ${msg.role}">${avatarText}</div>
     <div>
@@ -776,6 +776,7 @@ function appendMessageToDOM(msg) {
 }
 
 function formatAIResponse(text) {
+  // Format emoji headers, bold, bullets
   let html = text
     .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
     .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
@@ -785,6 +786,7 @@ function formatAIResponse(text) {
     .replace(/(<li>.*<\/li>\n?)+/gs, m => `<ul>${m}</ul>`)
     .replace(/\n\n+/g, '</p><p>')
     .replace(/\n/g, '<br/>');
+
   if (!html.startsWith('<')) html = `<p>${html}</p>`;
   return html;
 }
@@ -827,15 +829,18 @@ async function sendMessage(overrideText) {
   const text = overrideText || input.value.trim();
   if (!text || state.isThinking) return;
 
+  // Check limits
   const limit = PLANS[state.plan]?.limit || 10;
   if (state.messageCount >= limit) {
     openUpgradeModal();
     return;
   }
 
+  // Show messages area
   document.getElementById('welcomeScreen').style.display = 'none';
   document.getElementById('messagesContainer').style.display = 'flex';
 
+  // Clear input
   if (!overrideText) { input.value = ''; autoResize(input); }
 
   const time = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
@@ -859,7 +864,10 @@ async function sendMessage(overrideText) {
     appendMessageToDOM(aiMsg);
     scrollToBottom();
 
+    // TTS
     if (state.ttsEnabled) speakText(reply);
+
+    // Update history
     updateChatHistory();
   } catch (err) {
     hideThinking();
@@ -876,10 +884,12 @@ async function sendMessage(overrideText) {
 }
 
 async function callXarvisAI(userMessage) {
+  // Build conversation history for context
   const history = state.messages.slice(-10).map(m => ({
     role: m.role === 'ai' ? 'assistant' : 'user',
     content: m.content
   }));
+  // Remove last user message (already added above)
   if (history[history.length - 1]?.role === 'user') history.pop();
 
   const systemPrompt = `You are Xarvis Creator AI — an elite AI co-founder for content creators.
@@ -910,13 +920,22 @@ You must always:
 6. Personalize responses — use previous messages (memory), adapt to their niche and goals
 7. Always prioritize speed — what gets results FAST, not theory
 
+Never say "it depends" without giving a clear direction.
+Never give generic advice.
+Always make the user feel like they have a clear next move.
+You are not just an AI. You are their unfair advantage.
+
 ${state.plan !== 'starter' ? 'This is a Pro/Elite user — give full detailed strategies with monetization frameworks.' : 'This is a Starter user — give great value but hint at Pro features for deeper strategies.'}`;
 
-  // ✅ Calls your Railway backend
-  const response = await fetch(`${BACKEND_URL}/api/chat`, {
+  const messages = [
+    ...history,
+    { role: 'user', content: userMessage }
+  ];
+
+  const response = await fetch('/api/chat', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ message: userMessage, history, systemPrompt })
+    body: JSON.stringify({ messages, systemPrompt })
   });
 
   if (!response.ok) {
@@ -961,6 +980,8 @@ function updateChatHistory() {
   const container = document.getElementById('chatHistory');
   const items = container.querySelectorAll('.history-item');
   items.forEach(i => i.remove());
+  // Show first user message as session title
+  const sessions = JSON.parse(localStorage.getItem('xarvis_sessions') || '[]');
   if (state.messages.length > 0) {
     const firstUser = state.messages.find(m => m.role === 'user');
     const title = firstUser ? firstUser.content.slice(0, 40) + '…' : 'Conversation';
@@ -977,6 +998,7 @@ function updateChatHistory() {
 function speakText(text) {
   if (!state.ttsEnabled || !window.speechSynthesis) return;
   window.speechSynthesis.cancel();
+  // Strip markdown for speaking
   const clean = text.replace(/\*\*(.*?)\*\*/g, '$1').replace(/[🔥⚡🧠🎯🚀💡💰📅🎬📊✍️🔮📱🎤#]/g, '').replace(/\n+/g, '. ');
   const utterance = new SpeechSynthesisUtterance(clean.slice(0, 500));
   utterance.rate = 0.95;
@@ -1029,7 +1051,7 @@ function toggleVoice() {
       sendMessage();
     }
   };
-  recognition.onerror = () => { stopVoice(); };
+  recognition.onerror = (e) => { stopVoice(); };
   recognition.onend = () => { if (isRecording) stopVoice(); };
   recognition.start();
 }
@@ -1059,13 +1081,17 @@ function mockSubscribe() {
   updateLimitBanner();
   closeUpgradeModal();
 
-  const intro = { role: 'ai', content: `🎉 **Welcome to ${PLANS[state.plan].name}!**\n\nYou now have access to:\n- **Unlimited chat** with Xarvis\n- **Full Creator AI** — scripts, hooks, calendars, strategies\n- **Memory** — I remember your niche and goals across sessions\n- **Monetization frameworks** — turn your audience into income\n\nNow let's get to work. Tell me your niche and your current biggest challenge — I'll build you a plan TODAY.`, time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) };
-  state.messages.push(intro);
-  document.getElementById('welcomeScreen').style.display = 'none';
-  document.getElementById('messagesContainer').style.display = 'flex';
-  appendMessageToDOM(intro);
-  saveState();
-  if (state.ttsEnabled) speakText('Welcome! Your plan is now active. Tell me your niche and I will build your strategy.');
+  // Show confirmation
+  const welcome = document.getElementById('welcomeScreen');
+  if (state.messages.length === 0) {
+    const intro = { role: 'ai', content: `🎉 **Welcome to ${PLANS[state.plan].name}!**\n\nYou now have access to:\n- **Unlimited chat** with Xarvis\n- **Full Creator AI** — scripts, hooks, calendars, strategies\n- **Memory** — I remember your niche and goals across sessions\n- **Monetization frameworks** — turn your audience into income\n\nNow let's get to work. Tell me your niche and your current biggest challenge — I'll build you a plan TODAY.`, time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) };
+    state.messages.push(intro);
+    document.getElementById('welcomeScreen').style.display = 'none';
+    document.getElementById('messagesContainer').style.display = 'flex';
+    appendMessageToDOM(intro);
+    saveState();
+    if (state.ttsEnabled) speakText('Welcome! Your plan is now active. Tell me your niche and I will build your strategy.');
+  }
 }
 
 // ============================================================
@@ -1077,10 +1103,12 @@ updateLimitBanner();
 renderMessages();
 updateChatHistory();
 
+// Load TTS voices
 if (window.speechSynthesis) {
   window.speechSynthesis.onvoiceschanged = () => window.speechSynthesis.getVoices();
 }
 
+// Update TTS button state
 document.getElementById('ttsToggleBtn').textContent = `🔊 TTS: ${state.ttsEnabled ? 'ON' : 'OFF'}`;
 if (state.ttsEnabled) document.getElementById('ttsToggleBtn').classList.add('active');
 </script>
