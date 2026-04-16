@@ -1,101 +1,95 @@
 import 'dotenv/config';
 import express from 'express';
 import cors from 'cors';
-import Groq from 'groq-sdk';
+import { GoogleGenerativeAI } from '@google/generative-ai';
 
 const app = express();
 const PORT = process.env.PORT || 3001;
 
-// -------------------- MIDDLEWARE --------------------
 app.use(cors());
 app.use(express.json());
 
-// -------------------- GROQ CLIENT --------------------
-const groq = new Groq({
-  apiKey: process.env.GROQ_API_KEY,
+/* =========================
+   GEMINI SETUP
+========================= */
+const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
+const model = genAI.getGenerativeModel({
+    model: "gemini-1.5-flash"
 });
 
-// -------------------- HEALTH CHECK --------------------
+/* =========================
+   HEALTH CHECK
+========================= */
 app.get('/', (req, res) => {
-  res.json({
-    status: 'Xarvis AI backend running ✅',
-    time: new Date().toISOString()
-  });
+    res.json({ status: "Xarvis AI (Gemini) running ✅" });
 });
 
-// -------------------- VIRAL SCORING (OPTIONAL LOGIC LAYER) --------------------
-function viralScore(text) {
-  let score = 50;
-  const t = text.toLowerCase();
-
-  if (t.includes("how to")) score += 10;
-  if (t.includes("money") || t.includes("rich")) score += 10;
-  if (t.includes("secret")) score += 10;
-  if (t.includes("nobody")) score += 10;
-  if (t.includes("build")) score += 5;
-  if (t.length < 20) score -= 10;
-
-  if (score > 100) score = 100;
-  if (score < 0) score = 0;
-
-  return score;
-}
-
-// -------------------- CHAT + SCORE ENDPOINT --------------------
+/* =========================
+   CHAT ENDPOINT
+========================= */
 app.post('/api/chat', async (req, res) => {
-  const { message } = req.body;
+    const { message, history = [] } = req.body;
 
-  if (!message) {
-    return res.status(400).json({ error: 'No message provided' });
-  }
+    if (!message) {
+        return res.status(400).json({ error: "No message provided" });
+    }
 
-  try {
-    // AI response
-    const completion = await groq.chat.completions.create({
-      model: 'llama-3.3-70b-versatile',
-      messages: [
-        {
-          role: 'system',
-          content:
-            'You are Xarvis AI, an elite creator co-founder. Be sharp, practical, and high value.'
-        },
-        {
-          role: 'user',
-          content: message
-        }
-      ],
-      max_tokens: 800,
-    });
+    try {
+        const chat = model.startChat({
+            history: history.map(h => ({
+                role: h.role === "assistant" ? "model" : "user",
+                parts: [{ text: h.content }]
+            }))
+        });
 
-    const reply =
-      completion.choices?.[0]?.message?.content || 'No response';
+        const result = await chat.sendMessage(message);
+        const response = await result.response;
+        const text = response.text();
 
-    // Optional: viral score based on input
-    const score = viralScore(message);
+        res.json({ reply: text });
 
-    res.json({
-      reply,
-      viralScore: score,
-      verdict:
-        score > 80
-          ? 'VIRAL 🔥'
-          : score > 60
-          ? 'GOOD ⚡'
-          : score > 40
-          ? 'MID ⚠️'
-          : 'LOW ❌'
-    });
-
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({
-      error: 'AI request failed',
-      detail: err.message
-    });
-  }
+    } catch (err) {
+        console.error("Gemini error:", err);
+        res.status(500).json({
+            error: "Gemini request failed",
+            detail: err.message
+        });
+    }
 });
 
-// -------------------- START SERVER --------------------
+/* =========================
+   STREAM ENDPOINT (OPTIONAL SIMPLE VERSION)
+========================= */
+app.post('/api/chat/stream', async (req, res) => {
+    const { message } = req.body;
+
+    res.setHeader('Content-Type', 'text/event-stream');
+    res.setHeader('Cache-Control', 'no-cache');
+    res.setHeader('Connection', 'keep-alive');
+    res.flushHeaders();
+
+    try {
+        const result = await model.generateContentStream(message);
+
+        for await (const chunk of result.stream) {
+            const text = chunk.text();
+            if (text) {
+                res.write(`data: ${JSON.stringify({ token: text })}\n\n`);
+            }
+        }
+
+        res.write('data: [DONE]\n\n');
+        res.end();
+
+    } catch (err) {
+        res.write(`data: ${JSON.stringify({ error: err.message })}\n\n`);
+        res.end();
+    }
+});
+
+/* =========================
+   START SERVER
+========================= */
 app.listen(PORT, () => {
-  console.log(`🚀 Xarvis AI running on http://localhost:${PORT}`);
+    console.log(`🚀 Xarvis AI (Gemini) running on http://localhost:${PORT}`);
 });
