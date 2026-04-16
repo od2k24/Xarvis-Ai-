@@ -1,230 +1,87 @@
-require('dotenv').config();
+const express = require("express");
+const cors = require("cors");
+require("dotenv").config();
 
-const express = require('express');
-const cors = require('cors');
+const { GoogleGenerativeAI } = require("@google/generative-ai");
 
 const app = express();
-const PORT = process.env.PORT || 3001;
-
-// ============================================================
-// BASIC SETUP
-// ============================================================
+app.use(cors());
 app.use(express.json());
 
-app.use(cors({
-  origin: '*',
-  methods: ['GET', 'POST'],
-  allowedHeaders: ['Content-Type', 'x-api-key']
-}));
+// 🔑 Gemini setup
+const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 
-// ============================================================
-// HEALTH CHECK
-// ============================================================
-app.get('/', (req, res) => {
-  res.json({
-    status: 'Xarvis AI Backend Running 🚀',
-    time: new Date().toISOString()
-  });
-});
-
-// ============================================================
-// AUTH SYSTEM
-// ============================================================
-const API_KEY = process.env.XARVIS_API_KEY || 'dev-key';
-
-function requireAuth(req, res, next) {
-  const key = req.headers['x-api-key'];
-
-  if (!key || key !== API_KEY) {
-    return res.status(401).json({
-      error: 'Unauthorized'
-    });
-  }
-
-  next();
-}
-
-// ============================================================
-// RATE LIMIT (SIMPLE SAFE VERSION)
-// ============================================================
-const rateMap = new Map();
-const LIMIT = 25;
-
-function rateLimit(req, res, next) {
-  const ip = req.headers['x-forwarded-for'] || req.ip;
-  const today = new Date().toDateString();
-
-  const data = rateMap.get(ip);
-
-  if (!data || data.date !== today) {
-    rateMap.set(ip, { date: today, count: 1 });
-    return next();
-  }
-
-  if (data.count >= LIMIT) {
-    return res.status(429).json({
-      error: 'Rate limit reached'
-    });
-  }
-
-  data.count++;
-  next();
-}
-
-// cleanup memory daily
-setInterval(() => {
-  const today = new Date().toDateString();
-
-  for (const [ip, data] of rateMap.entries()) {
-    if (data.date !== today) rateMap.delete(ip);
-  }
-}, 60 * 60 * 1000);
-
-// ============================================================
-// SIMPLE MEMORY (SAFETY VERSION)
-// ============================================================
-const memory = new Map();
-
-// ============================================================
-// AI CALLS
-// ============================================================
-async function callGemini(message) {
-  try {
-    const key = process.env.GEMINI_API_KEY;
-    if (!key) return null;
-
-    const res = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${key}`,
-      {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          contents: [
-            {
-              role: 'user',
-              parts: [{ text: message }]
-            }
-          ]
-        })
-      }
-    );
-
-    if (!res.ok) return null;
-
-    const data = await res.json();
-    return data?.candidates?.[0]?.content?.parts?.[0]?.text || null;
-
-  } catch (err) {
-    return null;
-  }
-}
-
-async function callGroq(message) {
-  try {
-    const key = process.env.GROQ_API_KEY;
-    if (!key) return null;
-
-    const res = await fetch('https://api.groq.com/openai/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${key}`
-      },
-      body: JSON.stringify({
-        model: 'llama-3.3-70b-versatile',
-        messages: [
-          { role: 'user', content: message }
-        ]
-      })
-    });
-
-    if (!res.ok) return null;
-
-    const data = await res.json();
-    return data?.choices?.[0]?.message?.content || null;
-
-  } catch (err) {
-    return null;
-  }
-}
-
-// ============================================================
-// MAIN CHAT ENDPOINT
-// ============================================================
-app.post('/api/chat', requireAuth, rateLimit, async (req, res) => {
-  try {
-    const { message } = req.body;
-
-    if (!message) {
-      return res.status(400).json({
-        error: 'No message provided'
-      });
-    }
-
-    const ip = req.headers['x-forwarded-for'] || req.ip;
-
-    // init memory
-    if (!memory.has(ip)) {
-      memory.set(ip, {
-        messages: [],
-        niche: null
-      });
-    }
-
-    const user = memory.get(ip);
-
-    user.messages.push(message);
-    user.messages = user.messages.slice(-10);
-
-    const lower = message.toLowerCase();
-
-    if (lower.includes('youtube')) user.niche = 'youtube';
-    if (lower.includes('fitness')) user.niche = 'fitness';
-    if (lower.includes('money')) user.niche = 'business';
+// 🧠 VIRAL AI ENGINE (Gemini-powered)
+async function getViralScore(idea) {
+    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
 
     const prompt = `
-You are Xarvis AI.
+You are a viral content expert.
 
-User message:
-${message}
+Score this content idea from 0 to 100 based on VIRAL potential.
 
-User niche:
-${user.niche || 'unknown'}
+Analyze:
+- Hook strength
+- Emotion (anger, curiosity, motivation)
+- Shareability
+- Trend potential
+- Retention power
 
-Give:
-- clear answer
-- step by step execution
-- no fluff
+Return ONLY valid JSON like this:
+{
+  "score": number,
+  "verdict": "VIRAL | GOOD | MID | LOW",
+  "reason": "short explanation"
+}
+
+Idea:
+"${idea}"
 `;
 
-    console.log("📩", message);
+    const result = await model.generateContent(prompt);
+    const response = await result.response;
+    const text = response.text();
 
-    let reply =
-      await callGemini(prompt) ||
-      await callGroq(prompt);
-
-    if (!reply) {
-      return res.status(500).json({
-        error: 'All AI providers failed'
-      });
+    try {
+        return JSON.parse(text);
+    } catch (e) {
+        return {
+            score: 50,
+            verdict: "MID",
+            reason: "AI returned non-JSON response"
+        };
     }
+}
 
-    res.json({
-      reply,
-      memory: user
-    });
+// 🚀 API ROUTE
+app.post("/score", async (req, res) => {
+    try {
+        const { idea } = req.body;
 
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({
-      error: err.message
-    });
-  }
+        if (!idea) {
+            return res.status(400).json({ error: "Idea is required" });
+        }
+
+        const result = await getViralScore(idea);
+
+        res.json({
+            idea,
+            viralScore: result.score,
+            verdict: result.verdict,
+            reason: result.reason
+        });
+
+    } catch (err) {
+        res.status(500).json({
+            error: "Server error",
+            details: err.message
+        });
+    }
 });
 
-// ============================================================
-// START SERVER
-// ============================================================
+// 🌐 START SERVER
+const PORT = process.env.PORT || 3000;
+
 app.listen(PORT, () => {
-  console.log(`🚀 Xarvis AI running on port ${PORT}`);
+    console.log(`🚀 Xarvis AI (Gemini Engine) running on port ${PORT}`);
 });
