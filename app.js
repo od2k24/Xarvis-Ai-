@@ -1,119 +1,977 @@
-const API_URL = "http://localhost:3001/api/chat";
+From: <Saved by Blink>
+Snapshot-Content-Location: file:///C:/Users/HP/OneDrive/xarvis-ai/xarvis-ai/frontend/index.html
+Subject: =?utf-8?Q?Xarvis=20AI=20=E2=80=94=20Your=20AI=20Co-Founder=20for=20Conten?=
+ =?utf-8?Q?t=20Creators?=
+Date: Fri, 17 Apr 2026 18:31:18 +0100
+MIME-Version: 1.0
+Content-Type: multipart/related;
+	type="text/html";
+	boundary="----MultipartBoundary--vpWD06hCRLWnWEZFBWq8vdv2aL4qG16JarT2MVqwiq----"
 
-const userInput = document.getElementById("userInput");
-const sendBtn = document.getElementById("sendBtn");
-const btnLabel = document.getElementById("btnLabel");
-const responseArea = document.getElementById("responseArea");
-const scoreBar = document.getElementById("scoreBar");
-const scoreValue = document.getElementById("scoreValue");
-const scoreFill = document.getElementById("scoreFill");
-const charCount = document.getElementById("charCount");
 
-// Char counter
-userInput.addEventListener("input", () => {
-  const len = userInput.value.length;
-  charCount.textContent = `${len} / 2000`;
-});
+------MultipartBoundary--vpWD06hCRLWnWEZFBWq8vdv2aL4qG16JarT2MVqwiq----
+Content-Type: text/html
+Content-ID: <frame-E1C9732C42497EA52C7D98E29DC33157@mhtml.blink>
+Content-Transfer-Encoding: quoted-printable
+Content-Location: file:///C:/Users/HP/OneDrive/xarvis-ai/xarvis-ai/frontend/index.html
 
-// Enter = submit (shift+enter = newline)
-userInput.addEventListener("keydown", (e) => {
-  if (e.key === "Enter" && !e.shiftKey) {
-    e.preventDefault();
-    sendMessage();
-  }
-});
+<!DOCTYPE html><html lang=3D"en"><head><meta http-equiv=3D"Content-Type" co=
+ntent=3D"text/html; charset=3DUTF-8"><link rel=3D"stylesheet" type=3D"text/=
+css" href=3D"cid:css-1b9cb0a1-f212-45a0-87f9-e26246eb2b45@mhtml.blink" />
+ =20
+  <meta name=3D"viewport" content=3D"width=3Ddevice-width, initial-scale=3D=
+1.0">
+  <title>Xarvis AI =E2=80=94 Your AI Co-Founder for Content Creators</title=
+>
+  <link rel=3D"preconnect" href=3D"https://fonts.googleapis.com/">
+  <link href=3D"https://fonts.googleapis.com/css2?family=3DSyne:wght@400;60=
+0;700;800&amp;family=3DInter:wght@300;400;500;600&amp;display=3Dswap" rel=
+=3D"stylesheet">
+ =20
+</head>
+<body>
 
-function fillExample(el) {
-  userInput.value = el.textContent;
-  charCount.textContent = `${el.textContent.length} / 2000`;
-  userInput.focus();
-}
+<nav>
+  <div class=3D"nav-logo">Xarvis AI</div>
+  <ul class=3D"nav-links">
+    <li><a href=3D"file:///C:/Users/HP/OneDrive/xarvis-ai/xarvis-ai/fronten=
+d/index.html#features">Features</a></li>
+    <li><a href=3D"file:///C:/Users/HP/OneDrive/xarvis-ai/xarvis-ai/fronten=
+d/index.html#howitworks">How It Works</a></li>
+    <li><a href=3D"file:///C:/Users/HP/OneDrive/xarvis-ai/xarvis-ai/fronten=
+d/index.html#pricing">Pricing</a></li>
+    <li><a href=3D"file:///C:/Users/HP/OneDrive/xarvis-ai/xarvis-ai/fronten=
+d/index.html#testimonials">Reviews</a></li>
+  </ul>
+  <a href=3D"file:///C:/Users/HP/OneDrive/xarvis-ai/xarvis-ai/frontend/app.=
+html" class=3D"nav-cta">Launch App =E2=86=92</a>
+</nav>
 
-function setLoading(loading) {
-  sendBtn.disabled = loading;
-  btnLabel.textContent = loading ? "Analyzing..." : "Analyze with Xarvis";
-}
+<!-- HERO -->
+<section class=3D"hero">
+  <div class=3D"hero-glow"></div>
+  <div class=3D"hero-badge">=F0=9F=8E=AF Creators onboarded directly =E2=80=
+=94 no waitlist games</div>
+  <h1>Your <span>Second Brain</span><br>for Going Viral.</h1>
+  <p>Xarvis AI is the AI co-founder every creator needs =E2=80=94 writing y=
+our hooks, planning your content, building your growth engine. No team requ=
+ired.</p>
+  <div class=3D"hero-buttons">
+    <a href=3D"file:///C:/Users/HP/OneDrive/xarvis-ai/xarvis-ai/frontend/ap=
+p.html" class=3D"btn-primary">=F0=9F=9A=80 Get Started with Xarvis AI</a>
+    <a href=3D"file:///C:/Users/HP/OneDrive/xarvis-ai/xarvis-ai/frontend/in=
+dex.html#demo" class=3D"btn-secondary">See the Demo =E2=86=93</a>
+  </div>
+</section>
 
-function getScoreColor(score) {
-  if (score >= 75) return "#4dff91";
-  if (score >= 50) return "#e8ff47";
-  if (score >= 30) return "#ffa040";
-  return "#ff4757";
-}
+<!-- STATS -->
+<div class=3D"stats">
+  <div class=3D"stat"><div class=3D"stat-number">94%</div><div class=3D"sta=
+t-label">Virality Prediction Accuracy</div></div>
+  <div class=3D"stat"><div class=3D"stat-number">12hrs</div><div class=3D"s=
+tat-label">Saved Per Creator Weekly</div></div>
+  <div class=3D"stat"><div class=3D"stat-number">4.2=C3=97</div><div class=
+=3D"stat-label">Avg Engagement Increase</div></div>
+  <div class=3D"stat"><div class=3D"stat-number">8,000+</div><div class=3D"=
+stat-label">Creators Already Onboarded</div></div>
+</div>
 
-function renderScore(score) {
-  scoreBar.classList.add("visible");
-  scoreValue.textContent = score;
-  scoreValue.style.color = getScoreColor(score);
-
-  // Animate fill after a tick
-  setTimeout(() => {
-    scoreFill.style.width = `${score}%`;
-  }, 50);
-}
-
-function formatResponse(text) {
-  // Wrap emoji-led lines for styling
-  const lines = text.split("\n");
-  const formatted = lines.map(line => {
-    const trimmed = line.trim();
-    if (/^[⚡🎯💡🔥✦#]/.test(trimmed)) {
-      return `<span class="emoji-line">${escapeHtml(line)}</span>`;
-    }
-    return escapeHtml(line);
-  });
-  return formatted.join("\n");
-}
-
-function escapeHtml(str) {
-  return str
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;");
-}
-
-async function sendMessage() {
-  const message = userInput.value.trim();
-  if (!message) return;
-
-  setLoading(true);
-
-  // Show loader
-  responseArea.innerHTML = `
-    <div class="loader">
-      <div class="loader-dots">
-        <span></span><span></span><span></span>
+<!-- FEATURES -->
+<section id=3D"features">
+  <div class=3D"container">
+    <div class=3D"section-label">What Xarvis AI Does</div>
+    <h2>Your AI Co-Founder for Content</h2>
+    <p class=3D"section-sub">Every tool you need to scale your content =E2=
+=80=94 powered by an AI that thinks like a full creative team.</p>
+    <div class=3D"features-grid">
+      <div class=3D"feature-card">
+        <div class=3D"feature-icon">=F0=9F=8E=AC</div>
+        <h3>Clip Virality Analysis</h3>
+        <p>Identify your strongest hooks, peak engagement moments, and opti=
+mal cut points =E2=80=94 automatically.</p>
+        <span class=3D"feature-tag">=E2=9A=A1 Results in &lt; 30 seconds</s=
+pan>
       </div>
-      Xarvis is thinking...
+      <div class=3D"feature-card">
+        <div class=3D"feature-icon">=F0=9F=93=8A</div>
+        <h3>Viral % Prediction</h3>
+        <p>See your exact viral probability score before posting. Know whic=
+h clips to push and which to rework.</p>
+        <span class=3D"feature-tag">=F0=9F=8E=AF 87% avg score on top clips=
+</span>
+      </div>
+      <div class=3D"feature-card">
+        <div class=3D"feature-icon">=E2=9C=8D=EF=B8=8F</div>
+        <h3>Auto-Generated Scripts &amp; Hooks</h3>
+        <p>Platform-optimized captions, irresistible hooks, viral scripts, =
+trending hashtags =E2=80=94 ready to post instantly.</p>
+        <span class=3D"feature-tag">=F0=9F=94=A5 Copy-paste ready</span>
+      </div>
+      <div class=3D"feature-card">
+        <div class=3D"feature-icon">=F0=9F=94=AE</div>
+        <h3>Next Viral Content Planner</h3>
+        <p>Xarvis monitors live trending data in your niche and tells you e=
+xactly what to create next.</p>
+        <span class=3D"feature-tag">=F0=9F=93=88 Before your competitors</s=
+pan>
+      </div>
+      <div class=3D"feature-card">
+        <div class=3D"feature-icon">=F0=9F=93=B1</div>
+        <h3>Platform Strategy &amp; Timing</h3>
+        <p>TikTok, Instagram Reels, YouTube Shorts =E2=80=94 optimal platfo=
+rms, posting times, and format recommendations.</p>
+        <span class=3D"feature-tag">=F0=9F=8E=AF Multi-platform optimized</=
+span>
+      </div>
+      <div class=3D"feature-card">
+        <div class=3D"feature-icon">=F0=9F=92=B0</div>
+        <h3>Monetization Frameworks</h3>
+        <p>Sponsorship scripts, offer creation, product launch strategies =
+=E2=80=94 turn your audience into income.</p>
+        <span class=3D"feature-tag">=F0=9F=9A=80 Revenue-focused</span>
+      </div>
     </div>
-  `;
+  </div>
+</section>
 
-  try {
-    const res = await fetch(API_URL, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ message }),
-    });
-
-    const data = await res.json();
-
-    if (!res.ok) {
-      throw new Error(data.error || "Request failed.");
-    }
-
-    // Render score
-    renderScore(data.viralScore);
-
-    // Render response
-    responseArea.innerHTML = `<div class="response-content">${formatResponse(data.reply)}</div>`;
-
-  } catch (err) {
-    responseArea.innerHTML = `
-      <div class="error-msg">
-        ⚠ ${err.message}
+<!-- HOW IT WORKS -->
+<section id=3D"howitworks" style=3D"background: var(--surface);">
+  <div class=3D"container">
+    <div class=3D"section-label">The Xarvis Process</div>
+    <h2>Three Steps to Viral</h2>
+    <p class=3D"section-sub">No complex setup. No learning curve. Operation=
+al in minutes.</p>
+    <div class=3D"steps">
+      <div class=3D"step">
+        <div class=3D"step-num">1</div>
+        <div class=3D"step-content">
+          <h3>Tell Xarvis Your Niche &amp; Goals</h3>
+          <p>Share your niche, platform, and what you're trying to achieve.=
+ Xarvis adapts to your voice and audience from day one.</p>
+        </div>
       </div>
-    `;
-  } finally {
-    setLoading(false);
-  }
+      <div class=3D"step">
+        <div class=3D"step-num">2</div>
+        <div class=3D"step-content">
+          <h3>Xarvis Builds Your Strategy</h3>
+          <p>In seconds, get scripts, hooks, content calendars, growth plan=
+s, and monetization frameworks =E2=80=94 all personalized to you.</p>
+        </div>
+      </div>
+      <div class=3D"step">
+        <div class=3D"step-num">3</div>
+        <div class=3D"step-content">
+          <h3>Post, Scale, &amp; Monetize</h3>
+          <p>Execute the plan. Track growth. Come back daily for new conten=
+t, new strategies, and a second brain that never sleeps.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- DEMO -->
+<section id=3D"demo">
+  <div class=3D"container">
+    <div class=3D"demo-grid">
+      <div>
+        <div class=3D"section-label">Live Demo</div>
+        <h2>Meet Xarvis =E2=80=94 Your AI Content Co-Founder</h2>
+        <p class=3D"section-sub">Ask Xarvis anything about your content. Ge=
+t instant scripts, hooks, strategies, and viral roadmaps.</p>
+        <ul class=3D"demo-features">
+          <li>Instant virality scoring for any clip</li>
+          <li>Hook and script generation in seconds</li>
+          <li>Platform-specific posting strategy</li>
+          <li>Content calendar &amp; growth planning</li>
+          <li>Monetization frameworks &amp; offer creation</li>
+        </ul>
+        <br>
+        <a href=3D"file:///C:/Users/HP/OneDrive/xarvis-ai/xarvis-ai/fronten=
+d/app.html" class=3D"btn-primary" style=3D"display:inline-block; margin-top=
+:1rem;">=F0=9F=9A=80 Try Xarvis Now</a>
+      </div>
+      <div class=3D"demo-chat-preview">
+        <div class=3D"chat-header">
+          <div class=3D"chat-avatar">X</div>
+          <div>
+            <div class=3D"chat-name">Xarvis AI</div>
+            <div class=3D"chat-status">=E2=97=8F Online =E2=80=94 Ready to =
+work</div>
+          </div>
+        </div>
+        <div class=3D"chat-messages">
+          <div class=3D"msg msg-ai">Hey! I'm Xarvis =F0=9F=91=8B =E2=80=94 =
+your AI co-founder for content. Tell me your niche and I'll start building =
+your growth engine right now.</div>
+          <div class=3D"msg msg-user">I'm a fitness creator on TikTok with =
+12k followers. I want to hit 100k in 90 days.</div>
+          <div class=3D"msg msg-ai">
+            <strong>=F0=9F=94=A5 Goal:</strong> 100K in 90 days<br>
+            <strong>=E2=9A=A1 Plan:</strong> 3-video/day strategy with prov=
+en fitness hooks<br>
+            <strong>=F0=9F=A7=A0 Hook #1:</strong> "The gym routine nobody =
+tells beginners" =E2=80=94 Post 7PM EST Tuesday<br>
+            <strong>=F0=9F=8E=AF Your first viral clip:</strong> Film a bef=
+ore/after transition in 30 seconds. That format is getting 8M+ views in fit=
+ness right now.
+          </div>
+        </div>
+        <div class=3D"chat-input-bar">
+          <input type=3D"text" placeholder=3D"Ask Xarvis anything..." reado=
+nly=3D"">
+          <button class=3D"chat-send-btn">=E2=86=92</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- TESTIMONIALS -->
+<section id=3D"testimonials" style=3D"background: var(--surface);">
+  <div class=3D"container">
+    <div class=3D"section-label">Creator Stories</div>
+    <h2>Creators Are Already Winning</h2>
+    <p class=3D"section-sub">From solo creators to full-time influencers =
+=E2=80=94 Xarvis AI is changing how content gets made and monetized.</p>
+    <div class=3D"testimonials-grid">
+      <div class=3D"testimonial-card">
+        <div class=3D"stars">=E2=98=85=E2=98=85=E2=98=85=E2=98=85=E2=98=85<=
+/div>
+        <p class=3D"testimonial-text">"Xarvis AI literally predicted which =
+clip would go viral and it hit 2.1M views. I've never had that confidence p=
+osting before. It's like having a data scientist on my team."</p>
+        <div class=3D"testimonial-author">
+          <div class=3D"author-avatar">AK</div>
+          <div><div class=3D"author-name">Alex Kim</div><div class=3D"autho=
+r-handle">@alexkim.creates =C2=B7 890K followers</div></div>
+        </div>
+      </div>
+      <div class=3D"testimonial-card">
+        <div class=3D"stars">=E2=98=85=E2=98=85=E2=98=85=E2=98=85=E2=98=85<=
+/div>
+        <p class=3D"testimonial-text">"I went from 3 hours on captions to 1=
+0 minutes. Xarvis writes better hooks than I do honestly. My engagement is =
+up 340% in 6 weeks =E2=80=94 with the same posting frequency."</p>
+        <div class=3D"testimonial-author">
+          <div class=3D"author-avatar">SR</div>
+          <div><div class=3D"author-name">Sofia Reyes</div><div class=3D"au=
+thor-handle">@sofiareyes =C2=B7 1.2M followers</div></div>
+        </div>
+      </div>
+      <div class=3D"testimonial-card">
+        <div class=3D"stars">=E2=98=85=E2=98=85=E2=98=85=E2=98=85=E2=98=85<=
+/div>
+        <p class=3D"testimonial-text">"The trending content suggestions are=
+ insane. Xarvis told me to post a specific format 2 days before it blew up =
+everywhere. It's like having a team of strategists who never sleep."</p>
+        <div class=3D"testimonial-author">
+          <div class=3D"author-avatar">JM</div>
+          <div><div class=3D"author-name">Jake Monroe</div><div class=3D"au=
+thor-handle">@jakemonroefitness =C2=B7 450K followers</div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- PRICING -->
+<section id=3D"pricing">
+  <div class=3D"container" style=3D"text-align:center;">
+    <div class=3D"section-label">Pricing</div>
+    <h2>Simple, Creator-First Pricing</h2>
+    <p class=3D"section-sub" style=3D"margin: 0 auto;">Start free, scale wh=
+en you're ready. Cancel anytime.</p>
+    <div class=3D"pricing-grid">
+      <!-- Starter -->
+      <div class=3D"pricing-card">
+        <div class=3D"plan-name">=F0=9F=9F=A2 Starter</div>
+        <div class=3D"plan-price">$0<span>/month</span></div>
+        <p class=3D"plan-desc">Perfect for getting started and testing Xarv=
+is.</p>
+        <ul class=3D"plan-features">
+          <li>10 messages per day</li>
+          <li>Basic Creator AI access</li>
+          <li>Hook &amp; caption generation</li>
+          <li class=3D"locked">No memory / second brain</li>
+          <li class=3D"locked">No content calendar</li>
+          <li class=3D"locked">No monetization strategies</li>
+        </ul>
+        <a href=3D"file:///C:/Users/HP/OneDrive/xarvis-ai/xarvis-ai/fronten=
+d/app.html?plan=3Dstarter" class=3D"plan-btn plan-btn-outline">Get Started =
+Free</a>
+      </div>
+      <!-- Creator Pro -->
+      <div class=3D"pricing-card popular">
+        <div class=3D"popular-badge">=E2=9A=A1 Most Popular</div>
+        <div class=3D"plan-name">=F0=9F=94=B5 Creator Pro</div>
+        <div class=3D"plan-price">$12<span>/month</span></div>
+        <p class=3D"plan-desc">For serious creators who want to grow fast.<=
+/p>
+        <ul class=3D"plan-features">
+          <li>Unlimited chat</li>
+          <li>Full Creator AI (scripts, hooks, plans)</li>
+          <li>Memory / Second Brain</li>
+          <li>Content calendar generation</li>
+          <li>Growth strategies</li>
+          <li class=3D"locked">No advanced monetization</li>
+        </ul>
+        <a href=3D"file:///C:/Users/HP/OneDrive/xarvis-ai/xarvis-ai/fronten=
+d/app.html?plan=3Dpro" class=3D"plan-btn plan-btn-primary">Start Creator Pr=
+o</a>
+      </div>
+      <!-- Creator Elite -->
+      <div class=3D"pricing-card">
+        <div class=3D"plan-name">=F0=9F=9F=A3 Creator Elite</div>
+        <div class=3D"plan-price">$39<span>/month</span></div>
+        <p class=3D"plan-desc">For creators building a full creator busines=
+s.</p>
+        <ul class=3D"plan-features">
+          <li>Everything in Creator Pro</li>
+          <li>Advanced growth strategies</li>
+          <li>Full monetization frameworks</li>
+          <li>Done-for-you content systems</li>
+          <li>Sponsorship pitch scripts</li>
+          <li>Priority AI performance</li>
+        </ul>
+        <a href=3D"file:///C:/Users/HP/OneDrive/xarvis-ai/xarvis-ai/fronten=
+d/app.html?plan=3Delite" class=3D"plan-btn plan-btn-primary" style=3D"backg=
+round: linear-gradient(135deg, #7c3aed, #06b6d4);">Go Elite</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- CTA -->
+<section id=3D"cta" class=3D"cta-section">
+  <div class=3D"section-label">Limited Creator Access</div>
+  <h2>Ready to <span style=3D"background: linear-gradient(135deg, var(--acc=
+ent2), var(--accent3)); -webkit-background-clip: text; -webkit-text-fill-co=
+lor: transparent; background-clip: text;">Scale Your Content?</span></h2>
+  <p>Join thousands of creators using Xarvis AI as their unfair advantage. =
+Start free today.</p>
+  <div class=3D"cta-list">
+    <span>Instant onboarding</span>
+    <span>No credit card required</span>
+    <span>Cancel anytime</span>
+    <span>Real AI responses</span>
+  </div>
+  <a href=3D"file:///C:/Users/HP/OneDrive/xarvis-ai/xarvis-ai/frontend/app.=
+html" class=3D"btn-primary" style=3D"font-size: 1.1rem; padding: 1rem 2.5re=
+m;">=F0=9F=9A=80 Join Xarvis AI Today</a>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <div class=3D"footer-logo">Xarvis AI</div>
+  <p>=C2=A9 2026 Xarvis AI =C2=B7 Built for creators who are done playing s=
+mall.</p>
+  <div class=3D"footer-links">
+    <a href=3D"file:///C:/Users/HP/OneDrive/xarvis-ai/xarvis-ai/frontend/in=
+dex.html#features">Features</a>
+    <a href=3D"file:///C:/Users/HP/OneDrive/xarvis-ai/xarvis-ai/frontend/in=
+dex.html#howitworks">How It Works</a>
+    <a href=3D"file:///C:/Users/HP/OneDrive/xarvis-ai/xarvis-ai/frontend/in=
+dex.html#pricing">Pricing</a>
+    <a href=3D"file:///C:/Users/HP/OneDrive/xarvis-ai/xarvis-ai/frontend/in=
+dex.html#testimonials">Reviews</a>
+    <a href=3D"file:///C:/Users/HP/OneDrive/xarvis-ai/xarvis-ai/frontend/ap=
+p.html">Launch App</a>
+  </div>
+</footer>
+
+
+
+</body></html>
+------MultipartBoundary--vpWD06hCRLWnWEZFBWq8vdv2aL4qG16JarT2MVqwiq----
+Content-Type: text/css
+Content-Transfer-Encoding: quoted-printable
+Content-Location: https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=Inter:wght@300;400;500;600&display=swap
+
+@charset "utf-8";
+
+@font-face { font-family: Inter; font-style: normal; font-weight: 300; font=
+-display: swap; src: url("https://fonts.gstatic.com/s/inter/v20/UcC73FwrK3i=
+LTeHuS_nVMrMxCp50SjIa2JL7SUc.woff2") format("woff2"); unicode-range: U+460-=
+52F, U+1C80-1C8A, U+20B4, U+2DE0-2DFF, U+A640-A69F, U+FE2E-FE2F; }
+
+@font-face { font-family: Inter; font-style: normal; font-weight: 300; font=
+-display: swap; src: url("https://fonts.gstatic.com/s/inter/v20/UcC73FwrK3i=
+LTeHuS_nVMrMxCp50SjIa0ZL7SUc.woff2") format("woff2"); unicode-range: U+301,=
+ U+400-45F, U+490-491, U+4B0-4B1, U+2116; }
+
+@font-face { font-family: Inter; font-style: normal; font-weight: 300; font=
+-display: swap; src: url("https://fonts.gstatic.com/s/inter/v20/UcC73FwrK3i=
+LTeHuS_nVMrMxCp50SjIa2ZL7SUc.woff2") format("woff2"); unicode-range: U+1F00=
+-1FFF; }
+
+@font-face { font-family: Inter; font-style: normal; font-weight: 300; font=
+-display: swap; src: url("https://fonts.gstatic.com/s/inter/v20/UcC73FwrK3i=
+LTeHuS_nVMrMxCp50SjIa1pL7SUc.woff2") format("woff2"); unicode-range: U+370-=
+377, U+37A-37F, U+384-38A, U+38C, U+38E-3A1, U+3A3-3FF; }
+
+@font-face { font-family: Inter; font-style: normal; font-weight: 300; font=
+-display: swap; src: url("https://fonts.gstatic.com/s/inter/v20/UcC73FwrK3i=
+LTeHuS_nVMrMxCp50SjIa2pL7SUc.woff2") format("woff2"); unicode-range: U+102-=
+103, U+110-111, U+128-129, U+168-169, U+1A0-1A1, U+1AF-1B0, U+300-301, U+30=
+3-304, U+308-309, U+323, U+329, U+1EA0-1EF9, U+20AB; }
+
+@font-face { font-family: Inter; font-style: normal; font-weight: 300; font=
+-display: swap; src: url("https://fonts.gstatic.com/s/inter/v20/UcC73FwrK3i=
+LTeHuS_nVMrMxCp50SjIa25L7SUc.woff2") format("woff2"); unicode-range: U+100-=
+2BA, U+2BD-2C5, U+2C7-2CC, U+2CE-2D7, U+2DD-2FF, U+304, U+308, U+329, U+1D0=
+0-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113,=
+ U+2C60-2C7F, U+A720-A7FF; }
+
+@font-face { font-family: Inter; font-style: normal; font-weight: 300; font=
+-display: swap; src: url("https://fonts.gstatic.com/s/inter/v20/UcC73FwrK3i=
+LTeHuS_nVMrMxCp50SjIa1ZL7.woff2") format("woff2"); unicode-range: U+0-FF, U=
++131, U+152-153, U+2BB-2BC, U+2C6, U+2DA, U+2DC, U+304, U+308, U+329, U+200=
+0-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD; }
+
+@font-face { font-family: Inter; font-style: normal; font-weight: 400; font=
+-display: swap; src: url("https://fonts.gstatic.com/s/inter/v20/UcC73FwrK3i=
+LTeHuS_nVMrMxCp50SjIa2JL7SUc.woff2") format("woff2"); unicode-range: U+460-=
+52F, U+1C80-1C8A, U+20B4, U+2DE0-2DFF, U+A640-A69F, U+FE2E-FE2F; }
+
+@font-face { font-family: Inter; font-style: normal; font-weight: 400; font=
+-display: swap; src: url("https://fonts.gstatic.com/s/inter/v20/UcC73FwrK3i=
+LTeHuS_nVMrMxCp50SjIa0ZL7SUc.woff2") format("woff2"); unicode-range: U+301,=
+ U+400-45F, U+490-491, U+4B0-4B1, U+2116; }
+
+@font-face { font-family: Inter; font-style: normal; font-weight: 400; font=
+-display: swap; src: url("https://fonts.gstatic.com/s/inter/v20/UcC73FwrK3i=
+LTeHuS_nVMrMxCp50SjIa2ZL7SUc.woff2") format("woff2"); unicode-range: U+1F00=
+-1FFF; }
+
+@font-face { font-family: Inter; font-style: normal; font-weight: 400; font=
+-display: swap; src: url("https://fonts.gstatic.com/s/inter/v20/UcC73FwrK3i=
+LTeHuS_nVMrMxCp50SjIa1pL7SUc.woff2") format("woff2"); unicode-range: U+370-=
+377, U+37A-37F, U+384-38A, U+38C, U+38E-3A1, U+3A3-3FF; }
+
+@font-face { font-family: Inter; font-style: normal; font-weight: 400; font=
+-display: swap; src: url("https://fonts.gstatic.com/s/inter/v20/UcC73FwrK3i=
+LTeHuS_nVMrMxCp50SjIa2pL7SUc.woff2") format("woff2"); unicode-range: U+102-=
+103, U+110-111, U+128-129, U+168-169, U+1A0-1A1, U+1AF-1B0, U+300-301, U+30=
+3-304, U+308-309, U+323, U+329, U+1EA0-1EF9, U+20AB; }
+
+@font-face { font-family: Inter; font-style: normal; font-weight: 400; font=
+-display: swap; src: url("https://fonts.gstatic.com/s/inter/v20/UcC73FwrK3i=
+LTeHuS_nVMrMxCp50SjIa25L7SUc.woff2") format("woff2"); unicode-range: U+100-=
+2BA, U+2BD-2C5, U+2C7-2CC, U+2CE-2D7, U+2DD-2FF, U+304, U+308, U+329, U+1D0=
+0-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113,=
+ U+2C60-2C7F, U+A720-A7FF; }
+
+@font-face { font-family: Inter; font-style: normal; font-weight: 400; font=
+-display: swap; src: url("https://fonts.gstatic.com/s/inter/v20/UcC73FwrK3i=
+LTeHuS_nVMrMxCp50SjIa1ZL7.woff2") format("woff2"); unicode-range: U+0-FF, U=
++131, U+152-153, U+2BB-2BC, U+2C6, U+2DA, U+2DC, U+304, U+308, U+329, U+200=
+0-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD; }
+
+@font-face { font-family: Inter; font-style: normal; font-weight: 500; font=
+-display: swap; src: url("https://fonts.gstatic.com/s/inter/v20/UcC73FwrK3i=
+LTeHuS_nVMrMxCp50SjIa2JL7SUc.woff2") format("woff2"); unicode-range: U+460-=
+52F, U+1C80-1C8A, U+20B4, U+2DE0-2DFF, U+A640-A69F, U+FE2E-FE2F; }
+
+@font-face { font-family: Inter; font-style: normal; font-weight: 500; font=
+-display: swap; src: url("https://fonts.gstatic.com/s/inter/v20/UcC73FwrK3i=
+LTeHuS_nVMrMxCp50SjIa0ZL7SUc.woff2") format("woff2"); unicode-range: U+301,=
+ U+400-45F, U+490-491, U+4B0-4B1, U+2116; }
+
+@font-face { font-family: Inter; font-style: normal; font-weight: 500; font=
+-display: swap; src: url("https://fonts.gstatic.com/s/inter/v20/UcC73FwrK3i=
+LTeHuS_nVMrMxCp50SjIa2ZL7SUc.woff2") format("woff2"); unicode-range: U+1F00=
+-1FFF; }
+
+@font-face { font-family: Inter; font-style: normal; font-weight: 500; font=
+-display: swap; src: url("https://fonts.gstatic.com/s/inter/v20/UcC73FwrK3i=
+LTeHuS_nVMrMxCp50SjIa1pL7SUc.woff2") format("woff2"); unicode-range: U+370-=
+377, U+37A-37F, U+384-38A, U+38C, U+38E-3A1, U+3A3-3FF; }
+
+@font-face { font-family: Inter; font-style: normal; font-weight: 500; font=
+-display: swap; src: url("https://fonts.gstatic.com/s/inter/v20/UcC73FwrK3i=
+LTeHuS_nVMrMxCp50SjIa2pL7SUc.woff2") format("woff2"); unicode-range: U+102-=
+103, U+110-111, U+128-129, U+168-169, U+1A0-1A1, U+1AF-1B0, U+300-301, U+30=
+3-304, U+308-309, U+323, U+329, U+1EA0-1EF9, U+20AB; }
+
+@font-face { font-family: Inter; font-style: normal; font-weight: 500; font=
+-display: swap; src: url("https://fonts.gstatic.com/s/inter/v20/UcC73FwrK3i=
+LTeHuS_nVMrMxCp50SjIa25L7SUc.woff2") format("woff2"); unicode-range: U+100-=
+2BA, U+2BD-2C5, U+2C7-2CC, U+2CE-2D7, U+2DD-2FF, U+304, U+308, U+329, U+1D0=
+0-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113,=
+ U+2C60-2C7F, U+A720-A7FF; }
+
+@font-face { font-family: Inter; font-style: normal; font-weight: 500; font=
+-display: swap; src: url("https://fonts.gstatic.com/s/inter/v20/UcC73FwrK3i=
+LTeHuS_nVMrMxCp50SjIa1ZL7.woff2") format("woff2"); unicode-range: U+0-FF, U=
++131, U+152-153, U+2BB-2BC, U+2C6, U+2DA, U+2DC, U+304, U+308, U+329, U+200=
+0-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD; }
+
+@font-face { font-family: Inter; font-style: normal; font-weight: 600; font=
+-display: swap; src: url("https://fonts.gstatic.com/s/inter/v20/UcC73FwrK3i=
+LTeHuS_nVMrMxCp50SjIa2JL7SUc.woff2") format("woff2"); unicode-range: U+460-=
+52F, U+1C80-1C8A, U+20B4, U+2DE0-2DFF, U+A640-A69F, U+FE2E-FE2F; }
+
+@font-face { font-family: Inter; font-style: normal; font-weight: 600; font=
+-display: swap; src: url("https://fonts.gstatic.com/s/inter/v20/UcC73FwrK3i=
+LTeHuS_nVMrMxCp50SjIa0ZL7SUc.woff2") format("woff2"); unicode-range: U+301,=
+ U+400-45F, U+490-491, U+4B0-4B1, U+2116; }
+
+@font-face { font-family: Inter; font-style: normal; font-weight: 600; font=
+-display: swap; src: url("https://fonts.gstatic.com/s/inter/v20/UcC73FwrK3i=
+LTeHuS_nVMrMxCp50SjIa2ZL7SUc.woff2") format("woff2"); unicode-range: U+1F00=
+-1FFF; }
+
+@font-face { font-family: Inter; font-style: normal; font-weight: 600; font=
+-display: swap; src: url("https://fonts.gstatic.com/s/inter/v20/UcC73FwrK3i=
+LTeHuS_nVMrMxCp50SjIa1pL7SUc.woff2") format("woff2"); unicode-range: U+370-=
+377, U+37A-37F, U+384-38A, U+38C, U+38E-3A1, U+3A3-3FF; }
+
+@font-face { font-family: Inter; font-style: normal; font-weight: 600; font=
+-display: swap; src: url("https://fonts.gstatic.com/s/inter/v20/UcC73FwrK3i=
+LTeHuS_nVMrMxCp50SjIa2pL7SUc.woff2") format("woff2"); unicode-range: U+102-=
+103, U+110-111, U+128-129, U+168-169, U+1A0-1A1, U+1AF-1B0, U+300-301, U+30=
+3-304, U+308-309, U+323, U+329, U+1EA0-1EF9, U+20AB; }
+
+@font-face { font-family: Inter; font-style: normal; font-weight: 600; font=
+-display: swap; src: url("https://fonts.gstatic.com/s/inter/v20/UcC73FwrK3i=
+LTeHuS_nVMrMxCp50SjIa25L7SUc.woff2") format("woff2"); unicode-range: U+100-=
+2BA, U+2BD-2C5, U+2C7-2CC, U+2CE-2D7, U+2DD-2FF, U+304, U+308, U+329, U+1D0=
+0-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113,=
+ U+2C60-2C7F, U+A720-A7FF; }
+
+@font-face { font-family: Inter; font-style: normal; font-weight: 600; font=
+-display: swap; src: url("https://fonts.gstatic.com/s/inter/v20/UcC73FwrK3i=
+LTeHuS_nVMrMxCp50SjIa1ZL7.woff2") format("woff2"); unicode-range: U+0-FF, U=
++131, U+152-153, U+2BB-2BC, U+2C6, U+2DA, U+2DC, U+304, U+308, U+329, U+200=
+0-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD; }
+
+@font-face { font-family: Syne; font-style: normal; font-weight: 400; font-=
+display: swap; src: url("https://fonts.gstatic.com/s/syne/v24/8vIH7w4qzmVxm=
+2NL9Hz_.woff2") format("woff2"); unicode-range: U+370-377, U+37A-37F, U+384=
+-38A, U+38C, U+38E-3A1, U+3A3-3FF; }
+
+@font-face { font-family: Syne; font-style: normal; font-weight: 400; font-=
+display: swap; src: url("https://fonts.gstatic.com/s/syne/v24/8vIH7w4qzmVxm=
+25L9Hz_.woff2") format("woff2"); unicode-range: U+100-2BA, U+2BD-2C5, U+2C7=
+-2CC, U+2CE-2D7, U+2DD-2FF, U+304, U+308, U+329, U+1D00-1DBF, U+1E00-1E9F, =
+U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-=
+A7FF; }
+
+@font-face { font-family: Syne; font-style: normal; font-weight: 400; font-=
+display: swap; src: url("https://fonts.gstatic.com/s/syne/v24/8vIH7w4qzmVxm=
+2BL9A.woff2") format("woff2"); unicode-range: U+0-FF, U+131, U+152-153, U+2=
+BB-2BC, U+2C6, U+2DA, U+2DC, U+304, U+308, U+329, U+2000-206F, U+20AC, U+21=
+22, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD; }
+
+@font-face { font-family: Syne; font-style: normal; font-weight: 600; font-=
+display: swap; src: url("https://fonts.gstatic.com/s/syne/v24/8vIH7w4qzmVxm=
+2NL9Hz_.woff2") format("woff2"); unicode-range: U+370-377, U+37A-37F, U+384=
+-38A, U+38C, U+38E-3A1, U+3A3-3FF; }
+
+@font-face { font-family: Syne; font-style: normal; font-weight: 600; font-=
+display: swap; src: url("https://fonts.gstatic.com/s/syne/v24/8vIH7w4qzmVxm=
+25L9Hz_.woff2") format("woff2"); unicode-range: U+100-2BA, U+2BD-2C5, U+2C7=
+-2CC, U+2CE-2D7, U+2DD-2FF, U+304, U+308, U+329, U+1D00-1DBF, U+1E00-1E9F, =
+U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-=
+A7FF; }
+
+@font-face { font-family: Syne; font-style: normal; font-weight: 600; font-=
+display: swap; src: url("https://fonts.gstatic.com/s/syne/v24/8vIH7w4qzmVxm=
+2BL9A.woff2") format("woff2"); unicode-range: U+0-FF, U+131, U+152-153, U+2=
+BB-2BC, U+2C6, U+2DA, U+2DC, U+304, U+308, U+329, U+2000-206F, U+20AC, U+21=
+22, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD; }
+
+@font-face { font-family: Syne; font-style: normal; font-weight: 700; font-=
+display: swap; src: url("https://fonts.gstatic.com/s/syne/v24/8vIH7w4qzmVxm=
+2NL9Hz_.woff2") format("woff2"); unicode-range: U+370-377, U+37A-37F, U+384=
+-38A, U+38C, U+38E-3A1, U+3A3-3FF; }
+
+@font-face { font-family: Syne; font-style: normal; font-weight: 700; font-=
+display: swap; src: url("https://fonts.gstatic.com/s/syne/v24/8vIH7w4qzmVxm=
+25L9Hz_.woff2") format("woff2"); unicode-range: U+100-2BA, U+2BD-2C5, U+2C7=
+-2CC, U+2CE-2D7, U+2DD-2FF, U+304, U+308, U+329, U+1D00-1DBF, U+1E00-1E9F, =
+U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-=
+A7FF; }
+
+@font-face { font-family: Syne; font-style: normal; font-weight: 700; font-=
+display: swap; src: url("https://fonts.gstatic.com/s/syne/v24/8vIH7w4qzmVxm=
+2BL9A.woff2") format("woff2"); unicode-range: U+0-FF, U+131, U+152-153, U+2=
+BB-2BC, U+2C6, U+2DA, U+2DC, U+304, U+308, U+329, U+2000-206F, U+20AC, U+21=
+22, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD; }
+
+@font-face { font-family: Syne; font-style: normal; font-weight: 800; font-=
+display: swap; src: url("https://fonts.gstatic.com/s/syne/v24/8vIH7w4qzmVxm=
+2NL9Hz_.woff2") format("woff2"); unicode-range: U+370-377, U+37A-37F, U+384=
+-38A, U+38C, U+38E-3A1, U+3A3-3FF; }
+
+@font-face { font-family: Syne; font-style: normal; font-weight: 800; font-=
+display: swap; src: url("https://fonts.gstatic.com/s/syne/v24/8vIH7w4qzmVxm=
+25L9Hz_.woff2") format("woff2"); unicode-range: U+100-2BA, U+2BD-2C5, U+2C7=
+-2CC, U+2CE-2D7, U+2DD-2FF, U+304, U+308, U+329, U+1D00-1DBF, U+1E00-1E9F, =
+U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-=
+A7FF; }
+
+@font-face { font-family: Syne; font-style: normal; font-weight: 800; font-=
+display: swap; src: url("https://fonts.gstatic.com/s/syne/v24/8vIH7w4qzmVxm=
+2BL9A.woff2") format("woff2"); unicode-range: U+0-FF, U+131, U+152-153, U+2=
+BB-2BC, U+2C6, U+2DA, U+2DC, U+304, U+308, U+329, U+2000-206F, U+20AC, U+21=
+22, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD; }
+------MultipartBoundary--vpWD06hCRLWnWEZFBWq8vdv2aL4qG16JarT2MVqwiq----
+Content-Type: text/css
+Content-Transfer-Encoding: quoted-printable
+Content-Location: cid:css-1b9cb0a1-f212-45a0-87f9-e26246eb2b45@mhtml.blink
+
+@charset "utf-8";
+
+:root { --bg: #05050a; --surface: #0d0d1a; --surface2: #12121f; --border: r=
+gba(255,255,255,0.07); --accent: #7b5cf5; --accent2: #a78bfa; --accent3: #0=
+6b6d4; --text: #f0f0ff; --muted: #8888aa; --glow: rgba(123,92,245,0.3); }
+
+*, ::before, ::after { box-sizing: border-box; margin: 0px; padding: 0px; }
+
+html { scroll-behavior: smooth; }
+
+body { font-family: Inter, sans-serif; background: var(--bg); color: var(--=
+text); line-height: 1.6; overflow-x: hidden; }
+
+body::before { content: ""; position: fixed; inset: 0px; background-image: =
+url("data:image/svg+xml,%3Csvg viewBox=3D'0 0 200 200' xmlns=3D'http://www.=
+w3.org/2000/svg'%3E%3Cfilter id=3D'n'%3E%3CfeTurbulence type=3D'fractalNois=
+e' baseFrequency=3D'0.75' numOctaves=3D'4' stitchTiles=3D'stitch'/%3E%3C/fi=
+lter%3E%3Crect width=3D'100%25' height=3D'100%25' filter=3D'url(%23n)' opac=
+ity=3D'0.03'/%3E%3C/svg%3E"); pointer-events: none; z-index: 0; opacity: 0.=
+4; }
+
+nav { position: fixed; top: 0px; left: 0px; right: 0px; z-index: 100; displ=
+ay: flex; align-items: center; justify-content: space-between; padding: 1re=
+m 2rem; background: rgba(5, 5, 10, 0.85); backdrop-filter: blur(20px); bord=
+er-bottom: 1px solid var(--border); }
+
+.nav-logo { font-family: Syne, sans-serif; font-weight: 800; font-size: 1.4=
+rem; background-image: ; background-position-x: ; background-position-y: ; =
+background-size: ; background-repeat: ; background-attachment: ; background=
+-origin: ; background-color: ; -webkit-text-fill-color: transparent; backgr=
+ound-clip: text; }
+
+.nav-links { display: flex; gap: 2rem; list-style: none; }
+
+.nav-links a { color: var(--muted); text-decoration: none; font-size: 0.9re=
+m; transition: color 0.2s; }
+
+.nav-links a:hover { color: var(--text); }
+
+.nav-cta { background: var(--accent); color: white; border: none; padding: =
+0.6rem 1.4rem; border-radius: 8px; font-family: Syne, sans-serif; font-weig=
+ht: 600; cursor: pointer; text-decoration: none; font-size: 0.9rem; transit=
+ion: 0.2s; }
+
+.nav-cta:hover { background: var(--accent2); transform: translateY(-1px); }
+
+.hero { position: relative; min-height: 100vh; display: flex; flex-directio=
+n: column; align-items: center; justify-content: center; text-align: center=
+; padding: 8rem 2rem 4rem; overflow: hidden; }
+
+.hero-glow { position: absolute; width: 600px; height: 600px; background: r=
+adial-gradient(circle, rgba(123, 92, 245, 0.15) 0%, transparent 70%); top: =
+50%; left: 50%; transform: translate(-50%, -50%); pointer-events: none; }
+
+.hero-badge { display: inline-flex; align-items: center; gap: 0.5rem; backg=
+round: rgba(123, 92, 245, 0.15); border: 1px solid rgba(123, 92, 245, 0.3);=
+ color: var(--accent2); padding: 0.4rem 1rem; border-radius: 100px; font-si=
+ze: 0.8rem; font-weight: 500; margin-bottom: 2rem; animation: 0.6s ease 0s =
+1 normal both running fadeUp; }
+
+.hero h1 { font-family: Syne, sans-serif; font-size: clamp(2.5rem, 7vw, 5re=
+m); font-weight: 800; line-height: 1.1; margin-bottom: 1.5rem; animation: 0=
+.6s ease 0.1s 1 normal both running fadeUp; }
+
+.hero h1 span { background-image: ; background-position-x: ; background-pos=
+ition-y: ; background-size: ; background-repeat: ; background-attachment: ;=
+ background-origin: ; background-color: ; -webkit-text-fill-color: transpar=
+ent; background-clip: text; }
+
+.hero p { font-size: 1.15rem; color: var(--muted); max-width: 600px; margin=
+: 0px auto 2.5rem; animation: 0.6s ease 0.2s 1 normal both running fadeUp; =
 }
+
+.hero-buttons { display: flex; gap: 1rem; flex-wrap: wrap; justify-content:=
+ center; animation: 0.6s ease 0.3s 1 normal both running fadeUp; }
+
+.btn-primary { background: linear-gradient(135deg, var(--accent), #5b3fd4);=
+ color: white; border: none; padding: 0.9rem 2rem; border-radius: 10px; fon=
+t-family: Syne, sans-serif; font-weight: 700; font-size: 1rem; cursor: poin=
+ter; text-decoration: none; transition: 0.3s; box-shadow: rgba(123, 92, 245=
+, 0.3) 0px 0px 30px; }
+
+.btn-primary:hover { transform: translateY(-2px); box-shadow: rgba(123, 92,=
+ 245, 0.5) 0px 0px 50px; }
+
+.btn-secondary { background: transparent; color: var(--text); border: 1px s=
+olid var(--border); padding: 0.9rem 2rem; border-radius: 10px; font-family:=
+ Syne, sans-serif; font-weight: 600; font-size: 1rem; cursor: pointer; text=
+-decoration: none; transition: 0.3s; }
+
+.btn-secondary:hover { border-color: var(--accent); color: var(--accent2); =
+}
+
+.stats { display: flex; justify-content: center; gap: 3rem; flex-wrap: wrap=
+; padding: 3rem 2rem; border-top: 1px solid var(--border); border-bottom: 1=
+px solid var(--border); animation: 0.6s ease 0.4s 1 normal both running fad=
+eUp; }
+
+.stat { text-align: center; }
+
+.stat-number { font-family: Syne, sans-serif; font-size: 2.2rem; font-weigh=
+t: 800; background-image: ; background-position-x: ; background-position-y:=
+ ; background-size: ; background-repeat: ; background-attachment: ; backgro=
+und-origin: ; background-color: ; -webkit-text-fill-color: transparent; bac=
+kground-clip: text; }
+
+.stat-label { font-size: 0.85rem; color: var(--muted); margin-top: 0.25rem;=
+ }
+
+section { padding: 6rem 2rem; position: relative; }
+
+.section-label { font-size: 0.75rem; font-weight: 600; letter-spacing: 0.15=
+em; text-transform: uppercase; color: var(--accent2); margin-bottom: 1rem; =
+}
+
+h2 { font-family: Syne, sans-serif; font-size: clamp(1.8rem, 4vw, 2.8rem); =
+font-weight: 800; margin-bottom: 1rem; }
+
+.section-sub { color: var(--muted); font-size: 1.05rem; max-width: 560px; }
+
+.container { max-width: 1100px; margin: 0px auto; }
+
+.features-grid { display: grid; grid-template-columns: repeat(auto-fit, min=
+max(300px, 1fr)); gap: 1.5rem; margin-top: 3rem; }
+
+.feature-card { background: var(--surface); border: 1px solid var(--border)=
+; border-radius: 16px; padding: 1.8rem; transition: 0.3s; position: relativ=
+e; overflow: hidden; }
+
+.feature-card::before { content: ""; position: absolute; inset: 0px; backgr=
+ound: linear-gradient(135deg, rgba(123, 92, 245, 0.05), transparent); opaci=
+ty: 0; transition: opacity 0.3s; }
+
+.feature-card:hover { border-color: rgba(123, 92, 245, 0.3); transform: tra=
+nslateY(-4px); }
+
+.feature-card:hover::before { opacity: 1; }
+
+.feature-icon { font-size: 2rem; margin-bottom: 1rem; }
+
+.feature-card h3 { font-family: Syne, sans-serif; font-size: 1.1rem; font-w=
+eight: 700; margin-bottom: 0.5rem; }
+
+.feature-card p { color: var(--muted); font-size: 0.9rem; line-height: 1.6;=
+ }
+
+.feature-tag { display: inline-block; margin-top: 0.8rem; font-size: 0.75re=
+m; color: var(--accent2); background: rgba(123, 92, 245, 0.1); padding: 0.2=
+rem 0.6rem; border-radius: 4px; }
+
+.steps { display: flex; flex-direction: column; gap: 2rem; margin-top: 3rem=
+; max-width: 700px; }
+
+.step { display: flex; gap: 1.5rem; align-items: flex-start; }
+
+.step-num { flex-shrink: 0; width: 44px; height: 44px; background: linear-g=
+radient(135deg, var(--accent), var(--accent3)); border-radius: 50%; display=
+: flex; align-items: center; justify-content: center; font-family: Syne, sa=
+ns-serif; font-weight: 800; font-size: 1rem; }
+
+.step-content h3 { font-family: Syne, sans-serif; font-weight: 700; margin-=
+bottom: 0.4rem; }
+
+.step-content p { color: var(--muted); font-size: 0.95rem; }
+
+.demo-section { background: var(--surface); }
+
+.demo-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 4rem; alig=
+n-items: center; }
+
+.demo-features { list-style: none; display: flex; flex-direction: column; g=
+ap: 0.8rem; margin-top: 2rem; }
+
+.demo-features li { display: flex; align-items: center; gap: 0.7rem; color:=
+ var(--muted); font-size: 0.95rem; }
+
+.demo-features li::before { content: "=E2=9C=93"; color: var(--accent2); fo=
+nt-weight: 700; }
+
+.demo-chat-preview { background: var(--bg); border: 1px solid var(--border)=
+; border-radius: 20px; overflow: hidden; box-shadow: rgba(0, 0, 0, 0.5) 0px=
+ 30px 80px; }
+
+.chat-header { background: var(--surface2); padding: 1rem 1.5rem; display: =
+flex; align-items: center; gap: 0.8rem; border-bottom: 1px solid var(--bord=
+er); }
+
+.chat-avatar { width: 36px; height: 36px; background: linear-gradient(135de=
+g, var(--accent), var(--accent3)); border-radius: 50%; display: flex; align=
+-items: center; justify-content: center; font-family: Syne, sans-serif; fon=
+t-weight: 800; font-size: 0.85rem; }
+
+.chat-name { font-family: Syne, sans-serif; font-weight: 700; font-size: 0.=
+9rem; }
+
+.chat-status { font-size: 0.75rem; color: rgb(34, 197, 94); }
+
+.chat-messages { padding: 1.5rem; display: flex; flex-direction: column; ga=
+p: 1rem; min-height: 280px; }
+
+.msg { max-width: 85%; }
+
+.msg-ai { background: var(--surface2); border: 1px solid var(--border); bor=
+der-radius: 0px 14px 14px; padding: 0.8rem 1rem; font-size: 0.85rem; line-h=
+eight: 1.5; }
+
+.msg-user { background: linear-gradient(135deg, var(--accent), #5b3fd4); bo=
+rder-radius: 14px 14px 0px; padding: 0.8rem 1rem; font-size: 0.85rem; margi=
+n-left: auto; }
+
+.chat-input-bar { padding: 1rem 1.5rem; border-top: 1px solid var(--border)=
+; display: flex; gap: 0.5rem; }
+
+.chat-input-bar input { flex: 1 1 0%; background: var(--surface2); border: =
+1px solid var(--border); border-radius: 8px; padding: 0.6rem 0.9rem; color:=
+ var(--text); font-size: 0.85rem; outline: none; }
+
+.chat-send-btn { background: var(--accent); border: none; border-radius: 8p=
+x; padding: 0.6rem 1rem; color: white; cursor: pointer; font-size: 0.85rem;=
+ }
+
+.testimonials-grid { display: grid; grid-template-columns: repeat(auto-fit,=
+ minmax(300px, 1fr)); gap: 1.5rem; margin-top: 3rem; }
+
+.testimonial-card { background: var(--surface); border: 1px solid var(--bor=
+der); border-radius: 16px; padding: 1.8rem; }
+
+.stars { color: rgb(245, 158, 11); margin-bottom: 1rem; font-size: 0.9rem; =
+}
+
+.testimonial-text { color: var(--muted); font-size: 0.95rem; line-height: 1=
+.7; margin-bottom: 1.2rem; }
+
+.testimonial-author { display: flex; align-items: center; gap: 0.8rem; }
+
+.author-avatar { width: 40px; height: 40px; background: linear-gradient(135=
+deg, var(--accent), var(--accent3)); border-radius: 50%; display: flex; ali=
+gn-items: center; justify-content: center; font-family: Syne, sans-serif; f=
+ont-weight: 800; font-size: 0.8rem; }
+
+.author-name { font-family: Syne, sans-serif; font-weight: 700; font-size: =
+0.9rem; }
+
+.author-handle { font-size: 0.8rem; color: var(--muted); }
+
+.pricing-grid { display: grid; grid-template-columns: repeat(auto-fit, minm=
+ax(280px, 1fr)); gap: 1.5rem; margin-top: 3rem; align-items: start; }
+
+.pricing-card { background: var(--surface); border: 1px solid var(--border)=
+; border-radius: 20px; padding: 2rem; position: relative; transition: 0.3s;=
+ }
+
+.pricing-card.popular { border-color: var(--accent); box-shadow: rgba(123, =
+92, 245, 0.2) 0px 0px 40px; }
+
+.popular-badge { position: absolute; top: -12px; left: 50%; transform: tran=
+slateX(-50%); background: linear-gradient(135deg, var(--accent), var(--acce=
+nt3)); color: white; font-size: 0.7rem; font-weight: 700; font-family: Syne=
+, sans-serif; padding: 0.3rem 1rem; border-radius: 100px; white-space: nowr=
+ap; }
+
+.plan-name { font-family: Syne, sans-serif; font-weight: 700; font-size: 1r=
+em; color: var(--muted); }
+
+.plan-price { font-family: Syne, sans-serif; font-size: 2.8rem; font-weight=
+: 800; margin: 0.5rem 0px; }
+
+.plan-price span { font-size: 1rem; font-weight: 400; color: var(--muted); =
+}
+
+.plan-desc { color: var(--muted); font-size: 0.9rem; margin-bottom: 1.5rem;=
+ }
+
+.plan-features { list-style: none; display: flex; flex-direction: column; g=
+ap: 0.7rem; margin-bottom: 1.8rem; }
+
+.plan-features li { display: flex; gap: 0.7rem; font-size: 0.9rem; align-it=
+ems: flex-start; }
+
+.plan-features li::before { content: "=E2=9C=93"; color: var(--accent2); fo=
+nt-weight: 700; flex-shrink: 0; }
+
+.plan-features li.locked { color: var(--muted); }
+
+.plan-features li.locked::before { content: "=E2=9C=97"; color: rgb(85, 85,=
+ 85); }
+
+.plan-btn { width: 100%; padding: 0.8rem; border-radius: 10px; font-family:=
+ Syne, sans-serif; font-weight: 700; font-size: 0.95rem; cursor: pointer; t=
+ransition: 0.3s; text-decoration: none; display: block; text-align: center;=
+ }
+
+.plan-btn-primary { background: linear-gradient(135deg, var(--accent), #5b3=
+fd4); color: white; border: none; }
+
+.plan-btn-primary:hover { transform: translateY(-2px); box-shadow: rgba(123=
+, 92, 245, 0.4) 0px 10px 30px; }
+
+.plan-btn-outline { background: transparent; color: var(--text); border: 1p=
+x solid var(--border); }
+
+.plan-btn-outline:hover { border-color: var(--accent); color: var(--accent2=
+); }
+
+.cta-section { text-align: center; padding: 8rem 2rem; position: relative; =
+overflow: hidden; }
+
+.cta-section::before { content: ""; position: absolute; width: 600px; heigh=
+t: 600px; background: radial-gradient(circle, rgba(6, 182, 212, 0.1) 0%, tr=
+ansparent 70%); top: 50%; left: 50%; transform: translate(-50%, -50%); }
+
+.cta-section h2 { font-size: clamp(2rem, 5vw, 3.5rem); margin-bottom: 1rem;=
+ }
+
+.cta-section p { color: var(--muted); max-width: 500px; margin: 0px auto 2r=
+em; }
+
+.cta-list { display: flex; gap: 1.5rem; flex-wrap: wrap; justify-content: c=
+enter; margin-bottom: 2.5rem; }
+
+.cta-list span { color: var(--muted); font-size: 0.9rem; display: flex; ali=
+gn-items: center; gap: 0.4rem; }
+
+.cta-list span::before { content: "=E2=9C=85"; }
+
+footer { border-top: 1px solid var(--border); padding: 2rem; text-align: ce=
+nter; color: var(--muted); font-size: 0.85rem; }
+
+footer .footer-logo { font-family: Syne, sans-serif; font-weight: 800; font=
+-size: 1.1rem; background-image: ; background-position-x: ; background-posi=
+tion-y: ; background-size: ; background-repeat: ; background-attachment: ; =
+background-origin: ; background-color: ; -webkit-text-fill-color: transpare=
+nt; background-clip: text; margin-bottom: 0.5rem; }
+
+.footer-links { display: flex; gap: 1.5rem; justify-content: center; flex-w=
+rap: wrap; margin-top: 1rem; }
+
+.footer-links a { color: var(--muted); text-decoration: none; font-size: 0.=
+85rem; transition: color 0.2s; }
+
+.footer-links a:hover { color: var(--text); }
+
+@keyframes fadeUp {=20
+  0% { opacity: 0; transform: translateY(20px); }
+  100% { opacity: 1; transform: translateY(0px); }
+}
+
+@media (max-width: 768px) {
+  .nav-links { display: none; }
+  .demo-grid { grid-template-columns: 1fr; }
+  .stats { gap: 1.5rem; }
+}
+------MultipartBoundary--vpWD06hCRLWnWEZFBWq8vdv2aL4qG16JarT2MVqwiq------
