@@ -1,147 +1,532 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Xarvis AI</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Xarvis AI — Your AI Co-Creator</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;1,9..40,300&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #050508; --surface: #0d0d14; --surface2: #12121c;
+    --border: rgba(255,255,255,0.07); --text: #f0eeff; --muted: #7a78a0;
+    --accent: #7c6dfa; --accent2: #e05cff; --accent3: #00e5c3;
+    --glow: rgba(124,109,250,0.35); --glow2: rgba(224,92,255,0.2);
+  }
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  html { scroll-behavior: smooth; }
+  body { background: var(--bg); color: var(--text); font-family: 'DM Sans', sans-serif; font-size: 17px; line-height: 1.65; overflow-x: hidden; }
+  body::before { content: ''; position: fixed; inset: 0; background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E"); pointer-events: none; z-index: 1000; opacity: 0.4; }
+  h1, h2, h3, h4 { font-family: 'Syne', sans-serif; font-weight: 800; line-height: 1.1; letter-spacing: -0.02em; }
+  .label { font-size: 11px; font-weight: 600; letter-spacing: 0.18em; text-transform: uppercase; color: var(--accent); background: rgba(124,109,250,0.1); border: 1px solid rgba(124,109,250,0.25); padding: 5px 14px; border-radius: 100px; display: inline-block; }
+  nav { position: fixed; top: 0; left: 0; right: 0; z-index: 100; display: flex; align-items: center; justify-content: space-between; padding: 18px 48px; background: rgba(5,5,8,0.6); backdrop-filter: blur(24px); border-bottom: 1px solid var(--border); transition: all 0.3s; }
+  .nav-logo { font-family: 'Syne', sans-serif; font-weight: 800; font-size: 22px; background: linear-gradient(135deg, #fff 30%, var(--accent2)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+  .nav-links { display: flex; gap: 36px; list-style: none; }
+  .nav-links a { color: var(--muted); text-decoration: none; font-size: 15px; transition: color 0.2s; }
+  .nav-links a:hover { color: var(--text); }
+  .btn-nav { background: var(--accent); color: #fff; border: none; padding: 10px 22px; border-radius: 8px; font-family: 'DM Sans', sans-serif; font-size: 14px; font-weight: 500; cursor: pointer; transition: all 0.25s; text-decoration: none; }
+  .btn-nav:hover { background: #9485ff; transform: translateY(-1px); box-shadow: 0 8px 30px var(--glow); }
+  #hero { min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 140px 24px 100px; position: relative; overflow: hidden; }
+  .hero-bg { position: absolute; inset: 0; z-index: 0; pointer-events: none; }
+  .orb { position: absolute; border-radius: 50%; filter: blur(90px); opacity: 0.55; animation: drift 8s ease-in-out infinite alternate; }
+  .orb1 { width: 600px; height: 600px; background: radial-gradient(circle, #7c6dfa 0%, transparent 70%); top: -200px; left: -150px; }
+  .orb2 { width: 500px; height: 500px; background: radial-gradient(circle, #e05cff 0%, transparent 70%); top: -100px; right: -100px; animation-delay: -3s; }
+  .orb3 { width: 400px; height: 400px; background: radial-gradient(circle, #00e5c3 0%, transparent 70%); bottom: -100px; left: 40%; animation-delay: -5s; opacity: 0.25; }
+  @keyframes drift { from { transform: translate(0,0) scale(1); } to { transform: translate(40px,30px) scale(1.08); } }
+  .hero-grid-lines { position: absolute; inset: 0; background-image: linear-gradient(rgba(255,255,255,0.025) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.025) 1px, transparent 1px); background-size: 80px 80px; mask-image: radial-gradient(ellipse 80% 80% at 50% 50%, black, transparent); }
+  .hero-inner { position: relative; z-index: 2; max-width: 860px; margin: 0 auto; }
+  .hero-badge { display: inline-flex; align-items: center; gap: 8px; background: rgba(124,109,250,0.1); border: 1px solid rgba(124,109,250,0.3); color: #b8b0ff; font-size: 13px; padding: 6px 16px; border-radius: 100px; margin-bottom: 32px; animation: fadeUp 0.8s ease both; }
+  .hero-badge .dot { width: 7px; height: 7px; background: var(--accent3); border-radius: 50%; animation: pulse 2s ease-in-out infinite; }
+  @keyframes pulse { 0%, 100% { box-shadow: 0 0 0 0 rgba(0,229,195,0.5); } 50% { box-shadow: 0 0 0 6px rgba(0,229,195,0); } }
+  h1.hero-title { font-size: clamp(52px, 7vw, 88px); margin-bottom: 24px; animation: fadeUp 0.8s ease 0.1s both; }
+  .grad-text { background: linear-gradient(135deg, #fff 20%, var(--accent) 55%, var(--accent2) 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+  .hero-sub { font-size: clamp(17px, 2vw, 21px); color: var(--muted); max-width: 600px; margin: 0 auto 44px; font-weight: 300; animation: fadeUp 0.8s ease 0.2s both; }
+  .hero-ctas { display: flex; gap: 16px; justify-content: center; flex-wrap: wrap; animation: fadeUp 0.8s ease 0.3s both; }
+  .btn-primary { background: linear-gradient(135deg, var(--accent), var(--accent2)); color: #fff; border: none; padding: 16px 36px; border-radius: 10px; font-family: 'DM Sans', sans-serif; font-size: 16px; font-weight: 500; cursor: pointer; transition: all 0.3s; text-decoration: none; position: relative; overflow: hidden; display: inline-flex; align-items: center; gap: 8px; }
+  .btn-primary::before { content: ''; position: absolute; inset: 0; background: linear-gradient(135deg, var(--accent2), var(--accent)); opacity: 0; transition: opacity 0.3s; }
+  .btn-primary:hover::before { opacity: 1; }
+  .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 16px 50px var(--glow); }
+  .btn-primary span { position: relative; z-index: 1; }
+  .btn-ghost { background: transparent; color: var(--text); border: 1px solid var(--border); padding: 16px 36px; border-radius: 10px; font-family: 'DM Sans', sans-serif; font-size: 16px; cursor: pointer; transition: all 0.25s; text-decoration: none; display: inline-flex; align-items: center; gap: 8px; }
+  .btn-ghost:hover { border-color: rgba(124,109,250,0.5); background: rgba(124,109,250,0.07); transform: translateY(-1px); }
+  .hero-stats { display: flex; justify-content: center; gap: 56px; margin-top: 80px; padding-top: 56px; border-top: 1px solid var(--border); animation: fadeUp 0.8s ease 0.4s both; flex-wrap: wrap; }
+  .stat-item { text-align: center; }
+  .stat-num { font-family: 'Syne', sans-serif; font-size: 36px; font-weight: 800; background: linear-gradient(135deg, #fff, var(--accent)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; display: block; }
+  .stat-label { font-size: 13px; color: var(--muted); margin-top: 4px; }
+  @keyframes fadeUp { from { opacity: 0; transform: translateY(24px); } to { opacity: 1; transform: translateY(0); } }
+  section { padding: 110px 24px; }
+  .container { max-width: 1180px; margin: 0 auto; }
+  .section-header { text-align: center; margin-bottom: 70px; }
+  .section-header h2 { font-size: clamp(34px, 4vw, 56px); margin-top: 16px; margin-bottom: 16px; }
+  .section-header p { color: var(--muted); font-size: 18px; max-width: 560px; margin: 0 auto; }
+  #features { background: var(--surface); }
+  .features-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(310px, 1fr)); gap: 2px; background: var(--border); border: 1px solid var(--border); border-radius: 20px; overflow: hidden; }
+  .feat-card { background: var(--surface); padding: 40px 36px; transition: background 0.3s; position: relative; overflow: hidden; }
+  .feat-card::before { content: ''; position: absolute; inset: 0; background: radial-gradient(circle at 20% 20%, rgba(124,109,250,0.08), transparent 60%); opacity: 0; transition: opacity 0.4s; }
+  .feat-card:hover::before { opacity: 1; }
+  .feat-card:hover { background: var(--surface2); }
+  .feat-icon { width: 48px; height: 48px; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 22px; margin-bottom: 22px; }
+  .feat-icon.purple { background: rgba(124,109,250,0.15); border: 1px solid rgba(124,109,250,0.3); }
+  .feat-icon.pink   { background: rgba(224,92,255,0.15);  border: 1px solid rgba(224,92,255,0.3); }
+  .feat-icon.teal   { background: rgba(0,229,195,0.12);   border: 1px solid rgba(0,229,195,0.3); }
+  .feat-icon.orange { background: rgba(255,140,60,0.12);  border: 1px solid rgba(255,140,60,0.3); }
+  .feat-card h3 { font-size: 20px; margin-bottom: 12px; font-family: 'Syne', sans-serif; font-weight: 700; }
+  .feat-card p  { color: var(--muted); font-size: 15px; line-height: 1.7; }
+  .viral-badge { display: inline-flex; align-items: center; gap: 8px; background: rgba(0,229,195,0.1); border: 1px solid rgba(0,229,195,0.3); color: var(--accent3); font-size: 13px; font-weight: 600; padding: 4px 12px; border-radius: 100px; margin-top: 16px; }
+  #howitworks { background: var(--bg); }
+  .steps { display: grid; grid-template-columns: repeat(3,1fr); gap: 32px; position: relative; }
+  .steps::before { content: ''; position: absolute; top: 52px; left: 16.66%; right: 16.66%; height: 1px; background: linear-gradient(90deg, transparent, var(--accent), transparent); }
+  .step-card { text-align: center; padding: 48px 32px; border: 1px solid var(--border); border-radius: 20px; background: var(--surface); transition: all 0.35s; position: relative; }
+  .step-card:hover { border-color: rgba(124,109,250,0.4); transform: translateY(-6px); box-shadow: 0 24px 60px rgba(124,109,250,0.12); }
+  .step-num { width: 56px; height: 56px; border-radius: 50%; background: linear-gradient(135deg, var(--accent), var(--accent2)); display: flex; align-items: center; justify-content: center; font-family: 'Syne', sans-serif; font-size: 22px; font-weight: 800; margin: 0 auto 24px; position: relative; z-index: 1; }
+  .step-card h3 { font-size: 20px; margin-bottom: 12px; }
+  .step-card p  { color: var(--muted); font-size: 15px; }
+  #chatdemo { background: var(--surface); }
+  .chat-wrapper { display: grid; grid-template-columns: 1fr 1fr; gap: 60px; align-items: center; }
+  .chat-text h2 { font-size: clamp(32px, 3.5vw, 48px); margin-bottom: 20px; }
+  .chat-text p  { color: var(--muted); margin-bottom: 32px; font-size: 17px; }
+  .chat-feature-list { list-style: none; display: flex; flex-direction: column; gap: 14px; }
+  .chat-feature-list li { display: flex; align-items: center; gap: 12px; font-size: 15px; color: var(--muted); }
+  .chat-feature-list li .check { width: 22px; height: 22px; border-radius: 50%; background: rgba(0,229,195,0.1); border: 1px solid rgba(0,229,195,0.3); display: flex; align-items: center; justify-content: center; color: var(--accent3); font-size: 12px; flex-shrink: 0; }
+  .chat-box { background: var(--bg); border: 1px solid var(--border); border-radius: 20px; overflow: hidden; box-shadow: 0 40px 100px rgba(0,0,0,0.5); }
+  .chat-header { background: var(--surface2); border-bottom: 1px solid var(--border); padding: 16px 20px; display: flex; align-items: center; gap: 10px; }
+  .chat-header-dot { width: 10px; height: 10px; border-radius: 50%; }
+  .chat-header-dot.r { background: #ff5f57; }
+  .chat-header-dot.y { background: #febc2e; }
+  .chat-header-dot.g { background: #28c840; }
+  .chat-name { margin-left: 8px; font-family: 'Syne', sans-serif; font-size: 14px; font-weight: 700; color: var(--text); }
+  .chat-status { margin-left: auto; font-size: 12px; color: var(--accent3); display: flex; align-items: center; gap: 6px; }
 
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&family=Syne:wght@600;700;800&display=swap" rel="stylesheet"/>
+  /* ── 3 NEW LINES: scrollable chat, custom scrollbar ── */
+  .chat-messages { padding: 20px; display: flex; flex-direction: column; gap: 16px; min-height: 340px; max-height: 460px; overflow-y: auto; scroll-behavior: smooth; }
+  .chat-messages::-webkit-scrollbar { width: 4px; }
+  .chat-messages::-webkit-scrollbar-track { background: transparent; }
+  .chat-messages::-webkit-scrollbar-thumb { background: rgba(124,109,250,0.3); border-radius: 2px; }
 
-  <style>
-    body {
-      margin: 0;
-      font-family: Inter, sans-serif;
-      background: #05050a;
-      color: white;
-      overflow-x: hidden;
-    }
+  .msg { display: flex; gap: 12px; align-items: flex-start; }
+  .msg-avatar { width: 32px; height: 32px; border-radius: 50%; flex-shrink: 0; display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: 700; }
+  .msg-avatar.ai   { background: linear-gradient(135deg, var(--accent), var(--accent2)); font-family: 'Syne', sans-serif; font-size: 11px; }
+  .msg-avatar.user { background: var(--surface2); font-size: 16px; }
+  .msg-bubble { background: var(--surface2); border: 1px solid var(--border); border-radius: 14px 14px 14px 4px; padding: 12px 16px; font-size: 14px; line-height: 1.6; color: var(--text); max-width: 320px; }
+  .msg.user .msg-bubble { background: rgba(124,109,250,0.1); border-color: rgba(124,109,250,0.25); border-radius: 14px 14px 4px 14px; margin-left: auto; }
+  .msg.user { flex-direction: row-reverse; }
 
-    nav {
-      display: flex;
-      justify-content: space-between;
-      padding: 20px 40px;
-      background: rgba(0,0,0,0.6);
-      position: sticky;
-      top: 0;
-      backdrop-filter: blur(10px);
-    }
+  /* ── Markdown formatting helpers for AI replies ── */
+  .msg-bubble strong   { color: var(--text); font-weight: 600; }
+  .msg-bubble em       { color: var(--muted); font-style: italic; }
+  .ai-bullet { display: block; padding-left: 14px; position: relative; color: var(--muted); margin-top: 4px; }
+  .ai-bullet::before   { content: '•'; position: absolute; left: 2px; color: var(--accent); }
+  .ai-section { display: block; color: var(--accent3); font-weight: 600; font-size: 12px; letter-spacing: 0.05em; text-transform: uppercase; margin-top: 10px; margin-bottom: 2px; }
 
-    .logo {
-      font-weight: 800;
-      font-size: 20px;
-      font-family: Syne;
-    }
+  /* ── Typing indicator animation ── */
+  @keyframes xvDot { 0%,80%,100% { opacity:0; transform:translateY(0); } 40% { opacity:1; transform:translateY(-4px); } }
+  .xv-dot { display: inline-block; font-size: 20px; line-height: 1; animation: xvDot 1.2s ease-in-out infinite; }
 
-    .hero {
-      text-align: center;
-      padding: 120px 20px;
-    }
-
-    .hero h1 {
-      font-size: 60px;
-      font-family: Syne;
-      margin-bottom: 10px;
-    }
-
-    .hero span {
-      background: linear-gradient(90deg,#7c3aed,#06b6d4);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-    }
-
-    .hero p {
-      color: #aaa;
-      max-width: 600px;
-      margin: auto;
-    }
-
-    .btn {
-      margin-top: 20px;
-      padding: 12px 20px;
-      background: linear-gradient(90deg,#7c3aed,#06b6d4);
-      border: none;
-      color: white;
-      border-radius: 10px;
-      cursor: pointer;
-      font-weight: 600;
-    }
-
-    .container {
-      max-width: 900px;
-      margin: auto;
-      padding: 40px;
-    }
-
-    .box {
-      background: #111;
-      padding: 20px;
-      border-radius: 12px;
-      margin-top: 30px;
-    }
-
-    input {
-      width: 100%;
-      padding: 12px;
-      border-radius: 8px;
-      border: none;
-      outline: none;
-      margin-bottom: 10px;
-      background: #222;
-      color: white;
-    }
-
-    #result {
-      margin-top: 15px;
-      color: #06b6d4;
-      font-weight: 600;
-    }
-  </style>
+  .viral-score { display: inline-block; font-family: 'Syne', sans-serif; font-size: 28px; font-weight: 800; background: linear-gradient(135deg, var(--accent3), #00b4d8); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+  .platform-tags { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 8px; }
+  .ptag { font-size: 11px; padding: 3px 10px; border-radius: 100px; font-weight: 600; }
+  .ptag.tk { background: rgba(0,229,195,0.1); color: var(--accent3); border: 1px solid rgba(0,229,195,0.3); }
+  .ptag.ig { background: rgba(224,92,255,0.1); color: #e05cff; border: 1px solid rgba(224,92,255,0.3); }
+  .ptag.yt { background: rgba(255,80,80,0.1); color: #ff5555; border: 1px solid rgba(255,80,80,0.3); }
+  .chat-input-row { border-top: 1px solid var(--border); padding: 14px 16px; display: flex; gap: 10px; align-items: center; }
+  .chat-input { flex: 1; background: var(--surface2); border: 1px solid var(--border); border-radius: 8px; padding: 10px 14px; font-family: 'DM Sans', sans-serif; font-size: 13px; color: var(--text); outline: none; transition: border-color 0.2s; }
+  .chat-input:focus { border-color: rgba(124,109,250,0.5); }
+  .chat-input::placeholder { color: var(--muted); }
+  .chat-send { background: linear-gradient(135deg, var(--accent), var(--accent2)); border: none; border-radius: 8px; width: 38px; height: 38px; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.25s; flex-shrink: 0; }
+  .chat-send:hover { transform: scale(1.08); box-shadow: 0 6px 20px var(--glow); }
+  #benefits { background: var(--bg); }
+  .benefits-grid { display: grid; grid-template-columns: 1.1fr 1fr; gap: 60px; align-items: center; }
+  .benefits-list { display: flex; flex-direction: column; gap: 28px; }
+  .benefit-item { display: flex; gap: 20px; padding: 28px; border: 1px solid var(--border); border-radius: 16px; background: var(--surface); transition: all 0.3s; }
+  .benefit-item:hover { border-color: rgba(124,109,250,0.3); transform: translateX(6px); box-shadow: -4px 0 0 var(--accent), 0 8px 30px rgba(124,109,250,0.08); }
+  .benefit-icon { font-size: 28px; flex-shrink: 0; margin-top: 2px; }
+  .benefit-text h3 { font-size: 17px; margin-bottom: 6px; font-family: 'Syne', sans-serif; font-weight: 700; }
+  .benefit-text p  { color: var(--muted); font-size: 14px; }
+  .benefits-visual { position: relative; height: 500px; }
+  .bv-card { position: absolute; background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 20px 24px; }
+  .bv-card.main { top: 40px; right: 0; width: 260px; animation: float1 5s ease-in-out infinite; }
+  .bv-card.sec  { bottom: 60px; left: 0; width: 230px; animation: float2 6s ease-in-out infinite; animation-delay: -2s; }
+  .bv-card.tert { top: 200px; left: 50px; width: 200px; animation: float1 7s ease-in-out infinite; animation-delay: -4s; }
+  @keyframes float1 { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-12px); } }
+  @keyframes float2 { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(10px); } }
+  .bv-label { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 8px; }
+  .bv-big { font-family: 'Syne', sans-serif; font-size: 32px; font-weight: 800; background: linear-gradient(135deg, var(--accent3), #00b4d8); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+  .bv-sub { font-size: 13px; color: var(--muted); margin-top: 4px; }
+  .bv-bar { height: 6px; background: var(--surface2); border-radius: 3px; margin: 8px 0; overflow: hidden; }
+  .bv-bar-fill { height: 100%; border-radius: 3px; animation: fillBar 2s ease 1s both; }
+  .bv-bar-fill.purple { background: linear-gradient(90deg, var(--accent), var(--accent2)); width: 87%; }
+  .bv-bar-fill.teal   { background: linear-gradient(90deg, var(--accent3), #00b4d8); width: 72%; }
+  .bv-bar-fill.orange { background: linear-gradient(90deg, #ff8c3c, #ff5555); width: 94%; }
+  @keyframes fillBar { from { width: 0; } }
+  .mini-row { display: flex; justify-content: space-between; font-size: 12px; color: var(--muted); }
+  #testimonials { background: var(--surface); }
+  .testi-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; }
+  .testi-card { background: var(--bg); border: 1px solid var(--border); border-radius: 16px; padding: 32px; transition: all 0.3s; position: relative; overflow: hidden; }
+  .testi-card::after { content: '"'; position: absolute; top: -10px; right: 20px; font-size: 120px; font-family: 'Syne', sans-serif; color: rgba(124,109,250,0.06); line-height: 1; pointer-events: none; }
+  .testi-card:hover { border-color: rgba(124,109,250,0.3); transform: translateY(-4px); box-shadow: 0 20px 50px rgba(0,0,0,0.3); }
+  .stars { color: #f59e0b; font-size: 14px; margin-bottom: 16px; letter-spacing: 2px; }
+  .testi-text { font-size: 15px; color: var(--muted); line-height: 1.75; margin-bottom: 24px; font-style: italic; }
+  .testi-author { display: flex; align-items: center; gap: 12px; }
+  .testi-avatar { width: 42px; height: 42px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-family: 'Syne', sans-serif; font-size: 15px; font-weight: 800; flex-shrink: 0; }
+  .testi-name { font-size: 15px; font-weight: 600; font-family: 'Syne', sans-serif; }
+  .testi-handle { font-size: 12px; color: var(--muted); }
+  #cta { background: var(--bg); }
+  .cta-box { background: var(--surface); border: 1px solid var(--border); border-radius: 28px; padding: 80px 60px; text-align: center; position: relative; overflow: hidden; }
+  .cta-box::before { content: ''; position: absolute; inset: 0; background: radial-gradient(ellipse 70% 50% at 50% 0%, rgba(124,109,250,0.12), transparent); pointer-events: none; }
+  .cta-box h2 { font-size: clamp(36px, 4vw, 62px); margin-bottom: 20px; position: relative; z-index: 1; }
+  .cta-box p  { color: var(--muted); font-size: 18px; margin-bottom: 40px; position: relative; z-index: 1; }
+  .form-row { display: flex; gap: 12px; max-width: 480px; margin: 0 auto; position: relative; z-index: 1; }
+  .form-input { flex: 1; background: var(--bg); border: 1px solid var(--border); border-radius: 10px; padding: 15px 20px; font-family: 'DM Sans', sans-serif; font-size: 15px; color: var(--text); outline: none; transition: border-color 0.2s; }
+  .form-input:focus { border-color: rgba(124,109,250,0.5); }
+  .form-input::placeholder { color: var(--muted); }
+  footer { background: var(--surface); border-top: 1px solid var(--border); padding: 48px 24px; text-align: center; }
+  .footer-logo { font-family: 'Syne', sans-serif; font-weight: 800; font-size: 24px; background: linear-gradient(135deg, #fff, var(--accent)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; margin-bottom: 16px; }
+  .footer-links { display: flex; justify-content: center; gap: 32px; flex-wrap: wrap; margin-bottom: 24px; }
+  .footer-links a { color: var(--muted); text-decoration: none; font-size: 14px; transition: color 0.2s; }
+  .footer-links a:hover { color: var(--text); }
+  .footer-copy { color: var(--muted); font-size: 13px; }
+  .reveal { opacity: 0; transform: translateY(30px); transition: opacity 0.7s ease, transform 0.7s ease; }
+  .reveal.visible { opacity: 1; transform: translateY(0); }
+  @media (max-width: 900px) {
+    nav { padding: 16px 24px; }
+    .nav-links { display: none; }
+    .chat-wrapper, .benefits-grid { grid-template-columns: 1fr; gap: 40px; }
+    .steps { grid-template-columns: 1fr; }
+    .steps::before { display: none; }
+    .testi-grid { grid-template-columns: 1fr; }
+    .features-grid { grid-template-columns: 1fr; }
+    .form-row { flex-direction: column; }
+    .benefits-visual { height: 300px; }
+    .cta-box { padding: 48px 28px; }
+  }
+  @media (max-width: 600px) {
+    nav { padding: 14px 18px; }
+    section { padding: 80px 18px; }
+    .hero-stats { gap: 32px; }
+    .testi-grid { grid-template-columns: 1fr; }
+  }
+  .typing::after { content: '|'; animation: blink 0.8s step-end infinite; color: var(--accent); }
+  @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0; } }
+</style>
 </head>
-
 <body>
-
 <nav>
-  <div class="logo">Xarvis AI</div>
+  <div class="nav-logo">Xarvis AI</div>
+  <ul class="nav-links">
+    <li><a href="#features">Features</a></li>
+    <li><a href="#howitworks">How It Works</a></li>
+    <li><a href="#chatdemo">Demo</a></li>
+    <li><a href="#testimonials">Reviews</a></li>
+  </ul>
+  <a href="#cta" class="btn-nav">Get Early Access →</a>
 </nav>
 
-<div class="hero">
-  <h1>Your <span>AI Co-Founder</span></h1>
-  <p>Turn ideas into viral content using AI-powered intelligence and strategy.</p>
-</div>
-
-<div class="container">
-
-  <div class="box">
-    <h2>🔥 Try Xarvis AI</h2>
-
-    <input id="input" placeholder="Enter your idea..." />
-
-    <button class="btn" onclick="send()">Generate Insight</button>
-
-    <div id="result"></div>
+<section id="hero">
+  <div class="hero-bg">
+    <div class="orb orb1"></div><div class="orb orb2"></div><div class="orb orb3"></div>
+    <div class="hero-grid-lines"></div>
   </div>
+  <div class="hero-inner">
+    <div class="hero-badge"><span class="dot"></span>Your AI Co-Creator is here — Now in Early Access</div>
+    <h1 class="hero-title">Go Viral.<br><span class="grad-text">On Autopilot.</span></h1>
+    <p class="hero-sub">Upload your clips and Xarvis AI predicts virality, writes your hooks, plans your next post, and automates your entire content workflow — like having a full creative team in your pocket.</p>
+    <div class="hero-ctas">
+      <a href="#cta" class="btn-primary"><span>🚀 Get Early Access</span></a>
+      <a href="#chatdemo" class="btn-ghost">See Demo ↓</a>
+    </div>
+    <div class="hero-stats">
+      <div class="stat-item"><span class="stat-num">94%</span><div class="stat-label">Virality Prediction Accuracy</div></div>
+      <div class="stat-item"><span class="stat-num">12hrs</span><div class="stat-label">Saved Per Creator Weekly</div></div>
+      <div class="stat-item"><span class="stat-num">4.2×</span><div class="stat-label">Avg Engagement Increase</div></div>
+      <div class="stat-item"><span class="stat-num">8,000+</span><div class="stat-label">Creators on Waitlist</div></div>
+    </div>
+  </div>
+</section>
 
-</div>
+<section id="features">
+  <div class="container">
+    <div class="section-header reveal">
+      <span class="label">What Xarvis Does</span>
+      <h2>Your <span class="grad-text">AI Co-Founder</span><br>for Content</h2>
+      <p>Every tool you need to go viral — all in one intelligent system that learns your niche and audience.</p>
+    </div>
+    <div class="features-grid reveal">
+      <div class="feat-card"><div class="feat-icon purple">🎬</div><h3>Clip Virality Analysis</h3><p>Upload raw footage and Xarvis identifies your strongest hooks, peak engagement moments, and optimal cut points — automatically.</p><div class="viral-badge">⚡ Analyzed in &lt; 30 seconds</div></div>
+      <div class="feat-card"><div class="feat-icon teal">📊</div><h3>Viral % Prediction</h3><p>See your exact viral probability score before posting. Know which clips to push and which to rework — with data behind every decision.</p><div class="viral-badge">🎯 87% avg score on top clips</div></div>
+      <div class="feat-card"><div class="feat-icon pink">✍️</div><h3>Auto-Generated Captions &amp; Hooks</h3><p>Platform-optimized captions, irresistible hooks, trending hashtags, and full descriptions — ready to copy-paste and post instantly.</p></div>
+      <div class="feat-card"><div class="feat-icon orange">🔮</div><h3>Next Viral Content Planner</h3><p>Based on live trending data in your niche, Xarvis tells you exactly what to create next — and how to make it go viral when you post it.</p></div>
+      <div class="feat-card"><div class="feat-icon purple">📱</div><h3>Platform Recommendations</h3><p>TikTok, Instagram Reels, YouTube Shorts, or all three? Xarvis recommends the right platforms for each clip and formats content accordingly.</p></div>
+      <div class="feat-card"><div class="feat-icon teal">🤖</div><h3>Full Workflow Automation</h3><p>From clip intake to ready-to-post content, Xarvis acts as your Jarvis-style AI co-creator — handling strategy, analytics, and optimization.</p></div>
+    </div>
+  </div>
+</section>
 
+<section id="howitworks">
+  <div class="container">
+    <div class="section-header reveal">
+      <span class="label">The Process</span>
+      <h2>Three Steps to <span class="grad-text">Viral</span></h2>
+      <p>No complex setup. No learning curve. Upload and let Xarvis handle everything else.</p>
+    </div>
+    <div class="steps reveal">
+      <div class="step-card"><div class="step-num">1</div><h3>Upload Your Clips</h3><p>Drag and drop your raw footage. Xarvis accepts any format — phone recordings, edits, long-form content, everything.</p></div>
+      <div class="step-card"><div class="step-num">2</div><h3>Xarvis Analyzes &amp; Optimizes</h3><p>In seconds, the AI scans for hooks, predicts virality, identifies the best moments, and creates all your content copy.</p></div>
+      <div class="step-card"><div class="step-num">3</div><h3>Post &amp; Go Viral</h3><p>Receive a complete ready-to-post package: edited clip suggestions, captions, hooks, hashtags, and your next content plan.</p></div>
+    </div>
+  </div>
+</section>
+
+<section id="chatdemo">
+  <div class="container">
+    <div class="chat-wrapper reveal">
+      <div class="chat-text">
+        <span class="label">Live Demo</span>
+        <h2>Meet Xarvis — <span class="grad-text">Your AI</span> Content Strategist</h2>
+        <p>Ask Xarvis anything about your content. Get instant viral predictions, caption generation, platform strategy, and trending content ideas — all in real time.</p>
+        <ul class="chat-feature-list">
+          <li><span class="check">✓</span> Instant virality scoring for any clip</li>
+          <li><span class="check">✓</span> Hook and caption generation in seconds</li>
+          <li><span class="check">✓</span> Platform-specific posting strategy</li>
+          <li><span class="check">✓</span> Trending topic alerts for your niche</li>
+          <li><span class="check">✓</span> Next post suggestions with viral roadmap</li>
+        </ul>
+      </div>
+      <div class="chat-box">
+        <div class="chat-header">
+          <div class="chat-header-dot r"></div><div class="chat-header-dot y"></div><div class="chat-header-dot g"></div>
+          <span class="chat-name">Xarvis AI</span>
+          <span class="chat-status">
+            <span id="statusDot" style="width:7px;height:7px;border-radius:50%;background:var(--accent3);display:inline-block;transition:background 0.3s;"></span>
+            <span id="statusText">Online</span>
+          </span>
+        </div>
+        <div class="chat-messages" id="chatMessages">
+          <div class="msg"><div class="msg-avatar ai">X</div><div class="msg-bubble">Hey! I'm Xarvis 👋 Drop your clip or tell me about your content — I'll analyze it for virality right now.</div></div>
+          <div class="msg user"><div class="msg-avatar user">👤</div><div class="msg-bubble">Analyze my cooking video — it's a 3-minute pasta recipe filmed in my kitchen.</div></div>
+          <div class="msg"><div class="msg-avatar ai">X</div><div class="msg-bubble">🔍 Analyzing... Done! Here's your report:<br><br><b>Viral Score:</b> <span class="viral-score">87%</span><br><b>Best Hook Moment:</b> 0:14 — the cheese pull<br><b>Post on:</b><div class="platform-tags"><span class="ptag tk">TikTok</span><span class="ptag ig">Instagram Reels</span><span class="ptag yt">YouTube Shorts</span></div></div></div>
+          <div class="msg user"><div class="msg-avatar user">👤</div><div class="msg-bubble">Write me a hook and caption!</div></div>
+          <div class="msg"><div class="msg-avatar ai">X</div><div class="msg-bubble"><b>Hook:</b> "The pasta secret restaurants don't want you to know 🤫"<br><br><b>Caption:</b> This 10-minute recipe gets requested EVERY week. Here's why it works 👇 #PastaRecipe #CookingTok #FoodTikTok #EasyRecipes #ViralFood</div></div>
+        </div>
+        <div class="chat-input-row">
+          <input class="chat-input" id="chatInput" type="text" placeholder="Ask Xarvis about your content..." />
+          <button class="chat-send" id="chatSendBtn" title="Send">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="benefits">
+  <div class="container">
+    <div class="section-header reveal">
+      <span class="label">Why Creators Love It</span>
+      <h2>Scale Like a <span class="grad-text">Full Team</span></h2>
+      <p>Xarvis gives solo creators the leverage of a content team — without the cost, complexity, or delays.</p>
+    </div>
+    <div class="benefits-grid reveal">
+      <div class="benefits-list">
+        <div class="benefit-item"><div class="benefit-icon">⏱️</div><div class="benefit-text"><h3>Save 12+ Hours Every Week</h3><p>Stop spending hours on captions, hashtag research, and content planning. Xarvis does it in seconds.</p></div></div>
+        <div class="benefit-item"><div class="benefit-icon">🎯</div><div class="benefit-text"><h3>Post Only High-Performing Content</h3><p>Know your viral score before you hit publish. Never waste a post on content that won't land.</p></div></div>
+        <div class="benefit-item"><div class="benefit-icon">📈</div><div class="benefit-text"><h3>Stay Ahead of Trends</h3><p>Xarvis monitors trending content in your niche 24/7 and tells you exactly what to create next.</p></div></div>
+        <div class="benefit-item"><div class="benefit-icon">🧠</div><div class="benefit-text"><h3>Focus on Your Creative Vision</h3><p>Let Xarvis handle the strategy and analytics so you can focus on what you love — creating.</p></div></div>
+      </div>
+      <div class="benefits-visual">
+        <div class="bv-card main"><div class="bv-label">Viral Score</div><div class="bv-big">94%</div><div class="bv-sub">🔥 Top 3% in Food Niche</div><div class="bv-bar"><div class="bv-bar-fill teal"></div></div><div class="mini-row"><span>Engagement</span><span style="color:var(--accent3)">+312%</span></div></div>
+        <div class="bv-card sec"><div class="bv-label">This Week's Top Content</div><div style="font-size:14px;margin-top:8px;color:var(--text);">📹 "5 min breakfast ideas"</div><div class="bv-bar" style="margin-top:10px;"><div class="bv-bar-fill orange"></div></div><div class="mini-row"><span>Trend score</span><span style="color:#ff8c3c">94/100</span></div></div>
+        <div class="bv-card tert"><div class="bv-label">Platform Match</div><div style="display:flex;gap:6px;margin-top:10px;flex-wrap:wrap;"><span class="ptag tk">TikTok ✓</span><span class="ptag ig">Reels ✓</span></div><div style="font-size:12px;color:var(--muted);margin-top:10px;">Best time: 6PM – 9PM</div></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="testimonials">
+  <div class="container">
+    <div class="section-header reveal">
+      <span class="label">Social Proof</span>
+      <h2>Creators Are Already <span class="grad-text">Winning</span></h2>
+      <p>From solo creators to full-time influencers — Xarvis is changing how content is made.</p>
+    </div>
+    <div class="testi-grid reveal">
+      <div class="testi-card"><div class="stars">★★★★★</div><p class="testi-text">"Xarvis literally predicted which clip would go viral and it hit 2.1M views. I've never had that confidence posting before. This is a game changer."</p><div class="testi-author"><div class="testi-avatar" style="background:linear-gradient(135deg,#7c6dfa,#e05cff);">AK</div><div><div class="testi-name">Alex Kim</div><div class="testi-handle">@alexkim.creates · 890K followers</div></div></div></div>
+      <div class="testi-card"><div class="stars">★★★★★</div><p class="testi-text">"I went from spending 3 hours on captions to 10 minutes. Xarvis writes better hooks than I do honestly. My engagement is up 340% in 6 weeks."</p><div class="testi-author"><div class="testi-avatar" style="background:linear-gradient(135deg,#00e5c3,#00b4d8);">SR</div><div><div class="testi-name">Sofia Reyes</div><div class="testi-handle">@sofiareyes · 1.2M followers</div></div></div></div>
+      <div class="testi-card"><div class="stars">★★★★★</div><p class="testi-text">"The trending content suggestions are insane. Xarvis told me to post about a trending format 2 days before it blew up. It's like having a team of strategists."</p><div class="testi-author"><div class="testi-avatar" style="background:linear-gradient(135deg,#ff8c3c,#e05cff);">JM</div><div><div class="testi-name">Jake Monroe</div><div class="testi-handle">@jakemonroefitness · 450K followers</div></div></div></div>
+    </div>
+  </div>
+</section>
+
+<section id="cta">
+  <div class="container">
+    <div class="cta-box reveal">
+      <span class="label">Limited Early Access</span>
+      <h2>Ready to Go <span class="grad-text">Viral?</span></h2>
+      <p>Join 8,000+ creators already on the waitlist. Early access members get 3 months free and locked-in pricing forever.</p>
+      <div class="form-row">
+        <input class="form-input" type="email" id="emailInput" placeholder="Enter your email..." />
+        <a href="#" class="btn-primary" onclick="handleSignup(event)"><span>🚀 Join Waitlist</span></a>
+      </div>
+      <p style="margin-top:16px;font-size:13px;color:var(--muted);">No credit card required · Cancel anytime · First 500 get priority access</p>
+      <div id="formSuccess" style="display:none;margin-top:24px;padding:18px 24px;background:rgba(0,229,195,0.1);border:1px solid rgba(0,229,195,0.3);border-radius:12px;color:var(--accent3);font-size:15px;">🎉 You're on the list! We'll reach out when your early access is ready.</div>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="footer-logo">Xarvis AI</div>
+  <div class="footer-links">
+    <a href="#features">Features</a><a href="#howitworks">How It Works</a>
+    <a href="#chatdemo">Demo</a><a href="#testimonials">Reviews</a><a href="#cta">Early Access</a>
+  </div>
+  <div class="footer-copy">© 2025 Creator Xarvis AI · Built for creators who create to win.</div>
+</footer>
 <script>
-async function send() {
-  const message = document.getElementById("input").value;
+  // ── SCROLL REVEAL (unchanged) ────────────────────────────────────────
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(el => {
+      if (el.isIntersecting) {
+        el.target.classList.add('visible');
+        el.target.querySelectorAll('.feat-card,.step-card,.benefit-item,.testi-card').forEach((child, i) => {
+          child.style.transitionDelay = `${i * 80}ms`;
+          child.style.opacity = '0';
+          child.style.transform = 'translateY(24px)';
+          setTimeout(() => {
+            child.style.opacity = '1';
+            child.style.transform = 'translateY(0)';
+            child.style.transition = 'opacity 0.6s ease,transform 0.6s ease,border-color 0.3s,box-shadow 0.3s,background 0.3s';
+          }, 80);
+        });
+      }
+    });
+  }, { threshold: 0.12 });
+  document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
 
-  document.getElementById("result").innerText = "Thinking...";
+  // ── EMAIL SIGNUP (unchanged) ─────────────────────────────────────────
+  function handleSignup(e) {
+    e.preventDefault();
+    const email = document.getElementById('emailInput').value;
+    if (!email || !email.includes('@')) { document.getElementById('emailInput').style.borderColor = 'rgba(255,80,80,0.5)'; return; }
+    document.getElementById('formSuccess').style.display = 'block';
+    document.getElementById('emailInput').value = '';
+    document.getElementById('emailInput').style.borderColor = '';
+  }
 
-  const res = await fetch("http://localhost:3001/api/chat", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json"
-    },
-    body: JSON.stringify({ message })
+  // ── NAV SCROLL (unchanged) ───────────────────────────────────────────
+  window.addEventListener('scroll', () => {
+    const nav = document.querySelector('nav');
+    nav.style.padding = window.scrollY > 40 ? '12px 48px' : '18px 48px';
+    nav.style.borderBottomColor = window.scrollY > 40 ? 'rgba(255,255,255,0.1)' : 'rgba(255,255,255,0.07)';
   });
 
-  const data = await res.json();
+  // ════════════════════════════════════════════════════════════════════
+  // XARVIS CHAT — replaces the static demo, wires to your backend
+  // Change BACKEND_URL when you deploy (Railway, Render, etc.)
+  // ════════════════════════════════════════════════════════════════════
+  const BACKEND_URL   = 'http://localhost:3000';
+  const chatInput     = document.getElementById('chatInput');
+  const chatSendBtn   = document.getElementById('chatSendBtn');
+  const chatMessages  = document.getElementById('chatMessages');
+  const statusDot     = document.getElementById('statusDot');
+  const statusText    = document.getElementById('statusText');
 
-  document.getElementById("result").innerText = data.reply;
-}
+  // Convert plain-text AI reply to styled HTML
+  // Handles **bold**, *italic*, bullet lines (- / •), numbered lists,
+  // section headers (ALL CAPS or "Step N:"), and bare newlines.
+  function formatReply(raw) {
+    const safe = raw
+      .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+    return safe.split('\n').map(line => {
+      const t = line.trim();
+      if (!t) return '<br>';
+      if (/^[A-Z][^a-z]{0,20}:$/.test(t) || /^Step \d+:/i.test(t))
+        return '<span class="ai-section">' + inline(t) + '</span>';
+      if (/^[-•*]\s/.test(t))
+        return '<span class="ai-bullet">' + inline(t.replace(/^[-•*]\s/,'')) + '</span>';
+      if (/^\d+\.\s/.test(t))
+        return '<span class="ai-bullet">' + inline(t) + '</span>';
+      return inline(t) + '<br>';
+    }).join('');
+  }
+  function inline(t) {
+    return t.replace(/\*\*(.*?)\*\*/g,'<strong>$1</strong>')
+            .replace(/\*(.*?)\*/g,'<em>$1</em>');
+  }
+
+  function appendBubble(role, html) {
+    const wrap   = document.createElement('div');
+    wrap.className = role === 'user' ? 'msg user' : 'msg';
+    const avatar = document.createElement('div');
+    avatar.className = role === 'user' ? 'msg-avatar user' : 'msg-avatar ai';
+    avatar.textContent = role === 'user' ? '👤' : 'X';
+    const bubble = document.createElement('div');
+    bubble.className = 'msg-bubble';
+    bubble.innerHTML  = html;
+    wrap.appendChild(avatar);
+    wrap.appendChild(bubble);
+    chatMessages.appendChild(wrap);
+    chatMessages.scrollTop = chatMessages.scrollHeight;
+  }
+
+  function showTyping() {
+    const wrap   = document.createElement('div');
+    wrap.className = 'msg'; wrap.id = 'xv-typing';
+    const avatar = document.createElement('div');
+    avatar.className = 'msg-avatar ai'; avatar.textContent = 'X';
+    const bubble = document.createElement('div');
+    bubble.className = 'msg-bubble';
+    bubble.innerHTML =
+      '<span class="xv-dot" style="animation-delay:0s">·</span>' +
+      '<span class="xv-dot" style="animation-delay:.2s">·</span>' +
+      '<span class="xv-dot" style="animation-delay:.4s">·</span>';
+    wrap.appendChild(avatar); wrap.appendChild(bubble);
+    chatMessages.appendChild(wrap);
+    chatMessages.scrollTop = chatMessages.scrollHeight;
+  }
+  function hideTyping() { const el = document.getElementById('xv-typing'); if (el) el.remove(); }
+
+  function setLoading(on) {
+    chatInput.disabled = chatSendBtn.disabled = on;
+    chatSendBtn.style.opacity = on ? '0.45' : '1';
+    chatSendBtn.style.cursor  = on ? 'not-allowed' : 'pointer';
+    statusDot.style.background = on ? '#febc2e' : 'var(--accent3)';
+    statusText.textContent     = on ? 'Thinking…' : 'Online';
+  }
+
+  async function sendChatMsg() {
+    const text = chatInput.value.trim();
+    if (!text) return;
+    chatInput.value = '';
+    setLoading(true);
+    appendBubble('user', text);
+    showTyping();
+    try {
+      const res = await fetch(BACKEND_URL + '/api/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ message: text })
+      });
+      hideTyping();
+      if (!res.ok) throw new Error('HTTP ' + res.status);
+      const data = await res.json();
+      appendBubble('ai', formatReply(data.reply || 'No response received.'));
+    } catch (err) {
+      hideTyping();
+      console.error('[Xarvis]', err);
+      appendBubble('ai',
+        '<span style="color:#ff8c8c;">⚠️ Could not reach the Xarvis server.<br>' +
+        'Make sure your backend is running at <code style="color:var(--accent)">' +
+        BACKEND_URL + '</code> and CORS is enabled.</span>');
+    } finally {
+      setLoading(false);
+      chatInput.focus();
+    }
+  }
+
+  chatSendBtn.addEventListener('click', sendChatMsg);
+  chatInput.addEventListener('keydown', e => {
+    if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendChatMsg(); }
+  });
 </script>
-
 </body>
 </html>
