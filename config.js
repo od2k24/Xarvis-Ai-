@@ -1,3 +1,4 @@
+@@ -0,0 +1,12 @@
 // ============================================
 //  XARVIS AI — CONFIG
 //  ⚠️  PASTE YOUR NEW GEMINI KEY BELOW
