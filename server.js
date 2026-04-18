@@ -11,46 +11,41 @@ app.use(express.json());
 
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 
-const XARVIS_SYSTEM_PROMPT = `You are Xarvis AI — an elite AI co-founder and viral growth strategist built for content creators who want to dominate their niche.
+// 🔥 UPGRADED SYSTEM PROMPT (structured output)
+const XARVIS_SYSTEM_PROMPT = `
+You are Xarvis AI — an elite viral growth co-founder for content creators.
 
-Your personality: Direct, sharp, visionary. You don't give generic advice. You give specific, tactical, battle-tested strategies that actually move the needle.
+You must respond in VALID JSON ONLY.
 
-Your expertise:
-- Viral content strategy (YouTube, TikTok, Instagram, X)
-- Hook writing and attention engineering
-- Monetization blueprints for creators
-- Audience psychology and retention mechanics
-- Trend identification and newsjacking
-- Content repurposing and distribution
+Output format:
+{
+  "viralScore": number (0-100),
+  "reason": "short reason",
+  "tactics": ["tactic1", "tactic2", "tactic3"],
+  "reply": "main advice in sharp tone",
+  "contrarianInsight": "one deep insight most creators miss"
+}
 
-When a creator gives you an idea or asks a question:
-1. Evaluate it brutally honestly
-2. Give a VIRAL SCORE from 0–100 with a one-line reason
-3. Provide 3 specific, actionable tactics to maximize growth
-4. End with one contrarian insight most creators miss
+Rules:
+- Be brutally honest
+- Think like a viral strategist, not a chatbot
+- No fluff
+- No extra text outside JSON
+`;
 
-Format your response like this:
-
-⚡ VIRAL SCORE: [0-100] — [one sharp reason]
-
-🎯 TACTICS:
-1. [Tactic 1]
-2. [Tactic 2]  
-3. [Tactic 3]
-
-💡 CONTRARIAN INSIGHT:
-[One thing most creators overlook]
-
-Keep responses sharp and punchy. No fluff. No filler. Every word earns its place.`;
-
-function calculateViralScore(text) {
-  let score = 50;
-  const boostWords = ["viral", "trending", "controversial", "secret", "nobody", "exposed", "shocking", "unfiltered", "raw", "millionaire", "rich", "broke", "fail", "how i", "why i", "truth", "honest", "real"];
-  const lower = text.toLowerCase();
-  boostWords.forEach(w => { if (lower.includes(w)) score += 4; });
-  if (text.includes("?")) score += 5;
-  if (text.split(" ").length < 8) score += 5;
-  return Math.min(100, Math.max(0, score));
+// optional fallback safety parser
+function safeJSONParse(text) {
+  try {
+    return JSON.parse(text);
+  } catch {
+    return {
+      viralScore: 50,
+      reason: "fallback parse failed",
+      tactics: [],
+      reply: text,
+      contrarianInsight: ""
+    };
+  }
 }
 
 app.post("/api/chat", async (req, res) => {
@@ -59,10 +54,6 @@ app.post("/api/chat", async (req, res) => {
 
     if (!message || !message.trim()) {
       return res.status(400).json({ error: "Message is required." });
-    }
-
-    if (!process.env.GEMINI_API_KEY) {
-      return res.status(500).json({ error: "GEMINI_API_KEY is not set in .env" });
     }
 
     const model = genAI.getGenerativeModel({
@@ -74,25 +65,28 @@ app.post("/api/chat", async (req, res) => {
     const response = await result.response;
     const text = response.text();
 
-    const viralScore = calculateViralScore(message);
+    const parsed = safeJSONParse(text);
 
     res.json({
-      reply: text,
-      viralScore,
+      ...parsed,
       timestamp: new Date().toISOString(),
     });
+
   } catch (err) {
     console.error("Gemini error:", err.message);
     res.status(500).json({
-      error: err.message || "Something went wrong. Check your API key and try again.",
+      error: err.message || "Something went wrong.",
     });
   }
 });
 
 app.get("/api/health", (req, res) => {
-  res.json({ status: "Xarvis AI is live.", timestamp: new Date().toISOString() });
+  res.json({
+    status: "Xarvis AI v2 live 🔥",
+    timestamp: new Date().toISOString()
+  });
 });
 
 app.listen(PORT, () => {
-  console.log(`\n🚀 Xarvis AI backend running on http://localhost:${PORT}\n`);
+  console.log(`🚀 Xarvis AI backend running on http://localhost:${PORT}`);
 });
