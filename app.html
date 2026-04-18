@@ -576,6 +576,8 @@
         <span style="color:var(--muted);font-size:0.78rem;font-weight:400;">● Online — Ready to work</span>
       </div>
       <div class="topbar-right">
+        <button class="tts-btn active" id="tts-btn-top" onclick="toggleTTS()" style="padding:8px 14px;border-radius:50px;">🔊 TTS</button>
+        <button class="upgrade-btn" style="background:var(--card);border:1px solid var(--border2);color:var(--muted);" onclick="showKeyModal()" title="Set Gemini API Key">🔑 API Key</button>
         <button class="upgrade-btn" onclick="openUpgradeModal()">⚡ Upgrade</button>
       </div>
     </div>
@@ -631,6 +633,19 @@
     <button class="voice-stop-btn" onclick="stopVoice()">Stop & Send</button>
   </div>
 
+  <!-- API KEY MODAL -->
+  <div class="modal-overlay" id="key-modal">
+    <div class="modal">
+      <h3>🔑 Enter Gemini API Key</h3>
+      <p>Xarvis uses Google Gemini to power responses. Paste your key below — saved locally on your device only.</p>
+      <input id="api-key-input" type="password" placeholder="AIza..." style="width:100%;padding:12px 16px;background:var(--bg);border:1px solid var(--border2);border-radius:12px;color:var(--text);font-size:0.92rem;outline:none;font-family:'DM Sans',sans-serif;margin-bottom:6px;" onkeydown="if(event.key==='Enter')saveApiKey()" />
+      <p style="font-size:0.75rem;color:var(--muted);margin-bottom:16px;">Get your free key at <a href="https://aistudio.google.com/app/apikey" target="_blank" style="color:var(--accent);">aistudio.google.com</a></p>
+      <div class="modal-actions">
+        <button class="modal-activate" onclick="saveApiKey()">✦ Connect Gemini</button>
+      </div>
+    </div>
+  </div>
+
   <!-- UPGRADE MODAL -->
   <div class="modal-overlay" id="upgrade-modal" onclick="closeModalOutside(event)">
     <div class="modal">
@@ -678,11 +693,10 @@
     if (planParam === 'pro') activatePlanSilent('pro');
     if (planParam === 'elite') activatePlanSilent('elite');
 
-    // ===== CLAUDE API =====
-    async function callXarvis(userMessage) {
-      const systemPrompt = `You are Xarvis AI — an elite AI co-founder for content creators. You think like a viral strategist, YouTube growth expert, TikTok algorithm specialist, and monetization coach all in one.
+    // ===== GEMINI API =====
+    const GEMINI_SYSTEM = `You are Xarvis AI — an elite AI co-founder for content creators. You think like a viral strategist, YouTube growth expert, TikTok algorithm specialist, and monetization coach all in one.
 
-Your personality: Direct, energetic, data-driven, motivating. You cut through fluff and give REAL actionable strategies. You use bold formatting to highlight key insights. You reference real numbers, timeframes, and platforms.
+Your personality: Direct, energetic, data-driven, motivating. You cut through fluff and give REAL actionable strategies. You use bold formatting (**bold**) to highlight key insights. You reference real numbers, timeframes, and platforms.
 
 When helping creators:
 - Always give specific, numbered action steps
@@ -695,19 +709,58 @@ When helping creators:
 
 You are speaking to a creator who wants to go from where they are NOW to six-figure income and viral growth. Be their unfair advantage.`;
 
-      const response = await fetch("https://api.anthropic.com/v1/messages", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          model: "claude-sonnet-4-20250514",
-          max_tokens: 1000,
-          system: systemPrompt,
-          messages: messages.map(m => ({ role: m.role, content: m.content }))
-        })
-      });
+    function getApiKey() {
+      return localStorage.getItem('xarvis_gemini_key') || '';
+    }
+
+    async function callXarvis(userMessage) {
+      const apiKey = getApiKey();
+      if (!apiKey) {
+        showKeyModal();
+        throw new Error('No API key');
+      }
+
+      // Build conversation history for Gemini
+      const history = messages.slice(0, -1).map(m => ({
+        role: m.role === 'assistant' ? 'model' : 'user',
+        parts: [{ text: m.content }]
+      }));
+
+      const response = await fetch(
+        `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            system_instruction: { parts: [{ text: GEMINI_SYSTEM }] },
+            contents: [
+              ...history,
+              { role: "user", parts: [{ text: userMessage }] }
+            ],
+            generationConfig: { maxOutputTokens: 1000, temperature: 0.9 }
+          })
+        }
+      );
+
+      if (!response.ok) {
+        const err = await response.json();
+        throw new Error(err?.error?.message || 'Gemini API error');
+      }
 
       const data = await response.json();
-      return data.content?.[0]?.text || "Sorry, I couldn't process that. Try again.";
+      return data.candidates?.[0]?.content?.parts?.[0]?.text || "Sorry, I couldn't process that. Try again.";
+    }
+
+    // ===== API KEY MODAL =====
+    function showKeyModal() {
+      document.getElementById('key-modal').classList.add('open');
+    }
+    function saveApiKey() {
+      const val = document.getElementById('api-key-input').value.trim();
+      if (!val) return;
+      localStorage.setItem('xarvis_gemini_key', val);
+      document.getElementById('key-modal').classList.remove('open');
+      renderMessage('bot', '✅ **Gemini API key saved!** I\'m Xarvis — your AI co-founder. What\'s your niche and goal?');
     }
 
     // ===== SEND MESSAGE =====
@@ -755,7 +808,13 @@ You are speaking to a creator who wants to go from where they are NOW to six-fig
 
       } catch (err) {
         typingEl.remove();
-        renderMessage('bot', '⚠️ Xarvis is temporarily offline. Check your connection and try again.');
+        if (err.message === 'No API key') {
+          // key modal shown, do nothing else
+        } else if (err.message && (err.message.includes('invalid') || err.message.includes('API_KEY'))) {
+          renderMessage('bot', '❌ **Invalid API key.** Click the 🔑 button to update it.');
+        } else {
+          renderMessage('bot', '⚠️ **Error:** ' + (err.message || 'Unknown error') + ' — Check your internet and try again.');
+        }
       }
 
       document.getElementById('send-btn').disabled = false;
@@ -943,6 +1002,14 @@ You are speaking to a creator who wants to go from where they are NOW to six-fig
     function toggleSidebar() {
       document.getElementById('sidebar').classList.toggle('open');
     }
+
+    // ===== INIT =====
+    window.addEventListener('load', () => {
+      if (!getApiKey()) {
+        showKeyModal();
+      }
+      renderRecentChats();
+    });
   </script>
 </body>
 </html>
