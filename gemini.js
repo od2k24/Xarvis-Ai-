@@ -1,31 +1,22 @@
 // ============================================
-//  XARVIS AI — GEMINI ENGINE (FIXED & UPGRADED)
+//  XARVIS AI — GEMINI ENGINE (STABLE CLEAN BUILD)
 // ============================================
 
-// 🔥 SYSTEM PROMPT (your AI personality)
+// 🔥 SYSTEM PROMPT
 const XARVIS_SYSTEM = `You are Xarvis AI — an elite AI co-founder for content creators.
 
-You think like:
-- Viral strategist
-- YouTube growth expert
-- TikTok algorithm specialist
-- Monetization coach
-
-Your personality:
-Direct, energetic, data-driven, motivating.
-You cut fluff and give REAL actionable strategies.
+You give:
+- Direct, actionable advice
+- Viral strategies
+- Monetization plans
 
 Rules:
-- Always give numbered steps
-- Include hooks/scripts/examples
-- Reference real growth tactics
-- Use **bold** for key ideas
-- Use emojis strategically
-- Give predictions when relevant
-- End with a clear next step
+- Use numbered steps
+- Be concise but powerful
+- Highlight key ideas with **bold**
+- End with a next step
 
-Mission:
-Turn creators into six-figure earners with viral content.`;
+Goal: Help creators grow fast and make money.`;
 
 
 // ============================================
@@ -34,35 +25,33 @@ Turn creators into six-figure earners with viral content.`;
 
 async function callGemini(messagesHistory) {
   try {
-    const url = `https://generativelanguage.googleapis.com/v1beta/models/${XARVIS_CONFIG.GEMINI_MODEL}:generateContent?key=${XARVIS_CONFIG.GEMINI_API_KEY}`;
+    const apiKey = XARVIS_CONFIG.GEMINI_API_KEY;
+    const model = XARVIS_CONFIG.GEMINI_MODEL || "gemini-pro";
 
-    // ✅ Convert chat history to Gemini format
-    const contents = messagesHistory.map(m => ({
-      role: m.role === "assistant" ? "model" : "user",
-      parts: [{ text: m.content }]
-    }));
+    const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
 
-    // ✅ CLEAN request body (NO invalid fields)
+    // ✅ Get latest user message
+    const lastMessage = messagesHistory[messagesHistory.length - 1]?.content || "";
+
+    // ✅ Build request
     const body = {
       contents: [
         {
           role: "user",
           parts: [
             {
-              text: `${XARVIS_SYSTEM}\n\nUser request:\n${messagesHistory[messagesHistory.length - 1].content}`
+              text: `${XARVIS_SYSTEM}\n\nUser: ${lastMessage}`
             }
           ]
         }
       ],
       generationConfig: {
-        temperature: XARVIS_CONFIG.TEMPERATURE || 0.7,
-        maxOutputTokens: XARVIS_CONFIG.MAX_TOKENS || 800,
-        topP: 0.9,
-        topK: 40
+        temperature: 0.7,
+        maxOutputTokens: 800
       }
     };
 
-    const res = await fetch(url, {
+    const response = await fetch(url, {
       method: "POST",
       headers: {
         "Content-Type": "application/json"
@@ -70,32 +59,31 @@ async function callGemini(messagesHistory) {
       body: JSON.stringify(body)
     });
 
-    // ❌ Handle API errors properly
-    if (!res.ok) {
-      const errData = await res.json().catch(() => ({}));
-      console.error("Gemini API Error:", errData);
+    // ❌ API error handling
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      console.error("API ERROR:", errorData);
 
-      return `⚠️ Error: ${errData?.error?.message || "Something went wrong."}`;
+      return "⚠️ API Error — check key or model.";
     }
 
-    const data = await res.json();
+    const data = await response.json();
 
-    // ✅ Safe extraction
-    const output =
+    // ✅ Extract response safely
+    const text =
       data?.candidates?.[0]?.content?.parts?.[0]?.text;
 
-    return output || "⚠️ No response from AI.";
+    return text || "⚠️ No response.";
 
   } catch (error) {
-    console.error("Xarvis Error:", error);
-
-    return "⚠️ Network error. Check your API key or internet.";
+    console.error("XARVIS ERROR:", error);
+    return "⚠️ Network error. Check console.";
   }
 }
 
 
 // ============================================
-// 🔥 OPTIONAL: SIMPLE HELPER
+// 🔥 SIMPLE SEND FUNCTION
 // ============================================
 
 async function sendMessage(message) {
