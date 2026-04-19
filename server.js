@@ -12,30 +12,34 @@ const SYSTEM = `You are Xarvis AI — an elite AI co-founder for content creator
 
 app.post("/api/chat", async (req, res) => {
   try {
-    const apiKey = process.env.GEMINI_API_KEY;
-    if (!apiKey) return res.status(500).json({ error: "GEMINI_API_KEY not set in Railway Variables." });
+    const apiKey = process.env.GROQ_API_KEY;
+    if (!apiKey) return res.status(500).json({ error: "GROQ_API_KEY not set in Railway Variables." });
 
     const { message, history = [] } = req.body;
     if (!message?.trim()) return res.status(400).json({ error: "Message is required." });
 
-    const contents = [
-      { role: "user",  parts: [{ text: `SYSTEM: ${SYSTEM}\n\nAcknowledge briefly.` }] },
-      { role: "model", parts: [{ text: "Got it. I'm Xarvis AI — let's build your growth engine. What's your niche?" }] },
-      ...history,
-      { role: "user",  parts: [{ text: message }] }
-    ];
+    const historyMsgs = history.map(h => ({
+      role: h.role === "model" ? "assistant" : "user",
+      content: h.parts?.[0]?.text || ""
+    }));
 
-    const response = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`,
-      {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          contents,
-          generationConfig: { maxOutputTokens: 1024, temperature: 0.9 }
-        })
-      }
-    );
+    const response = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${apiKey}`
+      },
+      body: JSON.stringify({
+        model: "llama-3.3-70b-versatile",
+        messages: [
+          { role: "system",    content: SYSTEM },
+          ...historyMsgs,
+          { role: "user",      content: message }
+        ],
+        max_tokens: 1024,
+        temperature: 0.9
+      })
+    });
 
     const data = await response.json();
 
@@ -43,7 +47,7 @@ app.post("/api/chat", async (req, res) => {
       return res.status(500).json({ error: data?.error?.message || `Error ${response.status}` });
     }
 
-    const reply = data.candidates?.[0]?.content?.parts?.[0]?.text || "No response.";
+    const reply = data.choices?.[0]?.message?.content || "No response.";
     res.json({ reply, timestamp: new Date().toISOString() });
 
   } catch (err) {
@@ -52,7 +56,12 @@ app.post("/api/chat", async (req, res) => {
 });
 
 app.get("/api/health", (req, res) => {
-  res.json({ status: "Xarvis AI live 🔥", keyLoaded: !!process.env.GEMINI_API_KEY, timestamp: new Date().toISOString() });
+  res.json({
+    status:    "Xarvis AI live 🔥",
+    keyLoaded: !!process.env.GROQ_API_KEY,
+    model:     "llama-3.3-70b (Groq)",
+    timestamp: new Date().toISOString()
+  });
 });
 
-app.listen(PORT, () => console.log(`🚀 Xarvis on port ${PORT} | Key: ${!!process.env.GEMINI_API_KEY}`));
+app.listen(PORT, () => console.log(`🚀 Xarvis on port ${PORT} | Key: ${!!process.env.GROQ_API_KEY}`));
