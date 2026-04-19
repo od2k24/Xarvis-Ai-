@@ -1,107 +1,60 @@
+console.log("🔥 1 - FILE STARTED");
+
 require("dotenv").config();
+console.log("🔥 2 - dotenv loaded");
+
 const express = require("express");
+console.log("🔥 3 - express loaded");
+
 const cors = require("cors");
+console.log("🔥 4 - cors loaded");
+
 const { GoogleGenerativeAI } = require("@google/generative-ai");
+console.log("🔥 5 - gemini sdk loaded");
 
 const app = express();
 
-/**
- * ✅ Railway-safe setup
- */
-app.use(cors({
-  origin: "*",
-}));
+app.use(cors());
 app.use(express.json());
 
-/**
- * ✅ IMPORTANT: Railway requires this exact binding
- */
+console.log("🔥 6 - middleware set");
+
 const PORT = process.env.PORT;
 
-/**
- * ✅ Safety check (prevents silent crash)
- */
-if (!process.env.GEMINI_API_KEY) {
-  console.error("❌ GEMINI_API_KEY is missing in environment variables!");
+console.log("🔥 PORT =", PORT);
+
+if (!PORT) {
+  console.error("❌ PORT NOT FOUND — Railway issue");
 }
 
 /**
- * Gemini setup
- */
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
-
-/**
- * System prompt (your Xarvis personality)
- */
-const SYSTEM = `
-You are Xarvis AI — an elite AI co-founder for content creators.
-You are a viral strategist, YouTube growth expert, TikTok algorithm specialist, and monetization coach.
-
-Be:
-- Direct
-- Energetic
-- Actionable
-- Structured
-
-Always give:
-1. Numbered steps
-2. Examples/scripts when relevant
-3. Clear next action
-
-Avoid fluff.
-`;
-
-/**
- * HEALTH CHECK (must ALWAYS work)
+ * HEALTH CHECK
  */
 app.get("/api/health", (req, res) => {
+  res.json({ ok: true, time: Date.now() });
+});
+
+/**
+ * ROOT TEST
+ */
+app.get("/", (req, res) => {
+  res.send("Xarvis alive");
+});
+
+/**
+ * CHAT TEST (SAFE MODE — NO GEMINI YET)
+ */
+app.post("/api/chat", (req, res) => {
+  console.log("🔥 REQUEST RECEIVED");
+
   res.json({
-    status: "Xarvis AI alive 🔥",
-    time: new Date().toISOString(),
+    reply: "Xarvis test response working",
   });
 });
 
 /**
- * CHAT ENDPOINT (fully crash-proof)
- */
-app.post("/api/chat", async (req, res) => {
-  try {
-    const { message, history = [] } = req.body;
-
-    if (!message) {
-      return res.status(400).json({ error: "Message is required" });
-    }
-
-    const model = genAI.getGenerativeModel({
-      model: "gemini-1.5-flash", // ✅ stable model
-      systemInstruction: SYSTEM,
-    });
-
-    const chat = model.startChat({ history });
-
-    const result = await chat.sendMessage(message);
-    const reply = result.response.text();
-
-    return res.json({
-      reply,
-      success: true,
-      timestamp: new Date().toISOString(),
-    });
-
-  } catch (err) {
-    console.error("❌ Chat error:", err);
-
-    // NEVER crash server — always respond
-    return res.status(500).json({
-      error: "AI request failed",
-      details: err.message,
-    });
-  }
-});
-
-/**
- * START SERVER (Railway-safe binding)
+ * START SERVER
  */
 app.listen(PORT, "0.0.0.0", () => {
-  console.log(`🚀 Xarvis AI running on port ${PORT}`);
+  console.log("🚀 SERVER RUNNING ON", PORT);
 });
