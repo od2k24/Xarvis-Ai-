@@ -1,7 +1,6 @@
 require("dotenv").config();
 const express = require("express");
-const cors = require("cors");
-const { GoogleGenerativeAI } = require("@google/generative-ai");
+const cors    = require("cors");
 
 const app  = express();
 const PORT = process.env.PORT || 3001;
@@ -16,38 +15,51 @@ Always: give numbered steps, include hooks/scripts/examples, reference platform 
 app.post("/api/chat", async (req, res) => {
   try {
     const apiKey = process.env.GEMINI_API_KEY;
-    if (!apiKey) {
-      return res.status(500).json({ error: "GEMINI_API_KEY not set in Railway Variables." });
-    }
+    if (!apiKey) return res.status(500).json({ error: "GEMINI_API_KEY not set in Railway Variables." });
 
     const { message, history = [] } = req.body;
-    if (!message || !message.trim()) {
-      return res.status(400).json({ error: "Message is required." });
+    if (!message?.trim()) return res.status(400).json({ error: "Message is required." });
+
+    // Build conversation for Gemini REST API directly
+    const contents = [
+      ...history,
+      { role: "user", parts: [{ text: message }] }
+    ];
+
+    const response = await fetch(
+      `https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key=${apiKey}`,
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          system_instruction: { parts: [{ text: SYSTEM }] },
+          contents,
+          generationConfig: { maxOutputTokens: 1024, temperature: 0.9 }
+        })
+      }
+    );
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      const msg = data?.error?.message || `Gemini error ${response.status}`;
+      return res.status(500).json({ error: msg });
     }
 
-    const genAI = new GoogleGenerativeAI(apiKey);
-    const model = genAI.getGenerativeModel({
-      model: "gemini-1.5-flash-latest",
-      systemInstruction: SYSTEM,
-    });
-
-    const chat   = model.startChat({ history });
-    const result = await chat.sendMessage(message);
-    const reply  = result.response.text();
-
+    const reply = data.candidates?.[0]?.content?.parts?.[0]?.text || "No response from Gemini.";
     res.json({ reply, timestamp: new Date().toISOString() });
 
   } catch (err) {
-    console.error("Gemini error:", err.message);
+    console.error("Error:", err.message);
     res.status(500).json({ error: err.message || "Something went wrong." });
   }
 });
 
 app.get("/api/health", (req, res) => {
   res.json({
-    status: "Xarvis AI live 🔥",
+    status:    "Xarvis AI live 🔥",
     keyLoaded: !!process.env.GEMINI_API_KEY,
-    model: "gemini-1.5-flash-latest",
+    model:     "gemini-1.5-flash (REST v1)",
     timestamp: new Date().toISOString()
   });
 });
