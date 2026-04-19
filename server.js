@@ -8,9 +8,7 @@ const PORT = process.env.PORT || 3001;
 app.use(cors());
 app.use(express.json());
 
-const SYSTEM = `You are Xarvis AI — an elite AI co-founder for content creators. You are a viral strategist, YouTube growth expert, TikTok algorithm specialist, and monetization coach in one.
-Personality: Direct, energetic, data-driven, motivating. Cut through fluff, give REAL actionable strategies. Bold key terms with **bold**. Use emojis strategically.
-Always: give numbered steps, include hooks/scripts/examples, reference platform trends, end with a clear next step. Help creators get to six-figure income and viral growth.`;
+const SYSTEM = `You are Xarvis AI — an elite AI co-founder for content creators. You are a viral strategist, YouTube growth expert, TikTok algorithm specialist, and monetization coach in one. Personality: Direct, energetic, data-driven, motivating. Cut through fluff, give REAL actionable strategies. Bold key terms with **bold**. Use emojis strategically. Always: give numbered steps, include hooks/scripts/examples, reference platform trends, end with a clear next step. Help creators get to six-figure income and viral growth.`;
 
 app.post("/api/chat", async (req, res) => {
   try {
@@ -20,8 +18,14 @@ app.post("/api/chat", async (req, res) => {
     const { message, history = [] } = req.body;
     if (!message?.trim()) return res.status(400).json({ error: "Message is required." });
 
-    // Build conversation for Gemini REST API directly
+    // Inject system prompt as first user/model exchange
+    const systemTurn = [
+      { role: "user",  parts: [{ text: `SYSTEM INSTRUCTIONS: ${SYSTEM}\n\nAcknowledge you understand.` }] },
+      { role: "model", parts: [{ text: "Understood. I am Xarvis AI, ready to help creators go viral and build six-figure income. What's your niche and goal?" }] }
+    ];
+
     const contents = [
+      ...systemTurn,
       ...history,
       { role: "user", parts: [{ text: message }] }
     ];
@@ -32,7 +36,6 @@ app.post("/api/chat", async (req, res) => {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          system_instruction: { parts: [{ text: SYSTEM }] },
           contents,
           generationConfig: { maxOutputTokens: 1024, temperature: 0.9 }
         })
@@ -59,7 +62,7 @@ app.get("/api/health", (req, res) => {
   res.json({
     status:    "Xarvis AI live 🔥",
     keyLoaded: !!process.env.GEMINI_API_KEY,
-    model:     "gemini-1.5-flash (REST v1)",
+    model:     "gemini-1.5-flash",
     timestamp: new Date().toISOString()
   });
 });
