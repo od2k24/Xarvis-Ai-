@@ -5,64 +5,56 @@ const { GoogleGenerativeAI } = require("@google/generative-ai");
 
 const app = express();
 
-/**
- * ✅ Middleware
- */
 app.use(cors({ origin: "*" }));
 app.use(express.json());
 
 /**
- * 🚨 CRITICAL FIX: Railway PORT handling
- * NEVER hardcode 3001 on Railway
+ * 🚨 PORT (Railway safe)
  */
 const PORT = process.env.PORT || 3000;
 
 /**
- * 🚨 Safety check
+ * 🔥 MOVE GEMINI INSIDE SAFETY BLOCK (CRITICAL FIX)
  */
-if (!process.env.GEMINI_API_KEY) {
-  console.error("❌ GEMINI_API_KEY missing!");
+let genAI = null;
+
+if (process.env.GEMINI_API_KEY) {
+  genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
+  console.log("✅ Gemini initialized");
+} else {
+  console.error("❌ GEMINI_API_KEY missing in Railway env vars");
 }
 
 /**
- * Gemini setup
- */
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
-
-/**
- * System prompt
+ * SYSTEM PROMPT
  */
 const SYSTEM = `
 You are Xarvis AI — an elite AI co-founder for content creators.
-
-Be:
-- Direct
-- Energetic
-- Structured
-- Actionable
-
-Always give:
-1. Numbered steps
-2. Examples
-3. Clear next action
+Be direct, structured, actionable.
 `;
 
 /**
- * HEALTH CHECK
+ * HEALTH CHECK (always works)
  */
 app.get("/api/health", (req, res) => {
   res.json({
-    status: "Xarvis AI alive 🔥",
-    time: new Date().toISOString(),
+    status: "alive 🔥",
+    gemini: !!genAI,
     port: PORT
   });
 });
 
 /**
- * CHAT ENDPOINT
+ * CHAT (SAFE GUARDED)
  */
 app.post("/api/chat", async (req, res) => {
   try {
+    if (!genAI) {
+      return res.status(500).json({
+        error: "Gemini not initialized (missing API key)"
+      });
+    }
+
     const { message, history = [] } = req.body;
 
     if (!message) {
@@ -81,30 +73,28 @@ app.post("/api/chat", async (req, res) => {
 
     res.json({
       reply,
-      success: true,
-      timestamp: new Date().toISOString()
+      success: true
     });
 
   } catch (err) {
     console.error("❌ Chat error:", err);
-
     res.status(500).json({
-      error: "AI request failed",
+      error: "AI failed",
       details: err.message
     });
   }
 });
 
 /**
- * ROOT TEST (VERY IMPORTANT FOR DEBUGGING)
+ * ROOT
  */
 app.get("/", (req, res) => {
-  res.send("🔥 Xarvis backend is running");
+  res.send("🔥 Xarvis backend running");
 });
 
 /**
- * START SERVER
+ * START
  */
 app.listen(PORT, "0.0.0.0", () => {
-  console.log(`🚀 Xarvis AI running on port ${PORT}`);
+  console.log("🚀 Running on", PORT);
 });
