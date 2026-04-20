@@ -3,215 +3,2643 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Xarvis AI — Creator OS v4</title>
-
+  <title>Xarvis AI — Creator OS v3</title>
   <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet" />
-
   <style>
+    /* ═══════════════════════════════════════════
+       XARVIS AI — CREATOR OS v3
+       Modular. Scalable. Built for daily use.
+    ═══════════════════════════════════════════ */
+
+    /* ── [1] CSS VARIABLES ────────────────────── */
     :root {
-      --bg:#050810;
-      --surface:#0d1120;
-      --border:rgba(255,255,255,0.08);
-      --text:#f0f4ff;
-      --muted:#8895b0;
-      --accent:#4f8eff;
-      --accent2:#7c3aff;
-      --green:#3fff88;
-      --card:rgba(255,255,255,0.04);
-      --glow:rgba(79,142,255,0.25);
+      --bg:       #050810;
+      --surface:  #0d1120;
+      --surface2: #121828;
+      --border:   rgba(255,255,255,0.07);
+      --border2:  rgba(255,255,255,0.13);
+      --accent:   #4f8eff;
+      --accent2:  #7c3aff;
+      --glow:     rgba(79,142,255,0.2);
+      --text:     #f0f4ff;
+      --muted:    #8895b0;
+      --muted2:   #4a5568;
+      --card:     rgba(255,255,255,0.04);
+      --green:    #3fff88;
+      --red:      #ff4757;
+      --amber:    #ffa040;
+      --sw:       258px;
     }
 
-    *{margin:0;padding:0;box-sizing:border-box;}
-
-    body{
-      background:var(--bg);
-      color:var(--text);
-      font-family:DM Sans,sans-serif;
-      display:flex;
-      height:100vh;
-      overflow:hidden;
+    /* ── [2] RESET + BASE ─────────────────────── */
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+    html, body { height: 100%; }
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'DM Sans', sans-serif;
+      display: flex;
+      height: 100vh;
+      overflow: hidden;
     }
 
-    /* SIDEBAR */
-    .sidebar{
-      width:260px;
-      background:var(--surface);
-      border-right:1px solid var(--border);
-      display:flex;
-      flex-direction:column;
+    /* ── [3] SIDEBAR ──────────────────────────── */
+    .sidebar {
+      width: var(--sw);
+      min-width: var(--sw);
+      background: var(--surface);
+      border-right: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+      overflow: hidden;
+      transition: left 0.3s;
     }
 
-    .logo{
-      font-family:Syne;
-      font-weight:800;
-      padding:16px;
-      font-size:1.1rem;
-      background:linear-gradient(135deg,#fff,var(--accent));
-      -webkit-background-clip:text;
-      -webkit-text-fill-color:transparent;
+    .sidebar-header {
+      padding: 16px 14px 13px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-shrink: 0;
     }
 
-    .status{
-      padding:10px 16px;
-      font-size:0.75rem;
-      color:var(--muted);
+    .logo {
+      font-family: 'Syne', sans-serif;
+      font-weight: 800;
+      font-size: 1.1rem;
+      background: linear-gradient(135deg, #fff, var(--accent));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      text-decoration: none;
     }
 
-    .main{
-      flex:1;
-      display:flex;
-      flex-direction:column;
+    .plan-pill {
+      font-size: 0.65rem;
+      padding: 3px 9px;
+      background: rgba(63,255,136,0.1);
+      border: 1px solid rgba(63,255,136,0.25);
+      border-radius: 50px;
+      color: var(--green);
+      font-weight: 700;
     }
 
-    /* TOPBAR */
-    .topbar{
-      padding:12px 16px;
-      border-bottom:1px solid var(--border);
-      display:flex;
-      justify-content:space-between;
-      align-items:center;
+    .sidebar-top {
+      padding: 10px 10px 6px;
+      display: flex;
+      gap: 6px;
+      flex-shrink: 0;
     }
 
-    .title{
-      font-family:Syne;
-      font-weight:700;
+    .new-chat-btn {
+      flex: 1;
+      padding: 9px 10px;
+      background: linear-gradient(135deg, var(--accent), var(--accent2));
+      border: none;
+      border-radius: 9px;
+      color: #fff;
+      font-family: 'Syne', sans-serif;
+      font-weight: 700;
+      font-size: 0.77rem;
+      cursor: pointer;
+      transition: opacity 0.2s, transform 0.2s;
+    }
+    .new-chat-btn:hover { opacity: 0.88; transform: translateY(-1px); }
+
+    .tts-btn {
+      padding: 9px 10px;
+      background: var(--card);
+      border: 1px solid var(--border2);
+      border-radius: 9px;
+      color: var(--muted);
+      font-size: 0.75rem;
+      cursor: pointer;
+      white-space: nowrap;
+      transition: color 0.2s, border-color 0.2s;
+    }
+    .tts-btn.active { color: var(--accent); border-color: rgba(79,142,255,0.35); }
+
+    /* ── [4] MEMORY WIDGET ────────────────────── */
+    .memory-widget {
+      margin: 6px 10px;
+      padding: 11px 13px;
+      background: rgba(79,142,255,0.05);
+      border: 1px solid rgba(79,142,255,0.15);
+      border-radius: 11px;
+      flex-shrink: 0;
+      transition: border-color 0.3s, background 0.3s;
+    }
+    .memory-widget.unset {
+      background: rgba(255,160,50,0.05);
+      border-color: rgba(255,160,50,0.25);
     }
 
-    .badge{
-      font-size:0.7rem;
-      padding:4px 10px;
-      border-radius:20px;
-      background:rgba(63,255,136,0.1);
-      color:var(--green);
-      border:1px solid rgba(63,255,136,0.2);
+    .memory-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 8px;
     }
 
-    /* CHAT */
-    .chat{
-      flex:1;
-      padding:20px;
-      overflow-y:auto;
-      display:flex;
-      flex-direction:column;
-      gap:12px;
+    .memory-title {
+      font-family: 'Syne', sans-serif;
+      font-weight: 700;
+      font-size: 0.72rem;
+      color: var(--accent);
+    }
+    .memory-widget.unset .memory-title { color: var(--amber); }
+
+    .memory-edit-btn {
+      font-size: 0.68rem;
+      color: var(--muted);
+      background: none;
+      border: none;
+      cursor: pointer;
+      transition: color 0.2s;
+      font-family: 'DM Sans', sans-serif;
+    }
+    .memory-edit-btn:hover { color: var(--text); }
+
+    .memory-tags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 4px;
     }
 
-    .msg{
-      max-width:70%;
-      padding:12px 14px;
-      border-radius:14px;
-      line-height:1.5;
-      font-size:0.9rem;
+    .memory-tag {
+      padding: 3px 8px;
+      background: rgba(79,142,255,0.1);
+      border: 1px solid rgba(79,142,255,0.2);
+      border-radius: 20px;
+      font-size: 0.67rem;
+      color: var(--muted);
     }
 
-    .user{
-      align-self:flex-end;
+    .memory-empty {
+      font-size: 0.71rem;
+      color: var(--amber);
+    }
+    .memory-empty a {
+      color: var(--accent);
+      cursor: pointer;
+      text-decoration: underline;
+    }
+
+    /* ── [5] SIDEBAR SHARED ───────────────────── */
+    .limit-banner {
+      margin: 0 10px 4px;
+      padding: 8px 12px;
+      background: rgba(255,160,50,0.08);
+      border: 1px solid rgba(255,160,50,0.2);
+      border-radius: 9px;
+      font-size: 0.73rem;
+      color: #ffb347;
+      line-height: 1.5;
+      flex-shrink: 0;
+    }
+    .limit-banner.hidden { display: none; }
+
+    .sidebar-label {
+      padding: 8px 14px 4px;
+      font-size: 0.63rem;
+      text-transform: uppercase;
+      letter-spacing: 0.14em;
+      color: var(--muted2);
+      font-weight: 700;
+      flex-shrink: 0;
+    }
+
+    .quick-actions {
+      padding: 0 6px;
+      display: flex;
+      flex-direction: column;
+      gap: 1px;
+      flex-shrink: 0;
+    }
+
+    .quick-btn {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 7px 9px;
+      border-radius: 8px;
+      background: transparent;
+      border: none;
+      color: var(--muted);
+      font-size: 0.8rem;
+      cursor: pointer;
+      text-align: left;
+      width: 100%;
+      transition: background 0.15s, color 0.15s;
+    }
+    .quick-btn:hover { background: rgba(255,255,255,0.05); color: var(--text); }
+
+    .recent-chats {
+      flex: 1;
+      overflow-y: auto;
+      padding: 0 6px 6px;
+      scrollbar-width: thin;
+      scrollbar-color: var(--border) transparent;
+    }
+
+    .recent-chat-item {
+      padding: 7px 9px;
+      border-radius: 8px;
+      color: var(--muted);
+      font-size: 0.78rem;
+      cursor: pointer;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      transition: background 0.15s, color 0.15s;
+    }
+    .recent-chat-item:hover { background: rgba(255,255,255,0.05); color: var(--text); }
+    .recent-chat-item.active { background: rgba(79,142,255,0.1); color: var(--accent); }
+
+    .sidebar-upgrade {
+      margin: 6px 10px 12px;
+      padding: 13px;
+      background: linear-gradient(135deg, rgba(79,142,255,0.08), rgba(124,58,255,0.08));
+      border: 1px solid rgba(79,142,255,0.18);
+      border-radius: 13px;
+      flex-shrink: 0;
+    }
+    .sidebar-upgrade h4 { font-family: 'Syne', sans-serif; font-size: 0.83rem; font-weight: 700; margin-bottom: 4px; }
+    .sidebar-upgrade p  { font-size: 0.73rem; color: var(--muted); margin-bottom: 9px; line-height: 1.5; }
+    .upgrade-link {
+      display: block;
+      text-align: center;
+      padding: 7px;
+      background: linear-gradient(135deg, var(--accent), var(--accent2));
+      border-radius: 7px;
+      color: #fff;
+      text-decoration: none;
+      font-weight: 700;
+      font-size: 0.75rem;
+    }
+
+    /* ── [6] MAIN + TOPBAR ────────────────────── */
+    .main {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+      overflow: hidden;
+    }
+
+    .topbar {
+      padding: 11px 20px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: rgba(5,8,16,0.92);
+      backdrop-filter: blur(14px);
+      flex-shrink: 0;
+      gap: 10px;
+    }
+
+    .topbar-left {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-shrink: 0;
+    }
+
+    .status-dot {
+      width: 7px; height: 7px;
+      background: var(--green);
+      border-radius: 50%;
+      animation: pulse 2s infinite;
+    }
+    @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
+
+    .topbar-title {
+      font-family: 'Syne', sans-serif;
+      font-weight: 700;
+      font-size: 0.88rem;
+    }
+
+    /* ── [7] MODE TABS ────────────────────────── */
+    .mode-tabs {
+      display: flex;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 3px;
+      gap: 3px;
+      overflow-x: auto;
+      scrollbar-width: none;
+      flex-shrink: 0;
+    }
+    .mode-tabs::-webkit-scrollbar { display: none; }
+
+    .mode-tab {
+      padding: 7px 14px;
+      border-radius: 7px;
+      border: none;
+      background: transparent;
+      color: var(--muted);
+      font-family: 'Syne', sans-serif;
+      font-weight: 700;
+      font-size: 0.74rem;
+      cursor: pointer;
+      transition: background 0.2s, color 0.2s;
+      white-space: nowrap;
+      flex-shrink: 0;
+    }
+    .mode-tab.active {
+      background: linear-gradient(135deg, var(--accent), var(--accent2));
+      color: #fff;
+      box-shadow: 0 0 12px var(--glow);
+    }
+
+    .topbar-right { display: flex; align-items: center; gap: 6px; flex-shrink: 0; }
+
+    .upgrade-btn {
+      padding: 7px 15px;
+      background: linear-gradient(135deg, var(--accent), var(--accent2));
+      border: none;
+      border-radius: 50px;
+      color: #fff;
+      font-weight: 700;
+      font-size: 0.73rem;
+      cursor: pointer;
+      transition: opacity 0.2s, transform 0.2s;
+      box-shadow: 0 0 14px rgba(79,142,255,0.25);
+      white-space: nowrap;
+    }
+    .upgrade-btn:hover { opacity: 0.88; transform: translateY(-1px); }
+
+    .mobile-menu-btn {
+      display: none;
+      background: none;
+      border: none;
+      color: var(--text);
+      font-size: 1.2rem;
+      cursor: pointer;
+    }
+
+    /* ── [8] PANELS BASE ──────────────────────── */
+    .panel {
+      flex: 1;
+      display: none;
+      flex-direction: column;
+      overflow: hidden;
+    }
+    .panel.active { display: flex; }
+
+    /* ── [9] CHAT PANEL ───────────────────────── */
+    .chat-area {
+      flex: 1;
+      overflow-y: auto;
+      padding: 24px 18px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      scrollbar-width: thin;
+      scrollbar-color: var(--border) transparent;
+    }
+
+    .empty-state {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      padding: 40px 20px;
+      gap: 24px;
+      min-height: 60vh;
+    }
+
+    .empty-state h2 {
+      font-family: 'Syne', sans-serif;
+      font-size: clamp(1.4rem, 3vw, 1.9rem);
+      font-weight: 800;
+      letter-spacing: -0.5px;
+      margin-bottom: 8px;
+    }
+    .empty-state p { color: var(--muted); font-size: 0.92rem; max-width: 380px; line-height: 1.6; }
+
+    .suggestion-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 10px;
+      max-width: 520px;
+      width: 100%;
+    }
+
+    .suggestion-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 13px;
+      padding: 14px;
+      text-align: left;
+      cursor: pointer;
+      transition: border-color 0.2s, background 0.2s, transform 0.2s;
+    }
+    .suggestion-card:hover { border-color: rgba(79,142,255,0.3); background: rgba(79,142,255,0.05); transform: translateY(-2px); }
+    .sug-icon  { font-size: 1.3rem; margin-bottom: 6px; }
+    .sug-title { font-family: 'Syne', sans-serif; font-weight: 700; font-size: 0.83rem; margin-bottom: 3px; }
+    .sug-desc  { color: var(--muted); font-size: 0.73rem; line-height: 1.4; }
+
+    /* Messages */
+    .message-row {
+      display: flex;
+      gap: 11px;
+      max-width: 780px;
+      width: 100%;
+      align-self: flex-start;
+      animation: msgIn 0.25s ease both;
+    }
+    .message-row.user { align-self: flex-end; flex-direction: row-reverse; }
+
+    @keyframes msgIn { from{opacity:0;transform:translateY(8px)} to{opacity:1;transform:translateY(0)} }
+
+    .msg-avatar {
+      width: 32px; height: 32px;
+      border-radius: 50%;
+      flex-shrink: 0;
+      display: flex; align-items: center; justify-content: center;
+      font-family: 'Syne', sans-serif;
+      font-weight: 800;
+      font-size: 0.78rem;
+    }
+    .msg-avatar.bot     { background: linear-gradient(135deg, var(--accent), var(--accent2)); }
+    .msg-avatar.user-av { background: rgba(255,255,255,0.08); border: 1px solid var(--border2); }
+
+    .msg-bubble {
+      padding: 12px 16px;
+      border-radius: 17px;
+      max-width: 78%;
+      font-size: 0.88rem;
+      line-height: 1.7;
+    }
+    .msg-bubble.bot  { background: var(--surface); border: 1px solid var(--border); border-radius: 4px 17px 17px 17px; }
+    .msg-bubble.user { background: linear-gradient(135deg, var(--accent), var(--accent2)); color: #fff; border-radius: 17px 4px 17px 17px; }
+    .msg-bubble strong { color: var(--accent); }
+    .msg-bubble.user strong { color: rgba(255,255,255,0.95); }
+
+    .typing-indicator { display:flex; align-items:center; gap:5px; padding:3px 0; }
+    .typing-indicator span {
+      width:6px; height:6px; border-radius:50%;
+      background:var(--muted);
+      animation:typeBounce 1.2s infinite;
+    }
+    .typing-indicator span:nth-child(2){animation-delay:.2s}
+    .typing-indicator span:nth-child(3){animation-delay:.4s}
+    @keyframes typeBounce{0%,60%,100%{transform:translateY(0)}30%{transform:translateY(-5px)}}
+
+    /* Chat Input */
+    .input-area {
+      padding: 12px 18px 16px;
+      border-top: 1px solid var(--border);
+      flex-shrink: 0;
+    }
+
+    .input-wrap {
+      max-width: 780px;
+      margin: 0 auto;
+      background: var(--surface);
+      border: 1px solid var(--border2);
+      border-radius: 15px;
+      display: flex;
+      align-items: flex-end;
+      gap: 7px;
+      padding: 10px 12px;
+      transition: border-color 0.2s;
+    }
+    .input-wrap:focus-within { border-color: rgba(79,142,255,0.4); }
+
+    #chat-input {
+      flex: 1;
+      background: transparent;
+      border: none;
+      outline: none;
+      color: var(--text);
+      font-family: 'DM Sans', sans-serif;
+      font-size: 0.9rem;
+      resize: none;
+      min-height: 24px;
+      max-height: 140px;
+      line-height: 1.5;
+    }
+    #chat-input::placeholder { color: var(--muted2); }
+
+    .input-btns { display:flex; gap:5px; align-items:center; }
+
+    .mic-btn {
+      width:32px; height:32px; border-radius:50%;
+      background:var(--card); border:1px solid var(--border2);
+      color:var(--muted); cursor:pointer; font-size:0.9rem;
+      display:flex; align-items:center; justify-content:center;
+      transition:all 0.2s;
+    }
+    .mic-btn:hover { background:rgba(255,255,255,0.08); color:var(--text); }
+    .mic-btn.listening { background:rgba(255,70,70,0.15); border-color:rgba(255,70,70,0.4); color:#ff6b6b; animation:micPulse 1s infinite; }
+    @keyframes micPulse{0%,100%{transform:scale(1)}50%{transform:scale(1.1)}}
+
+    .send-btn {
+      width:32px; height:32px; border-radius:50%;
       background:linear-gradient(135deg,var(--accent),var(--accent2));
-      color:white;
+      border:none; color:#fff; cursor:pointer; font-size:0.9rem;
+      display:flex; align-items:center; justify-content:center;
+      box-shadow:0 0 12px rgba(79,142,255,0.3);
+      transition:opacity 0.2s, transform 0.2s;
+    }
+    .send-btn:hover { opacity:0.88; transform:scale(1.08); }
+    .send-btn:disabled { opacity:0.35; cursor:not-allowed; transform:none; }
+
+    .input-hint { text-align:center; font-size:0.68rem; color:var(--muted2); margin-top:6px; }
+
+    /* ── [10] VIRAL GENERATOR PANEL ───────────── */
+    .viral-panel {
+      flex: 1;
+      overflow-y: auto;
+      padding: 28px 24px 40px;
+      scrollbar-width: thin;
+      scrollbar-color: var(--border) transparent;
     }
 
-    .bot{
-      align-self:flex-start;
-      background:var(--card);
-      border:1px solid var(--border);
+    .viral-inner {
+      max-width: 820px;
+      margin: 0 auto;
+      display: flex;
+      flex-direction: column;
+      gap: 24px;
     }
 
-    /* INPUT */
-    .input{
-      padding:14px;
-      border-top:1px solid var(--border);
-      display:flex;
-      gap:10px;
+    .viral-input-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 28px;
     }
 
-    textarea{
-      flex:1;
-      resize:none;
-      border:none;
-      outline:none;
-      background:var(--surface);
-      color:var(--text);
-      padding:10px;
-      border-radius:10px;
-      font-family:inherit;
+    .viral-input-header { margin-bottom: 20px; }
+    .viral-input-header h2 {
+      font-family: 'Syne', sans-serif;
+      font-size: 1.35rem;
+      font-weight: 800;
+      letter-spacing: -0.4px;
+      margin-bottom: 6px;
+    }
+    .viral-input-header h2 span {
+      background: linear-gradient(135deg, var(--accent), var(--accent2));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    .viral-input-header p { color: var(--muted); font-size: 0.85rem; line-height: 1.6; }
+
+    .viral-input-row {
+      display: flex;
+      gap: 12px;
+      align-items: flex-start;
+      flex-wrap: wrap;
     }
 
-    button{
+    #viral-topic {
+      flex: 1;
+      min-width: 200px;
+      padding: 14px 18px;
+      background: var(--bg);
+      border: 1px solid var(--border2);
+      border-radius: 12px;
+      color: var(--text);
+      font-family: 'DM Sans', sans-serif;
+      font-size: 0.92rem;
+      outline: none;
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+    #viral-topic::placeholder { color: var(--muted2); }
+    #viral-topic:focus { border-color: rgba(79,142,255,0.45); box-shadow: 0 0 0 3px rgba(79,142,255,0.08); }
+
+    .platform-select {
+      padding: 14px 16px;
+      background: var(--bg);
+      border: 1px solid var(--border2);
+      border-radius: 12px;
+      color: var(--text);
+      font-family: 'DM Sans', sans-serif;
+      font-size: 0.88rem;
+      outline: none;
+      cursor: pointer;
+      transition: border-color 0.2s;
+      appearance: none;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' fill='none'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%238895b0' stroke-width='1.5' stroke-linecap='round'/%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right 14px center;
+      padding-right: 36px;
+    }
+    .platform-select:focus { border-color: rgba(79,142,255,0.45); }
+    .platform-select option { background: var(--surface); }
+
+    .generate-btn {
+      padding: 14px 24px;
+      background: linear-gradient(135deg, var(--accent), var(--accent2));
+      border: none;
+      border-radius: 12px;
+      color: #fff;
+      font-family: 'Syne', sans-serif;
+      font-weight: 700;
+      font-size: 0.88rem;
+      cursor: pointer;
+      white-space: nowrap;
+      transition: transform 0.2s, box-shadow 0.2s, opacity 0.2s;
+      box-shadow: 0 0 24px rgba(79,142,255,0.28);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .generate-btn:hover { transform: translateY(-2px); box-shadow: 0 0 36px rgba(79,142,255,0.4); }
+    .generate-btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; box-shadow: none; }
+
+    .generate-btn .btn-spinner {
+      width: 14px; height: 14px;
+      border: 2px solid rgba(255,255,255,0.3);
+      border-top-color: #fff;
+      border-radius: 50%;
+      animation: spin 0.7s linear infinite;
+      display: none;
+    }
+    .generate-btn.loading .btn-spinner { display: block; }
+    .generate-btn.loading .btn-text { opacity: 0.7; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    .viral-output {
+      display: none;
+      flex-direction: column;
+      gap: 16px;
+      animation: fadeUp 0.5s ease both;
+    }
+    .viral-output.visible { display: flex; }
+
+    @keyframes fadeUp { from{opacity:0;transform:translateY(16px)} to{opacity:1;transform:translateY(0)} }
+
+    .output-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+    .output-header h3 { font-family: 'Syne', sans-serif; font-weight: 800; font-size: 1rem; color: var(--muted); }
+    .output-header h3 span {
+      background: linear-gradient(135deg, var(--accent), var(--accent2));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .copy-all-btn {
+      padding: 7px 16px;
+      background: var(--card);
+      border: 1px solid var(--border2);
+      border-radius: 50px;
+      color: var(--muted);
+      font-size: 0.75rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .copy-all-btn:hover { color: var(--text); border-color: rgba(255,255,255,0.2); }
+
+    .output-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 14px;
+    }
+
+    .output-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      padding: 22px;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+      transition: border-color 0.2s, transform 0.2s;
+      animation: fadeUp 0.5s ease both;
+    }
+    .output-card:hover { border-color: rgba(79,142,255,0.2); transform: translateY(-2px); }
+    .output-card:nth-child(1) { animation-delay: 0.05s; }
+    .output-card:nth-child(2) { animation-delay: 0.12s; }
+    .output-card:nth-child(3) { animation-delay: 0.19s; }
+    .output-card:nth-child(4) { animation-delay: 0.26s; }
+
+    .card-label { display: flex; align-items: center; justify-content: space-between; }
+    .card-label-left { display: flex; align-items: center; gap: 8px; }
+
+    .card-icon {
+      width: 30px; height: 30px;
+      border-radius: 8px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 0.95rem;
+    }
+    .card-icon.hook-icon      { background: rgba(255,100,100,0.12); }
+    .card-icon.script-icon    { background: rgba(79,142,255,0.12); }
+    .card-icon.title-icon     { background: rgba(255,200,50,0.12); }
+    .card-icon.thumbnail-icon { background: rgba(100,255,150,0.12); }
+
+    .card-name {
+      font-family: 'Syne', sans-serif;
+      font-weight: 700;
+      font-size: 0.78rem;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: var(--muted);
+    }
+
+    .copy-btn {
+      width: 28px; height: 28px;
+      border-radius: 7px;
+      background: var(--card);
+      border: 1px solid var(--border);
+      color: var(--muted);
+      font-size: 0.78rem;
+      cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      transition: all 0.2s;
+      flex-shrink: 0;
+    }
+    .copy-btn:hover { background: rgba(79,142,255,0.1); border-color: rgba(79,142,255,0.3); color: var(--accent); }
+    .copy-btn.copied { background: rgba(63,255,136,0.1); border-color: rgba(63,255,136,0.3); color: var(--green); }
+
+    .card-content {
+      font-size: 0.87rem;
+      line-height: 1.75;
+      color: var(--text);
+      white-space: pre-wrap;
+      word-break: break-word;
+      flex: 1;
+    }
+
+    /* Skeleton */
+    .skeleton-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 14px; }
+    .skeleton-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      padding: 22px;
+      display: flex; flex-direction: column; gap: 12px;
+    }
+    .skeleton-line {
+      height: 12px;
+      border-radius: 6px;
+      background: linear-gradient(90deg, var(--border) 25%, rgba(255,255,255,0.08) 50%, var(--border) 75%);
+      background-size: 200% 100%;
+      animation: shimmer 1.4s ease infinite;
+    }
+    .skeleton-line.short { width: 40%; }
+    .skeleton-line.med   { width: 70%; }
+    .skeleton-line.tall  { height: 80px; }
+    @keyframes shimmer { 0%{background-position:200% 0} 100%{background-position:-200% 0} }
+
+    .viral-loading { display: none; flex-direction: column; gap: 14px; }
+    .viral-loading.visible { display: flex; }
+
+    .loading-status {
+      text-align: center;
+      color: var(--muted);
+      font-size: 0.8rem;
+      font-family: 'Syne', sans-serif;
+      font-weight: 600;
+      padding: 8px 0;
+      animation: statusPulse 2s ease infinite;
+    }
+    @keyframes statusPulse { 0%,100%{opacity:0.6} 50%{opacity:1} }
+
+    /* ── [11] POST NEXT PANEL ─────────────────── */
+    .postnext-panel {
+      flex: 1;
+      overflow-y: auto;
+      padding: 28px 24px 40px;
+      scrollbar-width: thin;
+      scrollbar-color: var(--border) transparent;
+    }
+
+    .postnext-inner {
+      max-width: 720px;
+      margin: 0 auto;
+      display: flex;
+      flex-direction: column;
+      gap: 24px;
+    }
+
+    .postnext-hero {
+      text-align: center;
+      padding: 44px 28px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 24px;
+      position: relative;
+      overflow: hidden;
+    }
+    .postnext-hero::before {
+      content: '';
+      position: absolute;
+      top: 50%; left: 50%;
+      transform: translate(-50%,-50%);
+      width: 400px; height: 200px;
+      background: radial-gradient(ellipse, rgba(79,142,255,0.08) 0%, transparent 70%);
+      pointer-events: none;
+    }
+
+    .postnext-hero-icon { font-size: 2.8rem; margin-bottom: 14px; }
+
+    .postnext-hero h2 {
+      font-family: 'Syne', sans-serif;
+      font-size: 1.5rem;
+      font-weight: 800;
+      letter-spacing: -0.4px;
+      margin-bottom: 10px;
+    }
+
+    .postnext-hero p {
+      color: var(--muted);
+      font-size: 0.88rem;
+      margin-bottom: 28px;
+      line-height: 1.6;
+      max-width: 420px;
+      margin-left: auto;
+      margin-right: auto;
+    }
+
+    .postnext-btn {
+      padding: 15px 34px;
+      background: linear-gradient(135deg, var(--accent), var(--accent2));
+      border: none;
+      border-radius: 50px;
+      color: #fff;
+      font-family: 'Syne', sans-serif;
+      font-weight: 700;
+      font-size: 0.95rem;
+      cursor: pointer;
+      box-shadow: 0 0 28px rgba(79,142,255,0.3);
+      transition: transform 0.2s, box-shadow 0.2s, opacity 0.2s;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .postnext-btn:hover { transform: translateY(-2px); box-shadow: 0 0 40px rgba(79,142,255,0.45); }
+    .postnext-btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; box-shadow: none; }
+
+    .postnext-output {
+      display: none;
+      flex-direction: column;
+      gap: 16px;
+      animation: fadeUp 0.5s ease both;
+    }
+    .postnext-output.visible { display: flex; }
+
+    .postnext-idea-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      overflow: hidden;
+    }
+
+    .postnext-idea-header {
+      padding: 14px 22px;
+      background: linear-gradient(135deg, rgba(79,142,255,0.1), rgba(124,58,255,0.08));
+      border-bottom: 1px solid var(--border);
+      font-family: 'Syne', sans-serif;
+      font-weight: 700;
+      font-size: 0.82rem;
+      color: var(--accent);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .postnext-sections {
+      padding: 22px;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+
+    .pn-section-label {
+      font-family: 'Syne', sans-serif;
+      font-size: 0.68rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      color: var(--muted);
+      margin-bottom: 7px;
+    }
+
+    .pn-section-content {
+      font-size: 0.9rem;
+      line-height: 1.75;
+      color: var(--text);
+      white-space: pre-wrap;
+    }
+
+    .pn-hook-wrap {
+      padding: 14px 18px;
+      background: rgba(79,142,255,0.06);
+      border-left: 3px solid var(--accent);
+      border-radius: 0 10px 10px 0;
+    }
+
+    .postnext-regen {
+      text-align: center;
+    }
+
+    /* ── [12] CALENDAR PANEL ──────────────────── */
+    .calendar-panel {
+      flex: 1;
+      overflow-y: auto;
+      padding: 28px 24px 40px;
+      scrollbar-width: thin;
+      scrollbar-color: var(--border) transparent;
+    }
+
+    .calendar-inner {
+      max-width: 960px;
+      margin: 0 auto;
+      display: flex;
+      flex-direction: column;
+      gap: 24px;
+    }
+
+    .calendar-header-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 28px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 16px;
+    }
+
+    .calendar-header-card h2 {
+      font-family: 'Syne', sans-serif;
+      font-size: 1.3rem;
+      font-weight: 800;
+      margin-bottom: 6px;
+    }
+    .calendar-header-card h2 span {
+      background: linear-gradient(135deg, var(--accent), var(--accent2));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    .calendar-header-card p { color: var(--muted); font-size: 0.85rem; line-height: 1.5; }
+
+    .cal-btn {
+      padding: 13px 24px;
+      background: linear-gradient(135deg, var(--accent), var(--accent2));
+      border: none;
+      border-radius: 12px;
+      color: #fff;
+      font-family: 'Syne', sans-serif;
+      font-weight: 700;
+      font-size: 0.88rem;
+      cursor: pointer;
+      white-space: nowrap;
+      transition: transform 0.2s, box-shadow 0.2s, opacity 0.2s;
+      box-shadow: 0 0 20px rgba(79,142,255,0.25);
+    }
+    .cal-btn:hover { transform: translateY(-2px); box-shadow: 0 0 32px rgba(79,142,255,0.4); }
+    .cal-btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; box-shadow: none; }
+
+    .calendar-grid {
+      display: none;
+      grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+      gap: 14px;
+    }
+    .calendar-grid.visible { display: grid; }
+
+    .day-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      transition: border-color 0.2s, transform 0.2s;
+      animation: fadeUp 0.5s ease both;
+    }
+    .day-card:hover { border-color: rgba(79,142,255,0.25); transform: translateY(-2px); }
+
+    .day-num {
+      font-family: 'Syne', sans-serif;
+      font-weight: 800;
+      font-size: 0.7rem;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      color: var(--accent);
+    }
+
+    .day-topic {
+      font-family: 'Syne', sans-serif;
+      font-weight: 700;
+      font-size: 0.95rem;
+      color: var(--text);
+      line-height: 1.3;
+    }
+
+    .day-angle {
+      font-size: 0.81rem;
+      color: var(--muted);
+      line-height: 1.5;
+    }
+
+    .day-hook {
+      padding: 10px 12px;
+      background: rgba(79,142,255,0.06);
+      border-left: 2px solid var(--accent);
+      border-radius: 0 8px 8px 0;
+      font-size: 0.8rem;
+      color: var(--text);
+      line-height: 1.5;
+      font-style: italic;
+    }
+
+    .cal-loading {
+      display: none;
+      text-align: center;
+      padding: 32px;
+      color: var(--muted);
+      font-family: 'Syne', sans-serif;
+      font-weight: 600;
+      font-size: 0.85rem;
+      animation: statusPulse 2s ease infinite;
+    }
+
+    /* ── [13] FEEDBACK PANEL ──────────────────── */
+    .feedback-panel {
+      flex: 1;
+      overflow-y: auto;
+      padding: 28px 24px 40px;
+      scrollbar-width: thin;
+      scrollbar-color: var(--border) transparent;
+    }
+
+    .feedback-inner {
+      max-width: 820px;
+      margin: 0 auto;
+      display: flex;
+      flex-direction: column;
+      gap: 24px;
+    }
+
+    .feedback-input-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 28px;
+    }
+
+    .feedback-input-card h2 {
+      font-family: 'Syne', sans-serif;
+      font-size: 1.3rem;
+      font-weight: 800;
+      margin-bottom: 8px;
+    }
+    .feedback-input-card h2 span {
+      background: linear-gradient(135deg, var(--accent), var(--accent2));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    .feedback-input-card p { color: var(--muted); font-size: 0.85rem; margin-bottom: 20px; line-height: 1.6; }
+
+    #feedback-input {
+      width: 100%;
+      min-height: 130px;
+      padding: 16px 18px;
+      background: var(--bg);
+      border: 1px solid var(--border2);
+      border-radius: 12px;
+      color: var(--text);
+      font-family: 'DM Sans', sans-serif;
+      font-size: 0.9rem;
+      outline: none;
+      resize: vertical;
+      line-height: 1.6;
+      transition: border-color 0.2s;
+      margin-bottom: 14px;
+      display: block;
+    }
+    #feedback-input::placeholder { color: var(--muted2); }
+    #feedback-input:focus { border-color: rgba(79,142,255,0.45); }
+
+    .feedback-output {
+      display: none;
+      flex-direction: column;
+      gap: 14px;
+      animation: fadeUp 0.5s ease both;
+    }
+    .feedback-output.visible { display: flex; }
+
+    .feedback-cards-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 14px;
+    }
+
+    .feedback-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      padding: 22px;
+      animation: fadeUp 0.5s ease both;
+    }
+    .feedback-card:nth-child(1) { animation-delay: 0.05s; border-top: 2px solid rgba(63,255,136,0.3); }
+    .feedback-card:nth-child(2) { animation-delay: 0.12s; border-top: 2px solid rgba(255,71,87,0.3); }
+    .feedback-card:nth-child(3) { animation-delay: 0.19s; border-top: 2px solid rgba(79,142,255,0.4); }
+
+    .feedback-card-title {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-family: 'Syne', sans-serif;
+      font-weight: 700;
+      font-size: 0.8rem;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: var(--muted);
+      margin-bottom: 14px;
+    }
+
+    .feedback-card-content {
+      font-size: 0.86rem;
+      line-height: 1.8;
+      color: var(--text);
+      white-space: pre-wrap;
+    }
+
+    .verdict-card {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 16px;
+      padding: 22px 28px;
+      background: linear-gradient(135deg, rgba(79,142,255,0.06), rgba(124,58,255,0.06));
+      border: 1px solid rgba(79,142,255,0.2);
+      border-radius: 18px;
+      animation: fadeUp 0.5s ease 0.26s both;
+    }
+
+    .verdict-score-wrap { text-align: center; }
+
+    .verdict-score {
+      font-family: 'Syne', sans-serif;
+      font-size: 2.8rem;
+      font-weight: 800;
+      background: linear-gradient(135deg, var(--accent), var(--accent2));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      line-height: 1;
+    }
+
+    .verdict-score-label {
+      font-size: 0.68rem;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      font-weight: 600;
+      margin-top: 4px;
+    }
+
+    .verdict-text {
+      font-family: 'Syne', sans-serif;
+      font-weight: 700;
+      font-size: 0.95rem;
+      color: var(--text);
+      max-width: 520px;
+      line-height: 1.5;
+    }
+
+    /* ── [14] MODALS ──────────────────────────── */
+    .modal-overlay {
+      position: fixed; inset: 0; z-index: 1000;
+      background: rgba(0,0,0,0.78);
+      backdrop-filter: blur(8px);
+      display: flex; align-items: center; justify-content: center;
+      opacity: 0; visibility: hidden;
+      transition: opacity 0.3s, visibility 0.3s;
+    }
+    .modal-overlay.open { opacity: 1; visibility: visible; }
+
+    .modal {
+      background: var(--surface);
+      border: 1px solid var(--border2);
+      border-radius: 22px;
+      padding: 30px;
+      max-width: 440px;
+      width: 94%;
+      transform: translateY(16px);
+      transition: transform 0.3s;
+      max-height: 92vh;
+      overflow-y: auto;
+    }
+    .modal-overlay.open .modal { transform: translateY(0); }
+
+    .modal h3 { font-family:'Syne',sans-serif; font-size:1.25rem; font-weight:800; margin-bottom:7px; }
+    .modal > p { color:var(--muted); font-size:0.85rem; margin-bottom:20px; line-height:1.6; }
+
+    /* Memory modal form */
+    .form-group { display: flex; flex-direction: column; gap: 6px; margin-bottom: 14px; }
+    .form-label {
+      font-family: 'Syne', sans-serif;
+      font-weight: 700;
+      font-size: 0.73rem;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+    }
+    .form-input, .form-select, .form-textarea {
+      padding: 11px 14px;
+      background: var(--bg);
+      border: 1px solid var(--border2);
+      border-radius: 10px;
+      color: var(--text);
+      font-size: 0.88rem;
+      outline: none;
+      font-family: 'DM Sans', sans-serif;
+      transition: border-color 0.2s;
+      width: 100%;
+    }
+    .form-input:focus, .form-select:focus, .form-textarea:focus { border-color: rgba(79,142,255,0.45); }
+    .form-input::placeholder, .form-textarea::placeholder { color: var(--muted2); }
+    .form-select { appearance: none; cursor: pointer; }
+    .form-select option { background: var(--surface); }
+    .form-textarea { min-height: 70px; resize: vertical; line-height: 1.5; }
+
+    /* Upgrade modal */
+    .plan-options { display:flex; flex-direction:column; gap:10px; }
+    .plan-option {
+      padding:13px 15px; border:1px solid var(--border2);
+      border-radius:12px; cursor:pointer;
+      display:flex; align-items:center; justify-content:space-between;
+      transition:border-color 0.2s, background 0.2s;
+    }
+    .plan-option:hover { border-color:rgba(79,142,255,0.4); background:rgba(79,142,255,0.05); }
+    .plan-option h4 { font-family:'Syne',sans-serif; font-weight:700; font-size:0.88rem; margin-bottom:2px; }
+    .plan-option p  { color:var(--muted); font-size:0.73rem; margin:0; }
+    .plan-price-tag { font-family:'Syne',sans-serif; font-weight:800; font-size:1rem; color:var(--accent); }
+
+    .modal-actions { display:flex; gap:8px; margin-top:20px; }
+    .modal-activate {
+      flex:1; padding:11px;
       background:linear-gradient(135deg,var(--accent),var(--accent2));
-      border:none;
-      color:white;
-      padding:10px 14px;
-      border-radius:10px;
-      cursor:pointer;
+      border:none; border-radius:50px; color:#fff;
+      font-family:'Syne',sans-serif; font-weight:700; cursor:pointer;
+      font-size:0.85rem; transition:opacity 0.2s;
+    }
+    .modal-activate:hover { opacity:0.88; }
+    .modal-dismiss {
+      padding:11px 16px; background:transparent;
+      border:1px solid var(--border2); border-radius:50px;
+      color:var(--muted); cursor:pointer; font-size:0.83rem;
+      transition:color 0.2s;
+    }
+    .modal-dismiss:hover { color:var(--text); }
+
+    /* ── [15] MOBILE ──────────────────────────── */
+    @media (max-width: 768px) {
+      .sidebar {
+        position: fixed;
+        left: -100%; top: 0; z-index: 200;
+        transition: left 0.3s;
+      }
+      .sidebar.open { left: 0; }
+      .mobile-menu-btn { display: block; }
+      .suggestion-grid { grid-template-columns: 1fr; }
+      .chat-area { padding: 14px 12px; }
+      .input-area { padding: 9px 12px 13px; }
+      .topbar { padding: 10px 14px; gap: 8px; }
+      .topbar-title { display: none; }
+      .mode-tab { padding: 6px 10px; font-size: 0.68rem; }
+      .output-grid { grid-template-columns: 1fr; }
+      .skeleton-grid { grid-template-columns: 1fr; }
+      .viral-input-row { flex-direction: column; }
+      .generate-btn { width: 100%; justify-content: center; }
+      .platform-select { width: 100%; }
+      .feedback-cards-grid { grid-template-columns: 1fr; }
+      .verdict-card { flex-direction: column; align-items: flex-start; }
+      .calendar-grid { grid-template-columns: 1fr 1fr; }
+      .upgrade-btn { display: none; }
     }
 
-    .note{
-      font-size:0.7rem;
-      color:var(--muted);
-      text-align:center;
-      padding:6px;
+    @media (max-width: 480px) {
+      .calendar-grid { grid-template-columns: 1fr; }
     }
   </style>
 </head>
 <body>
 
-  <div class="sidebar">
-    <div class="logo">XARVIS AI</div>
-    <div class="status">⚡ Creator OS v4 Active</div>
-  </div>
+  <!-- ══════════════════════════════════════════
+       SIDEBAR
+  ══════════════════════════════════════════ -->
+  <aside class="sidebar" id="sidebar">
 
+    <div class="sidebar-header">
+      <a href="index.html" class="logo">Xarvis AI</a>
+      <span class="plan-pill" id="plan-pill">FREE</span>
+    </div>
+
+    <div class="sidebar-top">
+      <button class="new-chat-btn" onclick="newChat()">+ New Chat</button>
+      <button class="tts-btn active" id="tts-btn" onclick="toggleTTS()">🔊 TTS</button>
+    </div>
+
+    <!-- Limit Banner -->
+    <div class="limit-banner hidden" id="limit-banner">
+      ⚡ <strong id="limit-text">10 messages left</strong><br/>Upgrade for unlimited access.
+    </div>
+
+    <!-- Memory Widget — NEW in V3 -->
+    <div class="memory-widget unset" id="memory-widget">
+      <div class="memory-header">
+        <span class="memory-title">🧠 Creator Profile</span>
+        <button class="memory-edit-btn" onclick="openMemoryModal()">Edit ↗</button>
+      </div>
+      <div class="memory-tags" id="memory-tags">
+        <span class="memory-empty">Not set — <a onclick="openMemoryModal()">set up now</a></span>
+      </div>
+    </div>
+
+    <!-- Quick Actions — V3 updated -->
+    <div class="sidebar-label">Quick Actions</div>
+    <div class="quick-actions">
+      <button class="quick-btn" onclick="switchMode('viral')">🔥 Generate Viral Content</button>
+      <button class="quick-btn" onclick="switchMode('postnext')">🎯 Post Next Idea</button>
+      <button class="quick-btn" onclick="switchMode('calendar')">📅 7-Day Content Plan</button>
+      <button class="quick-btn" onclick="switchMode('feedback')">📊 Analyze My Content</button>
+      <button class="quick-btn" onclick="openMemoryModal()">🧠 Update My Profile</button>
+    </div>
+
+    <div class="sidebar-label" style="margin-top:8px;">Recent</div>
+    <div class="recent-chats" id="recent-chats">
+      <div style="color:var(--muted2);font-size:0.75rem;padding:6px 9px;">No history yet</div>
+    </div>
+
+    <div class="sidebar-upgrade">
+      <h4>⚡ Go Creator Pro</h4>
+      <p>Unlimited AI, memory, calendar & monetization tools.</p>
+      <a href="index.html#pricing" class="upgrade-link">Upgrade — $12/mo</a>
+    </div>
+
+  </aside>
+
+  <!-- ══════════════════════════════════════════
+       MAIN
+  ══════════════════════════════════════════ -->
   <div class="main">
 
+    <!-- TOP BAR -->
     <div class="topbar">
-      <div class="title">AI Chat</div>
-      <div class="badge">READY</div>
+      <div class="topbar-left">
+        <button class="mobile-menu-btn" onclick="toggleSidebar()">☰</button>
+        <div class="status-dot"></div>
+        <span class="topbar-title">Xarvis AI</span>
+      </div>
+
+      <!-- 5 MODE TABS — V3 Core UI -->
+      <div class="mode-tabs">
+        <button class="mode-tab active" id="tab-chat"     onclick="switchMode('chat')">💬 Chat</button>
+        <button class="mode-tab"        id="tab-viral"    onclick="switchMode('viral')">🔥 Viral</button>
+        <button class="mode-tab"        id="tab-postnext" onclick="switchMode('postnext')">🎯 Post Next</button>
+        <button class="mode-tab"        id="tab-calendar" onclick="switchMode('calendar')">📅 Calendar</button>
+        <button class="mode-tab"        id="tab-feedback" onclick="switchMode('feedback')">📊 Feedback</button>
+      </div>
+
+      <div class="topbar-right">
+        <button class="upgrade-btn" onclick="openModal('upgrade-modal')">⚡ Upgrade</button>
+      </div>
     </div>
 
-    <div class="chat" id="chat">
-      <div class="msg bot">Welcome back. What are we building today?</div>
+    <!-- ══ PANEL 1: CHAT ══ -->
+    <div class="panel active" id="panel-chat">
+      <div class="chat-area" id="chat-area">
+        <div class="empty-state" id="empty-state">
+          <div>
+            <h2>Your AI Co-Founder is Ready.</h2>
+            <p>Ask Xarvis anything about growing your channel, writing hooks, building your strategy, or monetizing your audience.</p>
+          </div>
+          <div class="suggestion-grid">
+            <div class="suggestion-card" data-prompt="Write me 3 viral hooks for my next video in my niche">
+              <div class="sug-icon">🪝</div>
+              <div class="sug-title">Viral Hooks</div>
+              <div class="sug-desc">Get scroll-stopping openers for your next video</div>
+            </div>
+            <div class="suggestion-card" data-prompt="Give me a 90-day growth plan to hit 100k subscribers">
+              <div class="sug-icon">📈</div>
+              <div class="sug-title">Growth Plan</div>
+              <div class="sug-desc">A step-by-step roadmap to scale your audience</div>
+            </div>
+            <div class="suggestion-card" data-prompt="What content is going viral right now in my niche?">
+              <div class="sug-icon">🔮</div>
+              <div class="sug-title">Trend Intel</div>
+              <div class="sug-desc">What's blowing up in your niche right now</div>
+            </div>
+            <div class="suggestion-card" data-prompt="How do I land my first brand sponsorship as a creator?">
+              <div class="sug-icon">💰</div>
+              <div class="sug-title">Monetize</div>
+              <div class="sug-desc">Turn your audience into income with proven strategies</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="input-area">
+        <div class="input-wrap">
+          <textarea
+            id="chat-input"
+            placeholder="Ask Xarvis anything about growing your channel…"
+            rows="1"
+            onkeydown="handleKey(event)"
+            oninput="autoResize(this)"
+          ></textarea>
+          <div class="input-btns">
+            <button class="mic-btn" id="mic-btn" onclick="toggleMic()" title="Voice input">🎤</button>
+            <button class="send-btn" id="send-btn" onclick="sendMessage()" title="Send">➤</button>
+          </div>
+        </div>
+        <div class="input-hint">Enter to send · Shift+Enter for new line</div>
+      </div>
     </div>
 
-    <div class="input">
-      <textarea id="input" placeholder="Ask Xarvis..."></textarea>
-      <button onclick="send()">Send</button>
+    <!-- ══ PANEL 2: VIRAL GENERATOR ══ -->
+    <div class="panel" id="panel-viral">
+      <div class="viral-panel">
+        <div class="viral-inner">
+
+          <div class="viral-input-card">
+            <div class="viral-input-header">
+              <h2>🔥 <span>Viral Content Generator</span></h2>
+              <p>Enter your idea — Xarvis builds the full package: hook, script, title & thumbnail. Your creator profile is injected automatically.</p>
+            </div>
+            <div class="viral-input-row">
+              <input
+                type="text"
+                id="viral-topic"
+                placeholder="e.g. gym motivation, morning routines, making money at 17…"
+                onkeydown="if(event.key==='Enter') generateViralContent()"
+              />
+              <select class="platform-select" id="viral-platform">
+                <option value="YouTube Shorts">▶ YouTube Shorts</option>
+                <option value="TikTok">♪ TikTok</option>
+                <option value="Instagram Reels">◉ Instagram Reels</option>
+                <option value="YouTube">▶ YouTube Long-form</option>
+              </select>
+              <button class="generate-btn" id="generate-btn" onclick="generateViralContent()">
+                <div class="btn-spinner"></div>
+                <span class="btn-text">⚡ Generate</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- Loading Skeletons -->
+          <div class="viral-loading" id="viral-loading">
+            <div class="loading-status" id="loading-status">🧠 Xarvis is engineering your viral moment…</div>
+            <div class="skeleton-grid">
+              <div class="skeleton-card"><div class="skeleton-line short"></div><div class="skeleton-line tall"></div><div class="skeleton-line med"></div></div>
+              <div class="skeleton-card"><div class="skeleton-line short"></div><div class="skeleton-line tall"></div><div class="skeleton-line med"></div></div>
+              <div class="skeleton-card"><div class="skeleton-line short"></div><div class="skeleton-line tall"></div><div class="skeleton-line med"></div></div>
+              <div class="skeleton-card"><div class="skeleton-line short"></div><div class="skeleton-line tall"></div><div class="skeleton-line med"></div></div>
+            </div>
+          </div>
+
+          <!-- Output Cards -->
+          <div class="viral-output" id="viral-output">
+            <div class="output-header">
+              <h3>Results: <span id="output-topic-label"></span></h3>
+              <button class="copy-all-btn" onclick="copyAll()">📋 Copy All</button>
+            </div>
+            <div class="output-grid">
+              <div class="output-card">
+                <div class="card-label">
+                  <div class="card-label-left"><div class="card-icon hook-icon">🪝</div><span class="card-name">Hook</span></div>
+                  <button class="copy-btn" onclick="copyCard('hook-content', this)">📋</button>
+                </div>
+                <div class="card-content" id="hook-content"></div>
+              </div>
+              <div class="output-card">
+                <div class="card-label">
+                  <div class="card-label-left"><div class="card-icon title-icon">✏️</div><span class="card-name">Title</span></div>
+                  <button class="copy-btn" onclick="copyCard('title-content', this)">📋</button>
+                </div>
+                <div class="card-content" id="title-content"></div>
+              </div>
+              <div class="output-card" style="grid-column: 1 / -1;">
+                <div class="card-label">
+                  <div class="card-label-left"><div class="card-icon script-icon">📝</div><span class="card-name">Script</span></div>
+                  <button class="copy-btn" onclick="copyCard('script-content', this)">📋</button>
+                </div>
+                <div class="card-content" id="script-content"></div>
+              </div>
+              <div class="output-card" style="grid-column: 1 / -1;">
+                <div class="card-label">
+                  <div class="card-label-left"><div class="card-icon thumbnail-icon">🖼</div><span class="card-name">Thumbnail Concept</span></div>
+                  <button class="copy-btn" onclick="copyCard('thumbnail-content', this)">📋</button>
+                </div>
+                <div class="card-content" id="thumbnail-content"></div>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </div>
     </div>
 
-    <div class="note">
-      Backend required: connect /api/chat (Groq or OpenAI). No API keys in frontend.
+    <!-- ══ PANEL 3: POST NEXT ══ -->
+    <div class="panel" id="panel-postnext">
+      <div class="postnext-panel">
+        <div class="postnext-inner">
+
+          <div class="postnext-hero">
+            <div class="postnext-hero-icon">🎯</div>
+            <h2>What Should I Post Today?</h2>
+            <p>Xarvis analyzes your niche, tone, and past content to suggest the ONE idea most likely to perform right now. One click. One direction. Go.</p>
+            <button class="postnext-btn" id="postnext-btn" onclick="generatePostNext()">
+              🎯 What should I post today?
+            </button>
+          </div>
+
+          <!-- Output -->
+          <div class="postnext-output" id="postnext-output">
+            <div class="postnext-idea-card">
+              <div class="postnext-idea-header">⚡ Today's Recommended Post</div>
+              <div class="postnext-sections">
+                <div>
+                  <div class="pn-section-label">💡 The Idea</div>
+                  <div class="pn-section-content" id="pn-idea"></div>
+                </div>
+                <div>
+                  <div class="pn-section-label">🪝 Your Hook</div>
+                  <div class="pn-hook-wrap">
+                    <div class="pn-section-content" id="pn-hook"></div>
+                  </div>
+                </div>
+                <div>
+                  <div class="pn-section-label">📊 Why It Will Work</div>
+                  <div class="pn-section-content" id="pn-why"></div>
+                </div>
+                <div>
+                  <div class="pn-section-label">⏰ Best Time to Post</div>
+                  <div class="pn-section-content" id="pn-timing"></div>
+                </div>
+              </div>
+            </div>
+            <div class="postnext-regen">
+              <button class="postnext-btn" style="font-size:0.85rem;padding:12px 28px;" onclick="generatePostNext()">
+                ↻ Give Me Another Idea
+              </button>
+            </div>
+          </div>
+
+        </div>
+      </div>
     </div>
 
+    <!-- ══ PANEL 4: CALENDAR ══ -->
+    <div class="panel" id="panel-calendar">
+      <div class="calendar-panel">
+        <div class="calendar-inner">
+
+          <div class="calendar-header-card">
+            <div>
+              <h2>📅 <span>7-Day Content Calendar</span></h2>
+              <p>A full week of content ideas — personalized to your niche, tone, and goals. Each day includes a topic, angle, and hook ready to use.</p>
+            </div>
+            <button class="cal-btn" id="calendar-btn" onclick="generateCalendar()">
+              📅 Generate 7-Day Plan
+            </button>
+          </div>
+
+          <div class="cal-loading" id="cal-loading">
+            🧠 Building your 7-day strategy…
+          </div>
+
+          <div class="calendar-grid" id="calendar-grid">
+            <!-- Days injected by JS -->
+          </div>
+
+        </div>
+      </div>
+    </div>
+
+    <!-- ══ PANEL 5: FEEDBACK ══ -->
+    <div class="panel" id="panel-feedback">
+      <div class="feedback-panel">
+        <div class="feedback-inner">
+
+          <div class="feedback-input-card">
+            <h2>📊 <span>Performance Feedback</span></h2>
+            <p>Paste your video idea, description, or concept. Xarvis scores it, finds the weaknesses, and tells you exactly how to fix it before you post.</p>
+            <textarea
+              id="feedback-input"
+              placeholder="e.g. 'I want to make a video about 5 habits that helped me go from 0 to 50k in 6 months. I'll show before/after analytics and explain each habit with clips...' "
+            ></textarea>
+            <button class="generate-btn" id="feedback-btn" onclick="analyzeFeedback()">
+              <div class="btn-spinner"></div>
+              <span class="btn-text">🔍 Analyze My Content</span>
+            </button>
+          </div>
+
+          <!-- Output -->
+          <div class="feedback-output" id="feedback-output">
+            <div class="feedback-cards-grid">
+              <div class="feedback-card">
+                <div class="feedback-card-title">✅ Strengths</div>
+                <div class="feedback-card-content" id="fb-strengths"></div>
+              </div>
+              <div class="feedback-card">
+                <div class="feedback-card-title">⚠️ Weaknesses</div>
+                <div class="feedback-card-content" id="fb-weaknesses"></div>
+              </div>
+              <div class="feedback-card" style="grid-column: 1 / -1;">
+                <div class="feedback-card-title">🚀 Improvements</div>
+                <div class="feedback-card-content" id="fb-improvements"></div>
+              </div>
+            </div>
+            <div class="verdict-card">
+              <div class="verdict-score-wrap">
+                <div class="verdict-score" id="fb-score">?</div>
+                <div class="verdict-score-label">Viral Score / 10</div>
+              </div>
+              <div class="verdict-text" id="fb-verdict">Xarvis verdict loading…</div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /main -->
+
+  <!-- ══ MODAL: UPGRADE ══ -->
+  <div class="modal-overlay" id="upgrade-modal">
+    <div class="modal">
+      <h3>⚡ Upgrade Xarvis</h3>
+      <p>You've hit the free limit. Pick a plan and keep building.</p>
+      <div class="plan-options">
+        <div class="plan-option" onclick="activatePlan('pro')">
+          <div>
+            <h4>Creator Pro</h4>
+            <p>Unlimited chat, scripts, hooks, calendar & growth plans</p>
+          </div>
+          <div class="plan-price-tag">$12/mo</div>
+        </div>
+        <div class="plan-option" onclick="activatePlan('elite')">
+          <div>
+            <h4>Creator Elite</h4>
+            <p>Everything + monetization, sponsorship scripts & priority AI</p>
+          </div>
+          <div class="plan-price-tag">$39/mo</div>
+        </div>
+      </div>
+      <div class="modal-actions">
+        <button class="modal-dismiss" onclick="closeModal('upgrade-modal')">Maybe later</button>
+      </div>
+    </div>
   </div>
 
-<script>
-async function send(){
-  const input = document.getElementById('input');
-  const chat = document.getElementById('chat');
+  <!-- ══ MODAL: MEMORY SETUP ══ -->
+  <div class="modal-overlay" id="memory-modal">
+    <div class="modal">
+      <h3>🧠 Creator Profile</h3>
+      <p>Xarvis uses this to personalize every hook, script, calendar, and suggestion to your exact niche. Set it once, benefit forever.</p>
 
-  if(!input.value.trim()) return;
+      <div class="form-group">
+        <label class="form-label">Your Niche *</label>
+        <input type="text" class="form-input" id="mem-niche" placeholder="e.g. fitness, business, gaming, self-improvement, finance…" />
+      </div>
 
-  chat.innerHTML += `<div class='msg user'>${input.value}</div>`;
+      <div class="form-group">
+        <label class="form-label">Content Tone</label>
+        <select class="form-select" id="mem-tone">
+          <option value="motivational">🔥 Motivational — high energy, push people to act</option>
+          <option value="educational">📚 Educational — teach, explain, break things down</option>
+          <option value="storytelling">📖 Storytelling — narrative, relatable, emotional</option>
+          <option value="entertaining">🎭 Entertaining — funny, surprising, high entertainment</option>
+          <option value="bold and controversial">⚡ Bold / Controversial — strong opinions, debate-starting</option>
+        </select>
+      </div>
 
-  const userMessage = input.value;
-  input.value = '';
+      <div class="form-group">
+        <label class="form-label">Main Platform</label>
+        <select class="form-select" id="mem-platform">
+          <option value="YouTube Shorts">▶ YouTube Shorts</option>
+          <option value="TikTok">♪ TikTok</option>
+          <option value="Instagram Reels">◉ Instagram Reels</option>
+          <option value="YouTube">▶ YouTube Long-form</option>
+        </select>
+      </div>
 
-  chat.innerHTML += `<div class='msg bot'>Thinking...</div>`;
+      <div class="form-group">
+        <label class="form-label">Your #1 Goal</label>
+        <textarea class="form-textarea" id="mem-goals" placeholder="e.g. Hit 100k subscribers in 6 months and monetize through brand deals and digital products…"></textarea>
+      </div>
 
-  try {
-    // SAFE ARCHITECTURE: backend only
-    const res = await fetch('/api/chat', {
-      method:'POST',
-      headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({ message:userMessage })
+      <div class="modal-actions">
+        <button class="modal-activate" onclick="saveMemory()">💾 Save Profile</button>
+        <button class="modal-dismiss" onclick="closeModal('memory-modal')">Skip for now</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════
+       JAVASCRIPT — XARVIS CREATOR OS v3
+       Modular. Clean. Ready to scale.
+  ══════════════════════════════════════════ -->
+  <script>
+
+    // ════════════════════════════════════════════
+    // [1] CONFIG
+    // ════════════════════════════════════════════
+    // 👇 Paste your Groq API key here (get one free at console.groq.com)
+    const CONFIG = {
+      GROQ_API_KEY: 'YOUR_GROQ_API_KEY_HERE',
+      MODEL:        'llama-3.3-70b-versatile',
+      API_BASE:     'https://api.groq.com/openai/v1/chat/completions',
+      FREE_MSG_LIMIT: 15,
+      LOADING_MSGS: [
+        '🧠 Xarvis is engineering your viral moment…',
+        '🔥 Applying viral psychology to your topic…',
+        '📊 Optimizing for retention and scroll-stopping power…',
+        '⚡ Finalizing your content package…',
+      ],
+    };
+
+    // ════════════════════════════════════════════
+    // [2] MEMORY MODULE
+    // Stores & injects creator context into every AI call.
+    // Swap to a real DB here when you add user accounts.
+    // ════════════════════════════════════════════
+    const Memory = {
+      KEY: 'xarvis_v3_memory',
+
+      get() {
+        try { return JSON.parse(localStorage.getItem(this.KEY) || '{}'); }
+        catch { return {}; }
+      },
+
+      save(data) {
+        const updated = { ...this.get(), ...data };
+        localStorage.setItem(this.KEY, JSON.stringify(updated));
+        renderMemoryWidget();
+        return updated;
+      },
+
+      // Tracks past topics — avoids repeating ideas over time
+      addTopic(topic) {
+        if (!topic || topic.length < 3) return;
+        const mem = this.get();
+        const topics = mem.topics || [];
+        if (!topics.includes(topic)) {
+          mem.topics = [topic, ...topics].slice(0, 20);
+          localStorage.setItem(this.KEY, JSON.stringify(mem));
+        }
+      },
+
+      // Injects creator context into AI prompts
+      buildContext() {
+        const m = this.get();
+        if (!m.niche) return '';
+        let ctx = '\n\n━━━ CREATOR CONTEXT (personalize to this) ━━━';
+        if (m.niche)          ctx += `\nNiche: ${m.niche}`;
+        if (m.tone)           ctx += `\nContent Tone: ${m.tone}`;
+        if (m.platform)       ctx += `\nMain Platform: ${m.platform}`;
+        if (m.goals)          ctx += `\nGoals: ${m.goals}`;
+        if (m.topics?.length) ctx += `\nPast topics covered: ${m.topics.slice(0,6).join(', ')}`;
+        ctx += '\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━';
+        return ctx;
+      },
+
+      isSet() { return !!(this.get().niche); },
+    };
+
+    // ════════════════════════════════════════════
+    // [3] STATE
+    // ════════════════════════════════════════════
+    const state = {
+      messages:    [],
+      recentChats: [],
+      ttsEnabled:  true,
+      isListening: false,
+      recognition: null,
+      plan:        'starter',
+      msgCount:    0,
+      isPro:       false,
+      currentMode: 'chat',
+    };
+
+    // ════════════════════════════════════════════
+    // [4] INIT
+    // ════════════════════════════════════════════
+    window.addEventListener('DOMContentLoaded', () => {
+      const urlPlan = new URLSearchParams(location.search).get('plan');
+      if (urlPlan === 'pro' || urlPlan === 'elite') activatePlan(urlPlan, true);
+
+      loadRecentChats();
+      renderRecentChats();
+      updateLimitBanner();
+      bindSuggestions();
+      renderMemoryWidget();
+
+      // Show memory setup on first visit (after 1.2s delay)
+      if (!Memory.isSet()) {
+        setTimeout(() => openModal('memory-modal'), 1200);
+      }
     });
 
-    const data = await res.json();
+    // ════════════════════════════════════════════
+    // [5] API LAYER
+    // Flexible — swap to OpenAI or Anthropic here later.
+    // Just change API_PROVIDER and add a new callX() function.
+    // ════════════════════════════════════════════
+    const API_PROVIDER = 'groq'; // 'groq' | 'openai' | 'anthropic'
 
-    chat.lastChild.innerHTML = data.reply || "No response";
-  } catch(e){
-    chat.lastChild.innerHTML = "AI offline. Backend not connected.";
-  }
-}
-</script>
+    async function callAI(messages, system = '', options = {}) {
+      if (API_PROVIDER === 'groq') return callGroq(messages, system, options);
+      // Future: add 'openai', 'anthropic' cases here
+      throw new Error('Unknown API provider: ' + API_PROVIDER);
+    }
 
+    async function callGroq(messages, system = '', options = {}) {
+      const key = CONFIG.GROQ_API_KEY;
+      if (!key || key === 'YOUR_GROQ_API_KEY_HERE') {
+        throw new Error('Paste your Groq API key into CONFIG.GROQ_API_KEY at the top of the script.');
+      }
+
+      const built = [];
+      if (system) built.push({ role: 'system', content: system });
+      built.push(...messages.map(m => ({
+        role: m.role === 'bot' ? 'assistant' : m.role,
+        content: m.content,
+      })));
+
+      const res = await fetch(CONFIG.API_BASE, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${key}`,
+        },
+        body: JSON.stringify({
+          model:       options.model    || CONFIG.MODEL,
+          messages:    built,
+          max_tokens:  options.maxTokens || 1400,
+          temperature: options.temp     || 0.85,
+        }),
+      });
+
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err?.error?.message || `API error ${res.status}`);
+      }
+
+      const data = await res.json();
+      return data?.choices?.[0]?.message?.content || '';
+    }
+
+    // ════════════════════════════════════════════
+    // [6] MODE SWITCHING
+    // ════════════════════════════════════════════
+    function switchMode(mode) {
+      state.currentMode = mode;
+      document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+      document.querySelectorAll('.mode-tab').forEach(t => t.classList.remove('active'));
+      document.getElementById(`panel-${mode}`)?.classList.add('active');
+      document.getElementById(`tab-${mode}`)?.classList.add('active');
+      document.getElementById('sidebar')?.classList.remove('open');
+    }
+
+    // ════════════════════════════════════════════
+    // [7] CHAT SYSTEM
+    // Memory context is auto-injected into every message.
+    // ════════════════════════════════════════════
+    const CHAT_SYSTEM = `You are Xarvis AI — an elite AI co-founder for content creators. You think like MrBeast's strategy team, Alex Hormozi's marketing brain, and David Goggins' mindset coach combined.
+
+Rules:
+- Be direct, bold, and specific. Zero fluff.
+- Use short paragraphs and line breaks for readability.
+- Give actionable advice — no generic platitudes.
+- When writing hooks or scripts, make them scroll-stopping.
+- Format responses with **bold** for key points.
+- Always sound like a creator who's done it, not a textbook.`;
+
+    async function sendMessage(prefill) {
+      const input = document.getElementById('chat-input');
+      const userText = (prefill || input?.value || '').trim();
+      if (!userText) return;
+
+      if (!state.isPro && state.msgCount >= CONFIG.FREE_MSG_LIMIT) {
+        openModal('upgrade-modal'); return;
+      }
+
+      document.getElementById('empty-state')?.remove();
+      if (input) { input.value = ''; autoResize(input); }
+
+      pushMessage('user', userText);
+      state.msgCount++;
+      updateLimitBanner();
+      setSendDisabled(true);
+
+      const typing = showTyping();
+
+      try {
+        // Memory context injected here automatically
+        const system = CHAT_SYSTEM + Memory.buildContext();
+        const reply  = await callAI([...state.messages], system);
+        typing.remove();
+        pushMessage('bot', reply);
+        if (state.ttsEnabled) speak(reply);
+        saveRecentChat(userText);
+        Memory.addTopic(userText.slice(0, 50));
+      } catch (err) {
+        typing.remove();
+        pushMessage('bot', `⚠️ ${err.message || 'Something went wrong. Check your API key.'}`);
+        console.error(err);
+      }
+
+      setSendDisabled(false);
+      scrollBottom();
+    }
+
+    function pushMessage(role, text) {
+      state.messages.push({ role, content: text });
+      renderMessage(role, text);
+    }
+
+    function renderMessage(role, text) {
+      const area = document.getElementById('chat-area');
+      if (!area) return;
+      const row    = document.createElement('div');
+      row.className = `message-row ${role === 'user' ? 'user' : ''}`;
+      const avatar  = document.createElement('div');
+      avatar.className = `msg-avatar ${role === 'bot' ? 'bot' : 'user-av'}`;
+      avatar.textContent = role === 'bot' ? 'X' : 'U';
+      const bubble  = document.createElement('div');
+      bubble.className = `msg-bubble ${role}`;
+      bubble.innerHTML = formatText(text);
+      row.appendChild(avatar);
+      row.appendChild(bubble);
+      area.appendChild(row);
+      scrollBottom();
+    }
+
+    function formatText(t) {
+      return String(t)
+        .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+        .replace(/\n/g, '<br/>');
+    }
+
+    function showTyping() {
+      const area = document.getElementById('chat-area');
+      if (!area) return { remove: () => {} };
+      const row = document.createElement('div');
+      row.className = 'message-row';
+      row.innerHTML = `
+        <div class="msg-avatar bot">X</div>
+        <div class="msg-bubble bot">
+          <div class="typing-indicator"><span></span><span></span><span></span></div>
+        </div>`;
+      area.appendChild(row);
+      scrollBottom();
+      return row;
+    }
+
+    function newChat() {
+      state.messages = [];
+      const area = document.getElementById('chat-area');
+      if (area) {
+        area.innerHTML = `
+          <div class="empty-state" id="empty-state">
+            <div>
+              <h2>Your AI Co-Founder is Ready.</h2>
+              <p>Ask Xarvis anything about growing your channel, writing hooks, building your strategy, or monetizing your audience.</p>
+            </div>
+            <div class="suggestion-grid">
+              <div class="suggestion-card" data-prompt="Write me 3 viral hooks for my next video in my niche"><div class="sug-icon">🪝</div><div class="sug-title">Viral Hooks</div><div class="sug-desc">Scroll-stopping openers for your next video</div></div>
+              <div class="suggestion-card" data-prompt="Give me a 90-day growth plan to hit 100k subscribers"><div class="sug-icon">📈</div><div class="sug-title">Growth Plan</div><div class="sug-desc">A roadmap to scale your audience fast</div></div>
+              <div class="suggestion-card" data-prompt="What content is going viral right now in my niche?"><div class="sug-icon">🔮</div><div class="sug-title">Trend Intel</div><div class="sug-desc">What's blowing up in your niche right now</div></div>
+              <div class="suggestion-card" data-prompt="How do I land my first brand sponsorship as a creator?"><div class="sug-icon">💰</div><div class="sug-title">Monetize</div><div class="sug-desc">Turn your audience into income</div></div>
+            </div>
+          </div>`;
+        bindSuggestions();
+      }
+      switchMode('chat');
+    }
+
+    function bindSuggestions() {
+      document.querySelectorAll('.suggestion-card').forEach(el => {
+        el.onclick = () => sendMessage(el.dataset.prompt);
+      });
+    }
+
+    // ════════════════════════════════════════════
+    // [8] VIRAL GENERATOR
+    // Memory context injected into every generation.
+    // ════════════════════════════════════════════
+    const VIRAL_SYSTEM = `You are the world's best viral content strategist. You've studied every MrBeast video, every Hormozi reel, every Goggins clip. You know exactly what makes content stop a scroll in 2 seconds.
+
+RULES — follow exactly:
+- NEVER write generic advice. Every word must be specific, punchy, and ready to post.
+- Hooks trigger emotion in under 2 seconds: curiosity, FOMO, shock, or relatability.
+- Scripts use SHORT sentences. Hard line breaks for pacing. One pattern interrupt mid-way.
+- Titles: numbers, power words, or a curiosity gap. Max 60 characters.
+- Thumbnails: visual, simple, strong emotional reaction instantly.
+- Zero filler. Zero "in today's video". Zero "let's get started".`;
+
+    function buildViralPrompt(topic, platform) {
+      return `Create a complete viral content package for ${platform} about: "${topic}"${Memory.buildContext()}
+
+Return in EXACTLY this format — no preamble, no extra text:
+
+HOOK:
+[Single scroll-stopping opener. Max 2 sentences. Triggers emotion in under 2 seconds. Use curiosity gap, bold claim, or shocking stat.]
+
+SCRIPT:
+[Full 60-90 second script. Short sentences. Hard line breaks between beats. One unexpected pattern interrupt mid-way. No intro fluff. End with strong CTA.]
+
+TITLE:
+[3 title options, one per line. Under 60 chars each. Use numbers, power words, or curiosity gaps. Mark best one with ★]
+
+THUMBNAIL:
+[Describe in 3 parts:
+• VISUAL: Subject, expression, setting
+• TEXT OVERLAY: 3-5 bold words maximum
+• EMOTION: The gut feeling triggered in 0.5 seconds]`;
+    }
+
+    function parseViralResponse(text) {
+      const extract = (label, next) => {
+        const r = new RegExp(`${label}:\\s*([\\s\\S]*?)(?=${next}:|$)`, 'i');
+        const m = text.match(r);
+        return m ? m[1].trim() : '';
+      };
+      return {
+        hook:      extract('HOOK',      'SCRIPT'),
+        script:    extract('SCRIPT',    'TITLE'),
+        title:     extract('TITLE',     'THUMBNAIL'),
+        thumbnail: extract('THUMBNAIL', 'XARVIS_END_NEVER_MATCHES'),
+      };
+    }
+
+    async function generateViralContent() {
+      const topic    = document.getElementById('viral-topic').value.trim();
+      const platform = document.getElementById('viral-platform').value;
+
+      if (!topic) {
+        const inp = document.getElementById('viral-topic');
+        inp.style.borderColor = 'rgba(255,71,87,0.6)';
+        inp.focus();
+        setTimeout(() => { inp.style.borderColor = ''; }, 1500);
+        return;
+      }
+
+      if (!state.isPro && state.msgCount >= CONFIG.FREE_MSG_LIMIT) {
+        openModal('upgrade-modal'); return;
+      }
+
+      setGenLoading('generate-btn', true);
+      setVisible('viral-loading', true);
+      setVisible('viral-output', false);
+
+      let si = 0;
+      const statusEl = document.getElementById('loading-status');
+      const interval = setInterval(() => {
+        si = (si + 1) % CONFIG.LOADING_MSGS.length;
+        if (statusEl) statusEl.textContent = CONFIG.LOADING_MSGS[si];
+      }, 1400);
+
+      try {
+        const prompt   = buildViralPrompt(topic, platform);
+        const response = await callAI([{ role: 'user', content: prompt }], VIRAL_SYSTEM);
+        const s        = parseViralResponse(response);
+
+        setText('hook-content',      s.hook      || 'Generation failed — try again.');
+        setText('script-content',    s.script    || 'Generation failed — try again.');
+        setText('title-content',     s.title     || 'Generation failed — try again.');
+        setText('thumbnail-content', s.thumbnail || 'Generation failed — try again.');
+        document.getElementById('output-topic-label').textContent = `"${topic}" · ${platform}`;
+
+        setVisible('viral-loading', false);
+        setVisible('viral-output',  true);
+
+        state.msgCount++;
+        updateLimitBanner();
+        saveRecentChat(`[Viral] ${topic}`);
+        Memory.addTopic(topic);
+      } catch (err) {
+        setVisible('viral-loading', false);
+        alert(`Generation failed: ${err.message}`);
+        console.error(err);
+      }
+
+      clearInterval(interval);
+      setGenLoading('generate-btn', false);
+    }
+
+    // ════════════════════════════════════════════
+    // [9] POST NEXT
+    // One high-potential idea based on creator memory.
+    // ════════════════════════════════════════════
+    function buildPostNextPrompt() {
+      const m = Memory.get();
+      return `You are a viral content strategist. Based on this creator's profile, suggest ONE perfect content idea they should post TODAY.
+
+Creator Profile:
+- Niche: ${m.niche || 'content creation'}
+- Platform: ${m.platform || 'YouTube Shorts'}
+- Tone: ${m.tone || 'motivational'}
+- Goals: ${m.goals || 'grow audience and get views'}
+- Past topics covered: ${(m.topics || []).slice(0,6).join(', ') || 'none yet — this is their first'}
+
+Pick an idea that:
+1. Hasn't been covered yet (based on past topics)
+2. Is trending or high-potential RIGHT NOW in their niche
+3. Matches their tone and platform perfectly
+
+Return EXACTLY in this format:
+
+IDEA:
+[One specific, concrete content concept — not generic. One sentence.]
+
+HOOK:
+[The exact opening line they should say or show — scroll-stopping, under 2 sentences.]
+
+WHY IT WILL WORK:
+[3 specific reasons based on niche psychology and current trends. Each on its own line starting with ✦]
+
+BEST TIME TO POST:
+[Day + time + one-sentence reason]`;
+    }
+
+    function parsePostNext(text) {
+      const extract = (label, next) => {
+        const r = new RegExp(`${label}:\\s*([\\s\\S]*?)(?=${next}:|$)`, 'i');
+        const m = text.match(r);
+        return m ? m[1].trim() : '';
+      };
+      return {
+        idea:   extract('IDEA',   'HOOK'),
+        hook:   extract('HOOK',   'WHY'),
+        why:    extract('WHY IT WILL WORK', 'BEST TIME'),
+        timing: extract('BEST TIME TO POST', 'END_SENTINEL'),
+      };
+    }
+
+    async function generatePostNext() {
+      if (!Memory.isSet()) {
+        openModal('memory-modal'); return;
+      }
+      if (!state.isPro && state.msgCount >= CONFIG.FREE_MSG_LIMIT) {
+        openModal('upgrade-modal'); return;
+      }
+
+      const btn = document.getElementById('postnext-btn');
+      const regenBtns = document.querySelectorAll('[onclick="generatePostNext()"]');
+      regenBtns.forEach(b => { b.disabled = true; });
+      if (btn) btn.textContent = '⏳ Thinking…';
+
+      setVisible('postnext-output', false);
+
+      try {
+        const prompt   = buildPostNextPrompt();
+        const response = await callAI([{ role: 'user', content: prompt }], '');
+        const s        = parsePostNext(response);
+
+        setText('pn-idea',   s.idea   || 'Try again.');
+        setText('pn-hook',   s.hook   || '');
+        setText('pn-why',    s.why    || '');
+        setText('pn-timing', s.timing || '');
+
+        setVisible('postnext-output', true);
+        state.msgCount++;
+        updateLimitBanner();
+        saveRecentChat('[Post Next] Idea generated');
+      } catch (err) {
+        alert(`Error: ${err.message}`);
+        console.error(err);
+      }
+
+      regenBtns.forEach(b => { b.disabled = false; });
+      if (btn) btn.textContent = '🎯 What should I post today?';
+    }
+
+    // ════════════════════════════════════════════
+    // [10] CALENDAR
+    // 7-day plan built from creator memory.
+    // ════════════════════════════════════════════
+    function buildCalendarPrompt() {
+      const m = Memory.get();
+      return `Create a 7-day content calendar for this creator:
+- Niche: ${m.niche || 'content creation'}
+- Platform: ${m.platform || 'YouTube Shorts'}
+- Tone: ${m.tone || 'motivational'}
+- Goals: ${m.goals || 'grow audience and get views'}
+
+Return EXACTLY 7 lines, each in this pipe-separated format — no headers, no extra text:
+DAY 1 | [Specific topic] | [Unique angle or approach] | [The hook — exact opening line]
+DAY 2 | [Specific topic] | [Unique angle or approach] | [The hook — exact opening line]
+DAY 3 | [Specific topic] | [Unique angle or approach] | [The hook — exact opening line]
+DAY 4 | [Specific topic] | [Unique angle or approach] | [The hook — exact opening line]
+DAY 5 | [Specific topic] | [Unique angle or approach] | [The hook — exact opening line]
+DAY 6 | [Specific topic] | [Unique angle or approach] | [The hook — exact opening line]
+DAY 7 | [Specific topic] | [Unique angle or approach] | [The hook — exact opening line]
+
+Be specific. Vary content types across the week (e.g. story, tutorial, hot take, breakdown, challenge).`;
+    }
+
+    function parseCalendar(text) {
+      return text
+        .split('\n')
+        .filter(l => /^DAY\s*\d/i.test(l.trim()))
+        .map((line, i) => {
+          const parts = line.split('|').map(p => p.trim());
+          return {
+            day:   parts[0]?.replace(/^DAY\s*/i, 'Day ') || `Day ${i+1}`,
+            topic: parts[1] || '',
+            angle: parts[2] || '',
+            hook:  parts[3] || '',
+          };
+        })
+        .filter(d => d.topic);
+    }
+
+    async function generateCalendar() {
+      if (!Memory.isSet()) {
+        openModal('memory-modal'); return;
+      }
+      if (!state.isPro && state.msgCount >= CONFIG.FREE_MSG_LIMIT) {
+        openModal('upgrade-modal'); return;
+      }
+
+      const btn = document.getElementById('calendar-btn');
+      if (btn) { btn.disabled = true; btn.textContent = '⏳ Building plan…'; }
+
+      setVisible('calendar-grid', false);
+      const loading = document.getElementById('cal-loading');
+      if (loading) loading.style.display = 'block';
+
+      try {
+        const prompt   = buildCalendarPrompt();
+        const response = await callAI([{ role: 'user', content: prompt }], '');
+        const days     = parseCalendar(response);
+
+        const grid = document.getElementById('calendar-grid');
+        if (grid && days.length) {
+          grid.innerHTML = days.map((d, i) => `
+            <div class="day-card" style="animation-delay:${i * 0.07}s">
+              <div class="day-num">📅 ${d.day}</div>
+              <div class="day-topic">${d.topic}</div>
+              <div class="day-angle">${d.angle}</div>
+              <div class="day-hook">"${d.hook}"</div>
+            </div>
+          `).join('');
+          setVisible('calendar-grid', true);
+        } else {
+          alert('Could not parse calendar. Please try again.');
+        }
+
+        state.msgCount++;
+        updateLimitBanner();
+        saveRecentChat('[Calendar] 7-day plan generated');
+      } catch (err) {
+        alert(`Error: ${err.message}`);
+        console.error(err);
+      }
+
+      if (loading) loading.style.display = 'none';
+      if (btn) { btn.disabled = false; btn.textContent = '🔄 Regenerate Plan'; }
+    }
+
+    // ════════════════════════════════════════════
+    // [11] FEEDBACK
+    // Strengths, weaknesses, improvements + viral score.
+    // ════════════════════════════════════════════
+    function buildFeedbackPrompt(content) {
+      const m = Memory.get();
+      return `Analyze this content idea for a ${m.platform || 'YouTube Shorts'} creator in the ${m.niche || 'content creation'} niche:
+
+"${content}"
+
+Be brutally honest. Creators need real feedback, not cheerleading.
+
+Return EXACTLY in this format:
+
+STRENGTHS:
+[2-3 specific strengths. Each on its own line starting with ✓]
+
+WEAKNESSES:
+[2-3 specific weaknesses. Each on its own line starting with ✗]
+
+IMPROVEMENTS:
+[2-3 concrete, actionable improvements. Each on its own line starting with →]
+
+VIRAL SCORE: [number 1-10]/10
+VERDICT:
+[One punchy, direct sentence. Be honest.]`;
+    }
+
+    function parseFeedback(text) {
+      const extract = (label, next) => {
+        const r = new RegExp(`${label}:\\s*([\\s\\S]*?)(?=${next}:|$)`, 'i');
+        const m = text.match(r);
+        return m ? m[1].trim() : '';
+      };
+      const scoreMatch = text.match(/VIRAL SCORE:\s*(\d+)\s*\/\s*10/i);
+      return {
+        strengths:    extract('STRENGTHS',   'WEAKNESSES'),
+        weaknesses:   extract('WEAKNESSES',  'IMPROVEMENTS'),
+        improvements: extract('IMPROVEMENTS','VIRAL SCORE'),
+        score:        scoreMatch ? scoreMatch[1] : '?',
+        verdict:      extract('VERDICT', 'END_SENTINEL'),
+      };
+    }
+
+    async function analyzeFeedback() {
+      const content = document.getElementById('feedback-input')?.value.trim();
+      if (!content) {
+        document.getElementById('feedback-input')?.focus(); return;
+      }
+      if (!state.isPro && state.msgCount >= CONFIG.FREE_MSG_LIMIT) {
+        openModal('upgrade-modal'); return;
+      }
+
+      setGenLoading('feedback-btn', true);
+      setVisible('feedback-output', false);
+
+      try {
+        const prompt   = buildFeedbackPrompt(content);
+        const response = await callAI([{ role: 'user', content: prompt }], '');
+        const s        = parseFeedback(response);
+
+        setText('fb-strengths',    s.strengths    || 'Analysis failed. Try again.');
+        setText('fb-weaknesses',   s.weaknesses   || '');
+        setText('fb-improvements', s.improvements || '');
+        setText('fb-score',        s.score);
+        setText('fb-verdict',      s.verdict      || '');
+
+        setVisible('feedback-output', true);
+        state.msgCount++;
+        updateLimitBanner();
+        saveRecentChat('[Feedback] Content analyzed');
+      } catch (err) {
+        alert(`Error: ${err.message}`);
+        console.error(err);
+      }
+
+      setGenLoading('feedback-btn', false);
+    }
+
+    // ════════════════════════════════════════════
+    // [12] MEMORY WIDGET + MODAL
+    // ════════════════════════════════════════════
+    function renderMemoryWidget() {
+      const tagsEl  = document.getElementById('memory-tags');
+      const widget  = document.getElementById('memory-widget');
+      if (!tagsEl || !widget) return;
+
+      const mem = Memory.get();
+
+      if (!mem.niche) {
+        widget.classList.add('unset');
+        tagsEl.innerHTML = `<span class="memory-empty">Not set — <a onclick="openMemoryModal()">set up now</a></span>`;
+        return;
+      }
+
+      widget.classList.remove('unset');
+      const tags = [];
+      if (mem.niche)    tags.push(`🎯 ${mem.niche}`);
+      if (mem.tone)     tags.push(`🎭 ${mem.tone.split(' ')[0]}`);
+      if (mem.platform) tags.push(`📱 ${mem.platform.split(' ').slice(1).join(' ') || mem.platform}`);
+      tagsEl.innerHTML = tags.map(t => `<span class="memory-tag">${t}</span>`).join('');
+    }
+
+    function openMemoryModal() {
+      const mem = Memory.get();
+      const fields = { 'mem-niche': 'niche', 'mem-tone': 'tone', 'mem-platform': 'platform', 'mem-goals': 'goals' };
+      Object.entries(fields).forEach(([id, key]) => {
+        const el = document.getElementById(id);
+        if (el && mem[key]) el.value = mem[key];
+      });
+      openModal('memory-modal');
+    }
+
+    function saveMemory() {
+      const niche    = document.getElementById('mem-niche')?.value.trim();
+      const tone     = document.getElementById('mem-tone')?.value;
+      const platform = document.getElementById('mem-platform')?.value;
+      const goals    = document.getElementById('mem-goals')?.value.trim();
+
+      if (!niche) {
+        document.getElementById('mem-niche')?.focus();
+        document.getElementById('mem-niche').style.borderColor = 'rgba(255,71,87,0.5)';
+        setTimeout(() => { document.getElementById('mem-niche').style.borderColor = ''; }, 1500);
+        return;
+      }
+
+      Memory.save({ niche, tone, platform, goals });
+      closeModal('memory-modal');
+    }
+
+    // ════════════════════════════════════════════
+    // [13] COPY SYSTEM
+    // ════════════════════════════════════════════
+    function copyCard(elementId, btn) {
+      const text = document.getElementById(elementId)?.textContent || '';
+      navigator.clipboard.writeText(text).then(() => {
+        const orig = btn.textContent;
+        btn.textContent = '✓';
+        btn.classList.add('copied');
+        setTimeout(() => { btn.textContent = orig; btn.classList.remove('copied'); }, 1800);
+      });
+    }
+
+    function copyAll() {
+      const hook      = document.getElementById('hook-content')?.textContent || '';
+      const script    = document.getElementById('script-content')?.textContent || '';
+      const title     = document.getElementById('title-content')?.textContent || '';
+      const thumbnail = document.getElementById('thumbnail-content')?.textContent || '';
+      const topic     = document.getElementById('output-topic-label')?.textContent || '';
+
+      const full = `XARVIS AI — Viral Content Package\nTopic: ${topic}\n\n🪝 HOOK:\n${hook}\n\n📝 SCRIPT:\n${script}\n\n✏️ TITLE OPTIONS:\n${title}\n\n🖼 THUMBNAIL:\n${thumbnail}`;
+      navigator.clipboard.writeText(full).then(() => {
+        const btn = document.querySelector('.copy-all-btn');
+        if (btn) { btn.textContent = '✓ Copied!'; setTimeout(() => { btn.textContent = '📋 Copy All'; }, 2000); }
+      });
+    }
+
+    // ════════════════════════════════════════════
+    // [14] RECENT CHATS
+    // ════════════════════════════════════════════
+    function saveRecentChat(text) {
+      const label = text.length > 42 ? text.slice(0, 42) + '…' : text;
+      state.recentChats.unshift(label);
+      state.recentChats = state.recentChats.slice(0, 12);
+      localStorage.setItem('xarvis_recent', JSON.stringify(state.recentChats));
+      renderRecentChats();
+    }
+
+    function loadRecentChats() {
+      try { state.recentChats = JSON.parse(localStorage.getItem('xarvis_recent') || '[]'); }
+      catch { state.recentChats = []; }
+    }
+
+    function renderRecentChats() {
+      const el = document.getElementById('recent-chats');
+      if (!el) return;
+      el.innerHTML = state.recentChats.length
+        ? state.recentChats.map((c, i) =>
+            `<div class="recent-chat-item ${i===0?'active':''}">${c}</div>`
+          ).join('')
+        : '<div style="color:var(--muted2);font-size:0.75rem;padding:6px 9px;">No history yet</div>';
+    }
+
+    // ════════════════════════════════════════════
+    // [15] LIMIT + PLAN SYSTEM
+    // ════════════════════════════════════════════
+    function updateLimitBanner() {
+      const banner = document.getElementById('limit-banner');
+      const text   = document.getElementById('limit-text');
+      if (!banner || !text) return;
+      if (state.isPro) { banner.classList.add('hidden'); return; }
+      const remaining = CONFIG.FREE_MSG_LIMIT - state.msgCount;
+      if (remaining <= 5) {
+        banner.classList.remove('hidden');
+        text.textContent = `${remaining} message${remaining !== 1 ? 's' : ''} left`;
+      } else {
+        banner.classList.add('hidden');
+      }
+    }
+
+    function setSendDisabled(v) {
+      const btn = document.getElementById('send-btn');
+      if (btn) btn.disabled = v;
+    }
+
+    function activatePlan(plan, silent = false) {
+      state.plan  = plan;
+      state.isPro = true;
+      const pill  = document.getElementById('plan-pill');
+      if (pill) {
+        pill.textContent   = plan === 'elite' ? 'ELITE' : 'PRO';
+        pill.style.background   = 'rgba(79,142,255,0.12)';
+        pill.style.borderColor  = 'rgba(79,142,255,0.3)';
+        pill.style.color        = 'var(--accent)';
+      }
+      updateLimitBanner();
+      if (!silent) closeModal('upgrade-modal');
+    }
+
+    // ════════════════════════════════════════════
+    // [16] TTS + MIC
+    // ════════════════════════════════════════════
+    function toggleTTS() {
+      state.ttsEnabled = !state.ttsEnabled;
+      const btn = document.getElementById('tts-btn');
+      if (btn) {
+        btn.classList.toggle('active', state.ttsEnabled);
+        btn.textContent = state.ttsEnabled ? '🔊 TTS' : '🔇 TTS';
+      }
+    }
+
+    function speak(text) {
+      if (!state.ttsEnabled || !window.speechSynthesis) return;
+      window.speechSynthesis.cancel();
+      const clean = text.replace(/<[^>]+>/g, '').replace(/\*\*/g, '').slice(0, 300);
+      const utt = new SpeechSynthesisUtterance(clean);
+      utt.rate = 1.05;
+      window.speechSynthesis.speak(utt);
+    }
+
+    function toggleMic() {
+      if (!('webkitSpeechRecognition' in window || 'SpeechRecognition' in window)) {
+        alert('Voice input not supported. Try Chrome.'); return;
+      }
+      if (state.isListening) { state.recognition?.stop(); return; }
+
+      const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+      state.recognition = new SR();
+      state.recognition.lang = 'en-US';
+      state.recognition.continuous = false;
+
+      state.recognition.onstart = () => {
+        state.isListening = true;
+        document.getElementById('mic-btn')?.classList.add('listening');
+      };
+      state.recognition.onresult = (e) => {
+        const t = e.results[0][0].transcript;
+        const inp = document.getElementById('chat-input');
+        if (inp) { inp.value = t; autoResize(inp); }
+      };
+      state.recognition.onend = () => {
+        state.isListening = false;
+        document.getElementById('mic-btn')?.classList.remove('listening');
+      };
+      state.recognition.start();
+    }
+
+    // ════════════════════════════════════════════
+    // [17] UI UTILITIES
+    // Small reusable helpers — keeps feature code clean.
+    // ════════════════════════════════════════════
+
+    // Show or hide an element by adding/removing .visible class
+    function setVisible(id, show) {
+      const el = document.getElementById(id);
+      if (!el) return;
+      if (show) el.classList.add('visible');
+      else      el.classList.remove('visible');
+    }
+
+    // Set text content of an element by ID
+    function setText(id, text) {
+      const el = document.getElementById(id);
+      if (el) el.textContent = text;
+    }
+
+    // Toggle loading state on a button with .btn-spinner
+    function setGenLoading(btnId, loading) {
+      const btn = document.getElementById(btnId);
+      if (!btn) return;
+      btn.disabled = loading;
+      btn.classList.toggle('loading', loading);
+    }
+
+    function autoResize(el) {
+      el.style.height = 'auto';
+      el.style.height = Math.min(el.scrollHeight, 140) + 'px';
+    }
+
+    function handleKey(e) {
+      if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); }
+    }
+
+    function scrollBottom() {
+      const area = document.getElementById('chat-area');
+      if (area) setTimeout(() => { area.scrollTop = area.scrollHeight; }, 50);
+    }
+
+    function openModal(id)  { document.getElementById(id)?.classList.add('open'); }
+    function closeModal(id) { document.getElementById(id)?.classList.remove('open'); }
+    function toggleSidebar() { document.getElementById('sidebar')?.classList.toggle('open'); }
+
+    // Close any modal when clicking the backdrop
+    document.querySelectorAll('.modal-overlay').forEach(overlay => {
+      overlay.addEventListener('click', (e) => {
+        if (e.target === overlay) overlay.classList.remove('open');
+      });
+    });
+
+  </script>
 </body>
 </html>
