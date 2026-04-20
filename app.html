@@ -1163,13 +1163,13 @@
     // ════════════════════════════════════════════
 
     // ── CONFIG ──────────────────────────────────
-    // 👇 PASTE YOUR GEMINI API KEY HERE (get one free at aistudio.google.com)
-    const GEMINI_API_KEY = 'YOUR_API_KEY_HERE';
+    // 👇 PASTE YOUR GROQ API KEY HERE (get one free at console.groq.com)
+    const GROQ_API_KEY = 'YOUR_GROQ_API_KEY_HERE';
 
     const CONFIG = {
       FREE_MSG_LIMIT: 15,
-      MODEL: 'gemini-1.5-flash-latest',
-      API_BASE: 'https://generativelanguage.googleapis.com/v1beta/models',
+      MODEL: 'llama-3.3-70b-versatile',
+      API_BASE: 'https://api.groq.com/openai/v1/chat/completions',
       LOADING_MESSAGES: [
         '🧠 Xarvis is engineering your viral moment…',
         '🔥 Applying viral psychology to your topic…',
@@ -1218,39 +1218,39 @@
     // ════════════════════════════════════════════
     //  CORE: GEMINI API CALL
     // ════════════════════════════════════════════
-    async function callGemini(messages, systemInstruction = '') {
-      const key = GEMINI_API_KEY;
-      if (!key || key === 'YOUR_API_KEY_HERE') {
-        throw new Error('Add your Gemini API key at the top of app.html (GEMINI_API_KEY)');
+    async function callGroq(messages, systemInstruction = '') {
+      const key = GROQ_API_KEY;
+      if (!key || key === 'YOUR_GROQ_API_KEY_HERE') {
+        throw new Error('Add your Groq API key at the top of app.html (GROQ_API_KEY)');
       }
 
-      // Build contents array
-      const contents = messages.map(m => ({
-        role: m.role === 'user' ? 'user' : 'model',
-        parts: [{ text: m.content }]
-      }));
-
-      const body = { contents };
-
+      const builtMessages = [];
       if (systemInstruction) {
-        body.system_instruction = { parts: [{ text: systemInstruction }] };
+        builtMessages.push({ role: 'system', content: systemInstruction });
       }
+      builtMessages.push(...messages.map(m => ({ role: m.role === 'bot' ? 'assistant' : m.role, content: m.content })));
 
-      const url = `${CONFIG.API_BASE}/${CONFIG.MODEL}:generateContent?key=${key}`;
-
-      const res = await fetch(url, {
+      const res = await fetch(CONFIG.API_BASE, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(body)
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${key}`
+        },
+        body: JSON.stringify({
+          model: CONFIG.MODEL,
+          messages: builtMessages,
+          max_tokens: 1024,
+          temperature: 0.85,
+        })
       });
 
       if (!res.ok) {
         const err = await res.json().catch(() => ({}));
-        throw new Error(err?.error?.message || `API error ${res.status}`);
+        throw new Error(err?.error?.message || `Groq API error ${res.status}`);
       }
 
       const data = await res.json();
-      return data?.candidates?.[0]?.content?.parts?.[0]?.text || '';
+      return data?.choices?.[0]?.message?.content || '';
     }
 
     // ════════════════════════════════════════════
@@ -1291,7 +1291,7 @@ Rules:
       const typing = showTyping();
 
       try {
-        const reply = await callGemini(
+        const reply = await callGroq(
           [...state.messages], // pass current history
           CHAT_SYSTEM
         );
@@ -1491,7 +1491,7 @@ THUMBNAIL:
 
       try {
         const prompt = buildViralPrompt(topic, platform);
-        const response = await callGemini(
+        const response = await callGroq(
           [{ role: 'user', content: prompt }],
           VIRAL_SYSTEM
         );
