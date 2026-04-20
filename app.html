@@ -1128,20 +1128,6 @@
 
   </div><!-- /main -->
 
-  <!-- ══ API KEY MODAL ══ -->
-  <div class="modal-overlay" id="api-modal">
-    <div class="modal">
-      <h3>🔑 Connect Your AI</h3>
-      <p>Enter your Gemini API key to power Xarvis AI. Your key stays in your browser — never sent to our servers.</p>
-      <input type="password" class="modal-input" id="api-key-input" placeholder="Paste your Gemini API key…" />
-      <div class="modal-hint">Get a free key at <a href="https://aistudio.google.com/" target="_blank">aistudio.google.com</a> · Stored in localStorage</div>
-      <div class="modal-actions">
-        <button class="modal-activate" onclick="saveApiKey()">✓ Save & Connect</button>
-        <button class="modal-dismiss" onclick="closeModal('api-modal')">Cancel</button>
-      </div>
-    </div>
-  </div>
-
   <!-- ══ UPGRADE MODAL ══ -->
   <div class="modal-overlay" id="upgrade-modal">
     <div class="modal">
@@ -1177,6 +1163,9 @@
     // ════════════════════════════════════════════
 
     // ── CONFIG ──────────────────────────────────
+    // 👇 PASTE YOUR GEMINI API KEY HERE (get one free at aistudio.google.com)
+    const GEMINI_API_KEY = 'YOUR_API_KEY_HERE';
+
     const CONFIG = {
       FREE_MSG_LIMIT: 15,
       MODEL: 'gemini-1.5-flash-latest',
@@ -1199,7 +1188,6 @@
       plan:        'starter',
       msgCount:    0,
       isPro:       false,
-      apiKey:      '',
       currentMode: 'chat',
     };
 
@@ -1207,9 +1195,6 @@
     window.addEventListener('DOMContentLoaded', () => {
       const urlPlan = new URLSearchParams(location.search).get('plan');
       if (urlPlan === 'pro' || urlPlan === 'elite') activatePlan(urlPlan, true);
-
-      state.apiKey = localStorage.getItem('xarvis_api_key') || '';
-      if (!state.apiKey) openModal('api-modal');
 
       loadRecentChats();
       renderRecentChats();
@@ -1234,8 +1219,10 @@
     //  CORE: GEMINI API CALL
     // ════════════════════════════════════════════
     async function callGemini(messages, systemInstruction = '') {
-      const key = state.apiKey || localStorage.getItem('xarvis_api_key');
-      if (!key) { openModal('api-modal'); throw new Error('No API key'); }
+      const key = GEMINI_API_KEY;
+      if (!key || key === 'YOUR_API_KEY_HERE') {
+        throw new Error('Add your Gemini API key at the top of app.html (GEMINI_API_KEY)');
+      }
 
       // Build contents array
       const contents = messages.map(m => ({
@@ -1644,17 +1631,6 @@ THUMBNAIL:
       }
       updateLimitBanner();
       if (!silent) closeModal('upgrade-modal');
-    }
-
-    // ════════════════════════════════════════════
-    //  API KEY
-    // ════════════════════════════════════════════
-    function saveApiKey() {
-      const key = document.getElementById('api-key-input')?.value.trim();
-      if (!key) return;
-      state.apiKey = key;
-      localStorage.setItem('xarvis_api_key', key);
-      closeModal('api-modal');
     }
 
     // ════════════════════════════════════════════
