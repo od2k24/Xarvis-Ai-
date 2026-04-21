@@ -2141,16 +2141,15 @@
   // [1] CONFIG — change API key here
   // ══════════════════════════════════════
   const CONFIG = {
-    GROQ_API_KEY: 'YOUR_GROQ_API_KEY_HERE', // ← paste your key
-    MODEL:        'llama-3.3-70b-versatile',
-    API_BASE:     'https://api.groq.com/openai/v1/chat/completions',
-    FREE_LIMIT:   15,
+    API_BASE: 'https://YOUR-RAILWAY-URL.up.railway.app/api/generate',
+    FREE_LIMIT: 15,
     LOADING_MSGS: [
       '🧠 Engineering your viral moment…',
       '🔥 Applying viral psychology…',
       '📊 Optimizing for scroll-stopping power…',
       '⚡ Finalizing your content package…',
-    ],
+    ]
+};
     DAILY_TIPS: [
       '<strong>Hook rule #1:</strong> The first 2 seconds decide everything. If your hook doesn\'t create a question in the viewer\'s mind — they\'re gone. Bold claim, shocking result, FOMO, or curiosity gap. Pick one. Commit hard.',
       '<strong>The retention trick MrBeast uses:</strong> Tease what\'s coming at the very start. "By the end of this, you\'ll know exactly how to..." makes viewers stay for the payoff.',
