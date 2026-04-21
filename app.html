@@ -3,47 +3,54 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Xarvis AI — Creator OS v3</title>
-  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet" />
+  <title>Xarvis AI — Creator OS</title>
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,400&display=swap" rel="stylesheet" />
   <style>
     /* ═══════════════════════════════════════════
-       XARVIS AI — CREATOR OS v3
-       Modular. Scalable. Built for daily use.
+       XARVIS AI — CREATOR OPERATING SYSTEM v3
+       Design: Dark Command Center
+       Built for creators who mean business.
     ═══════════════════════════════════════════ */
 
-    /* ── [1] CSS VARIABLES ────────────────────── */
+    /* ─── TOKENS ─────────────────────────────── */
     :root {
-      --bg:       #050810;
-      --surface:  #0d1120;
-      --surface2: #121828;
-      --border:   rgba(255,255,255,0.07);
-      --border2:  rgba(255,255,255,0.13);
-      --accent:   #4f8eff;
-      --accent2:  #7c3aff;
-      --glow:     rgba(79,142,255,0.2);
-      --text:     #f0f4ff;
-      --muted:    #8895b0;
-      --muted2:   #4a5568;
-      --card:     rgba(255,255,255,0.04);
-      --green:    #3fff88;
-      --red:      #ff4757;
-      --amber:    #ffa040;
-      --sw:       258px;
+      --bg:        #04060f;
+      --bg2:       #070b18;
+      --surface:   #0c1120;
+      --surface2:  #111826;
+      --surface3:  #16202e;
+      --border:    rgba(255,255,255,0.06);
+      --border2:   rgba(255,255,255,0.11);
+      --border3:   rgba(255,255,255,0.18);
+      --blue:      #4f8eff;
+      --purple:    #7c3aff;
+      --cyan:      #22d3ee;
+      --green:     #34d399;
+      --amber:     #fbbf24;
+      --red:       #f87171;
+      --text:      #e8eeff;
+      --text2:     #a8b4cc;
+      --muted:     #58677e;
+      --glow-blue: rgba(79,142,255,0.22);
+      --glow-pur:  rgba(124,58,255,0.16);
+      --gradient:  linear-gradient(135deg, var(--blue), var(--purple));
+      --sw:        240px;
+      --topbar-h:  56px;
     }
 
-    /* ── [2] RESET + BASE ─────────────────────── */
-    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
-    html, body { height: 100%; }
+    /* ─── RESET ──────────────────────────────── */
+    *, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
+    html, body { height:100%; overflow:hidden; }
+
     body {
       background: var(--bg);
       color: var(--text);
       font-family: 'DM Sans', sans-serif;
       display: flex;
       height: 100vh;
-      overflow: hidden;
     }
 
-    /* ── [3] SIDEBAR ──────────────────────────── */
+    /* ─── SIDEBAR ────────────────────────────── */
     .sidebar {
       width: var(--sw);
       min-width: var(--sw);
@@ -52,337 +59,389 @@
       display: flex;
       flex-direction: column;
       height: 100vh;
-      overflow: hidden;
-      transition: left 0.3s;
+      position: relative;
+      z-index: 10;
+      transition: left .3s ease;
     }
 
-    .sidebar-header {
-      padding: 16px 14px 13px;
-      border-bottom: 1px solid var(--border);
+    /* subtle top gradient accent on sidebar */
+    .sidebar::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 1px;
+      background: linear-gradient(90deg, transparent, var(--blue), transparent);
+      opacity: .5;
+    }
+
+    .sidebar-logo {
+      padding: 18px 16px 14px;
       display: flex;
       align-items: center;
-      justify-content: space-between;
+      gap: 9px;
+      border-bottom: 1px solid var(--border);
       flex-shrink: 0;
-    }
-
-    .logo {
-      font-family: 'Syne', sans-serif;
-      font-weight: 800;
-      font-size: 1.1rem;
-      background: linear-gradient(135deg, #fff, var(--accent));
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      background-clip: text;
       text-decoration: none;
     }
 
-    .plan-pill {
-      font-size: 0.65rem;
-      padding: 3px 9px;
-      background: rgba(63,255,136,0.1);
-      border: 1px solid rgba(63,255,136,0.25);
-      border-radius: 50px;
-      color: var(--green);
-      font-weight: 700;
-    }
-
-    .sidebar-top {
-      padding: 10px 10px 6px;
-      display: flex;
-      gap: 6px;
-      flex-shrink: 0;
-    }
-
-    .new-chat-btn {
-      flex: 1;
-      padding: 9px 10px;
-      background: linear-gradient(135deg, var(--accent), var(--accent2));
-      border: none;
-      border-radius: 9px;
-      color: #fff;
+    .logo-mark {
+      width: 30px; height: 30px;
+      border-radius: 8px;
+      background: var(--gradient);
+      display: flex; align-items: center; justify-content: center;
       font-family: 'Syne', sans-serif;
-      font-weight: 700;
-      font-size: 0.77rem;
-      cursor: pointer;
-      transition: opacity 0.2s, transform 0.2s;
-    }
-    .new-chat-btn:hover { opacity: 0.88; transform: translateY(-1px); }
-
-    .tts-btn {
-      padding: 9px 10px;
-      background: var(--card);
-      border: 1px solid var(--border2);
-      border-radius: 9px;
-      color: var(--muted);
-      font-size: 0.75rem;
-      cursor: pointer;
-      white-space: nowrap;
-      transition: color 0.2s, border-color 0.2s;
-    }
-    .tts-btn.active { color: var(--accent); border-color: rgba(79,142,255,0.35); }
-
-    /* ── [4] MEMORY WIDGET ────────────────────── */
-    .memory-widget {
-      margin: 6px 10px;
-      padding: 11px 13px;
-      background: rgba(79,142,255,0.05);
-      border: 1px solid rgba(79,142,255,0.15);
-      border-radius: 11px;
+      font-weight: 800;
+      font-size: 0.9rem;
+      color: #fff;
+      box-shadow: 0 0 12px var(--glow-blue);
       flex-shrink: 0;
-      transition: border-color 0.3s, background 0.3s;
-    }
-    .memory-widget.unset {
-      background: rgba(255,160,50,0.05);
-      border-color: rgba(255,160,50,0.25);
     }
 
-    .memory-header {
+    .logo-text {
+      font-family: 'Syne', sans-serif;
+      font-weight: 800;
+      font-size: 1rem;
+      color: var(--text);
+    }
+
+    .logo-version {
+      margin-left: auto;
+      font-size: 0.6rem;
+      padding: 2px 7px;
+      background: rgba(79,142,255,0.1);
+      border: 1px solid rgba(79,142,255,0.25);
+      border-radius: 20px;
+      color: var(--blue);
+      font-weight: 700;
+      font-family: 'Syne', sans-serif;
+    }
+
+    /* ─── NAV ITEMS ──────────────────────────── */
+    .sidebar-nav {
+      padding: 8px 8px 0;
+      flex-shrink: 0;
+    }
+
+    .nav-section-label {
+      font-size: 0.6rem;
+      text-transform: uppercase;
+      letter-spacing: .15em;
+      color: var(--muted);
+      font-weight: 700;
+      padding: 10px 10px 4px;
+    }
+
+    .nav-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 9px 11px;
+      border-radius: 9px;
+      cursor: pointer;
+      border: none;
+      background: transparent;
+      color: var(--text2);
+      font-size: 0.82rem;
+      font-family: 'DM Sans', sans-serif;
+      width: 100%;
+      text-align: left;
+      transition: background .15s, color .15s;
+      position: relative;
+      margin-bottom: 1px;
+    }
+
+    .nav-item:hover { background: rgba(255,255,255,0.04); color: var(--text); }
+
+    .nav-item.active {
+      background: rgba(79,142,255,0.1);
+      color: var(--blue);
+    }
+
+    .nav-item.active::before {
+      content: '';
+      position: absolute;
+      left: 0; top: 20%; bottom: 20%;
+      width: 2px;
+      background: var(--blue);
+      border-radius: 0 2px 2px 0;
+    }
+
+    .nav-icon {
+      width: 28px; height: 28px;
+      border-radius: 7px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 0.95rem;
+      flex-shrink: 0;
+      transition: background .15s;
+    }
+
+    .nav-item.active .nav-icon { background: rgba(79,142,255,0.12); }
+
+    .nav-label { font-weight: 500; }
+    .nav-badge {
+      margin-left: auto;
+      font-size: 0.58rem;
+      padding: 2px 6px;
+      border-radius: 20px;
+      font-weight: 700;
+      background: rgba(79,142,255,0.15);
+      color: var(--blue);
+      font-family: 'Syne', sans-serif;
+    }
+    .nav-badge.new { background: rgba(52,211,153,0.15); color: var(--green); }
+
+    /* ─── MEMORY CHIP ────────────────────────── */
+    .memory-chip {
+      margin: 8px 10px;
+      padding: 10px 12px;
+      border-radius: 10px;
+      border: 1px solid var(--border2);
+      background: var(--bg2);
+      flex-shrink: 0;
+      cursor: pointer;
+      transition: border-color .2s;
+    }
+    .memory-chip:hover { border-color: rgba(79,142,255,0.3); }
+    .memory-chip.unset { border-color: rgba(251,191,36,0.25); background: rgba(251,191,36,0.03); }
+
+    .memory-chip-top {
       display: flex;
       align-items: center;
       justify-content: space-between;
+      margin-bottom: 6px;
+    }
+
+    .memory-chip-label {
+      font-size: 0.64rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: .1em;
+      color: var(--blue);
+    }
+    .memory-chip.unset .memory-chip-label { color: var(--amber); }
+
+    .memory-chip-edit {
+      font-size: 0.64rem;
+      color: var(--muted);
+      font-family: 'DM Sans', sans-serif;
+      transition: color .2s;
+    }
+    .memory-chip:hover .memory-chip-edit { color: var(--text2); }
+
+    .memory-tags { display: flex; flex-wrap: wrap; gap: 4px; }
+
+    .m-tag {
+      font-size: 0.65rem;
+      padding: 2px 8px;
+      border-radius: 20px;
+      background: rgba(79,142,255,0.08);
+      border: 1px solid rgba(79,142,255,0.15);
+      color: var(--text2);
+    }
+
+    .memory-setup-cta {
+      font-size: 0.7rem;
+      color: var(--amber);
+    }
+
+    /* ─── SIDEBAR BOTTOM ─────────────────────── */
+    .sidebar-spacer { flex: 1; }
+
+    .sidebar-bottom {
+      padding: 8px 10px 14px;
+      flex-shrink: 0;
+      border-top: 1px solid var(--border);
+    }
+
+    .plan-card {
+      padding: 12px 13px;
+      background: linear-gradient(135deg, rgba(79,142,255,0.07), rgba(124,58,255,0.07));
+      border: 1px solid rgba(79,142,255,0.15);
+      border-radius: 11px;
       margin-bottom: 8px;
     }
 
-    .memory-title {
-      font-family: 'Syne', sans-serif;
-      font-weight: 700;
-      font-size: 0.72rem;
-      color: var(--accent);
-    }
-    .memory-widget.unset .memory-title { color: var(--amber); }
-
-    .memory-edit-btn {
-      font-size: 0.68rem;
-      color: var(--muted);
-      background: none;
-      border: none;
-      cursor: pointer;
-      transition: color 0.2s;
-      font-family: 'DM Sans', sans-serif;
-    }
-    .memory-edit-btn:hover { color: var(--text); }
-
-    .memory-tags {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 4px;
-    }
-
-    .memory-tag {
-      padding: 3px 8px;
-      background: rgba(79,142,255,0.1);
-      border: 1px solid rgba(79,142,255,0.2);
-      border-radius: 20px;
-      font-size: 0.67rem;
-      color: var(--muted);
-    }
-
-    .memory-empty {
-      font-size: 0.71rem;
-      color: var(--amber);
-    }
-    .memory-empty a {
-      color: var(--accent);
-      cursor: pointer;
-      text-decoration: underline;
-    }
-
-    /* ── [5] SIDEBAR SHARED ───────────────────── */
-    .limit-banner {
-      margin: 0 10px 4px;
-      padding: 8px 12px;
-      background: rgba(255,160,50,0.08);
-      border: 1px solid rgba(255,160,50,0.2);
-      border-radius: 9px;
-      font-size: 0.73rem;
-      color: #ffb347;
-      line-height: 1.5;
-      flex-shrink: 0;
-    }
-    .limit-banner.hidden { display: none; }
-
-    .sidebar-label {
-      padding: 8px 14px 4px;
-      font-size: 0.63rem;
-      text-transform: uppercase;
-      letter-spacing: 0.14em;
-      color: var(--muted2);
-      font-weight: 700;
-      flex-shrink: 0;
-    }
-
-    .quick-actions {
-      padding: 0 6px;
-      display: flex;
-      flex-direction: column;
-      gap: 1px;
-      flex-shrink: 0;
-    }
-
-    .quick-btn {
+    .plan-card-top {
       display: flex;
       align-items: center;
-      gap: 8px;
-      padding: 7px 9px;
-      border-radius: 8px;
-      background: transparent;
-      border: none;
-      color: var(--muted);
-      font-size: 0.8rem;
-      cursor: pointer;
-      text-align: left;
-      width: 100%;
-      transition: background 0.15s, color 0.15s;
-    }
-    .quick-btn:hover { background: rgba(255,255,255,0.05); color: var(--text); }
-
-    .recent-chats {
-      flex: 1;
-      overflow-y: auto;
-      padding: 0 6px 6px;
-      scrollbar-width: thin;
-      scrollbar-color: var(--border) transparent;
+      justify-content: space-between;
+      margin-bottom: 4px;
     }
 
-    .recent-chat-item {
-      padding: 7px 9px;
-      border-radius: 8px;
-      color: var(--muted);
-      font-size: 0.78rem;
-      cursor: pointer;
-      white-space: nowrap;
+    .plan-card-name {
+      font-family: 'Syne', sans-serif;
+      font-size: 0.75rem;
+      font-weight: 700;
+      color: var(--text);
+    }
+
+    .plan-pill {
+      font-size: 0.58rem;
+      padding: 2px 7px;
+      border-radius: 20px;
+      font-weight: 700;
+      font-family: 'Syne', sans-serif;
+      background: rgba(52,211,153,0.12);
+      border: 1px solid rgba(52,211,153,0.25);
+      color: var(--green);
+    }
+    .plan-pill.pro { background: rgba(79,142,255,0.12); border-color: rgba(79,142,255,0.3); color: var(--blue); }
+
+    .plan-limit-bar {
+      height: 3px;
+      background: var(--border2);
+      border-radius: 3px;
+      margin: 8px 0 9px;
       overflow: hidden;
-      text-overflow: ellipsis;
-      transition: background 0.15s, color 0.15s;
     }
-    .recent-chat-item:hover { background: rgba(255,255,255,0.05); color: var(--text); }
-    .recent-chat-item.active { background: rgba(79,142,255,0.1); color: var(--accent); }
 
-    .sidebar-upgrade {
-      margin: 6px 10px 12px;
-      padding: 13px;
-      background: linear-gradient(135deg, rgba(79,142,255,0.08), rgba(124,58,255,0.08));
-      border: 1px solid rgba(79,142,255,0.18);
-      border-radius: 13px;
-      flex-shrink: 0;
+    .plan-limit-fill {
+      height: 100%;
+      background: var(--gradient);
+      border-radius: 3px;
+      transition: width .5s ease;
     }
-    .sidebar-upgrade h4 { font-family: 'Syne', sans-serif; font-size: 0.83rem; font-weight: 700; margin-bottom: 4px; }
-    .sidebar-upgrade p  { font-size: 0.73rem; color: var(--muted); margin-bottom: 9px; line-height: 1.5; }
-    .upgrade-link {
+
+    .plan-limit-text {
+      font-size: 0.65rem;
+      color: var(--text2);
+      margin-bottom: 9px;
+    }
+
+    .upgrade-cta {
       display: block;
-      text-align: center;
-      padding: 7px;
-      background: linear-gradient(135deg, var(--accent), var(--accent2));
-      border-radius: 7px;
+      width: 100%;
+      padding: 8px;
+      background: var(--gradient);
+      border: none;
+      border-radius: 8px;
       color: #fff;
-      text-decoration: none;
+      font-family: 'Syne', sans-serif;
       font-weight: 700;
       font-size: 0.75rem;
+      cursor: pointer;
+      text-align: center;
+      text-decoration: none;
+      transition: opacity .2s, transform .2s;
+      box-shadow: 0 0 16px var(--glow-blue);
+    }
+    .upgrade-cta:hover { opacity: .88; transform: translateY(-1px); }
+
+    .sidebar-util-btns {
+      display: flex;
+      gap: 6px;
+      margin-top: 8px;
     }
 
-    /* ── [6] MAIN + TOPBAR ────────────────────── */
+    .util-btn {
+      flex: 1;
+      padding: 7px 8px;
+      background: var(--bg2);
+      border: 1px solid var(--border2);
+      border-radius: 8px;
+      color: var(--text2);
+      font-size: 0.72rem;
+      cursor: pointer;
+      text-align: center;
+      transition: all .2s;
+      font-family: 'DM Sans', sans-serif;
+    }
+    .util-btn:hover { background: var(--surface3); color: var(--text); }
+    .util-btn.active { color: var(--blue); border-color: rgba(79,142,255,0.3); }
+
+    /* ─── MAIN ───────────────────────────────── */
     .main {
       flex: 1;
       display: flex;
       flex-direction: column;
       height: 100vh;
       overflow: hidden;
+      min-width: 0;
     }
 
+    /* ─── TOPBAR ─────────────────────────────── */
     .topbar {
-      padding: 11px 20px;
+      height: var(--topbar-h);
+      padding: 0 20px;
       border-bottom: 1px solid var(--border);
       display: flex;
       align-items: center;
-      justify-content: space-between;
-      background: rgba(5,8,16,0.92);
-      backdrop-filter: blur(14px);
-      flex-shrink: 0;
       gap: 10px;
+      background: rgba(4,6,15,0.95);
+      backdrop-filter: blur(16px);
+      flex-shrink: 0;
+      position: relative;
+      z-index: 5;
     }
 
-    .topbar-left {
+    .mobile-menu { display:none; background:none; border:none; color:var(--text2); font-size:1.1rem; cursor:pointer; padding:4px; }
+
+    .topbar-breadcrumb {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 0.82rem;
+    }
+
+    .breadcrumb-app {
+      color: var(--muted);
+      font-weight: 400;
+    }
+
+    .breadcrumb-sep { color: var(--muted); font-size: 0.7rem; }
+
+    .breadcrumb-page {
+      color: var(--text);
+      font-weight: 600;
+      font-family: 'Syne', sans-serif;
+    }
+
+    .topbar-center { flex: 1; }
+
+    .topbar-right {
       display: flex;
       align-items: center;
       gap: 8px;
       flex-shrink: 0;
     }
 
+    .status-chip {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 5px 10px;
+      background: rgba(52,211,153,0.07);
+      border: 1px solid rgba(52,211,153,0.18);
+      border-radius: 20px;
+      font-size: 0.7rem;
+      color: var(--green);
+      font-weight: 600;
+    }
+
     .status-dot {
-      width: 7px; height: 7px;
+      width: 6px; height: 6px;
       background: var(--green);
       border-radius: 50%;
       animation: pulse 2s infinite;
     }
-    @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
+    @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.35} }
 
-    .topbar-title {
-      font-family: 'Syne', sans-serif;
-      font-weight: 700;
-      font-size: 0.88rem;
-    }
-
-    /* ── [7] MODE TABS ────────────────────────── */
-    .mode-tabs {
-      display: flex;
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: 10px;
-      padding: 3px;
-      gap: 3px;
-      overflow-x: auto;
-      scrollbar-width: none;
-      flex-shrink: 0;
-    }
-    .mode-tabs::-webkit-scrollbar { display: none; }
-
-    .mode-tab {
-      padding: 7px 14px;
-      border-radius: 7px;
+    .topbar-upgrade {
+      padding: 6px 14px;
+      background: var(--gradient);
       border: none;
-      background: transparent;
-      color: var(--muted);
-      font-family: 'Syne', sans-serif;
-      font-weight: 700;
-      font-size: 0.74rem;
-      cursor: pointer;
-      transition: background 0.2s, color 0.2s;
-      white-space: nowrap;
-      flex-shrink: 0;
-    }
-    .mode-tab.active {
-      background: linear-gradient(135deg, var(--accent), var(--accent2));
-      color: #fff;
-      box-shadow: 0 0 12px var(--glow);
-    }
-
-    .topbar-right { display: flex; align-items: center; gap: 6px; flex-shrink: 0; }
-
-    .upgrade-btn {
-      padding: 7px 15px;
-      background: linear-gradient(135deg, var(--accent), var(--accent2));
-      border: none;
-      border-radius: 50px;
+      border-radius: 20px;
       color: #fff;
       font-weight: 700;
-      font-size: 0.73rem;
+      font-size: 0.72rem;
       cursor: pointer;
-      transition: opacity 0.2s, transform 0.2s;
-      box-shadow: 0 0 14px rgba(79,142,255,0.25);
-      white-space: nowrap;
+      font-family: 'Syne', sans-serif;
+      transition: opacity .2s, transform .2s;
+      box-shadow: 0 0 12px var(--glow-blue);
     }
-    .upgrade-btn:hover { opacity: 0.88; transform: translateY(-1px); }
+    .topbar-upgrade:hover { opacity:.88; transform:translateY(-1px); }
 
-    .mobile-menu-btn {
-      display: none;
-      background: none;
-      border: none;
-      color: var(--text);
-      font-size: 1.2rem;
-      cursor: pointer;
-    }
-
-    /* ── [8] PANELS BASE ──────────────────────── */
+    /* ─── PANELS ─────────────────────────────── */
     .panel {
       flex: 1;
       display: none;
@@ -391,14 +450,362 @@
     }
     .panel.active { display: flex; }
 
-    /* ── [9] CHAT PANEL ───────────────────────── */
+    /* ═══════════════════════════════════════════
+       DASHBOARD PANEL
+    ═══════════════════════════════════════════ */
+    .dash-scroll {
+      flex: 1;
+      overflow-y: auto;
+      padding: 28px 28px 48px;
+      scrollbar-width: thin;
+      scrollbar-color: var(--border) transparent;
+    }
+
+    .dash-inner { max-width: 960px; margin: 0 auto; display: flex; flex-direction: column; gap: 28px; }
+
+    /* Greeting */
+    .dash-greeting {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 16px;
+    }
+
+    .greeting-main {}
+
+    .greeting-eyebrow {
+      font-size: 0.72rem;
+      color: var(--text2);
+      margin-bottom: 6px;
+      font-weight: 500;
+    }
+
+    .greeting-h1 {
+      font-family: 'Syne', sans-serif;
+      font-size: clamp(1.6rem, 3vw, 2.2rem);
+      font-weight: 800;
+      letter-spacing: -0.5px;
+      line-height: 1.1;
+    }
+
+    .greeting-h1 .hl {
+      background: var(--gradient);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .greeting-sub { color: var(--text2); font-size: 0.9rem; margin-top: 8px; }
+
+    .greeting-new-chat {
+      padding: 12px 22px;
+      background: var(--gradient);
+      border: none;
+      border-radius: 10px;
+      color: #fff;
+      font-family: 'Syne', sans-serif;
+      font-weight: 700;
+      font-size: 0.83rem;
+      cursor: pointer;
+      transition: opacity .2s, transform .2s;
+      box-shadow: 0 0 20px var(--glow-blue);
+      white-space: nowrap;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .greeting-new-chat:hover { opacity:.88; transform:translateY(-1px); }
+
+    /* Stats Row */
+    .stats-row {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 12px;
+    }
+
+    .stat-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 18px 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      transition: border-color .2s, transform .2s;
+      animation: slideUp .5s ease both;
+    }
+    .stat-card:hover { border-color: var(--border2); transform: translateY(-2px); }
+    .stat-card:nth-child(1) { animation-delay: .05s; }
+    .stat-card:nth-child(2) { animation-delay: .10s; }
+    .stat-card:nth-child(3) { animation-delay: .15s; }
+    .stat-card:nth-child(4) { animation-delay: .20s; }
+
+    .stat-icon {
+      width: 32px; height: 32px;
+      border-radius: 8px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1rem;
+    }
+    .si-blue   { background: rgba(79,142,255,0.1); }
+    .si-green  { background: rgba(52,211,153,0.1); }
+    .si-purple { background: rgba(124,58,255,0.1); }
+    .si-amber  { background: rgba(251,191,36,0.1); }
+
+    .stat-value {
+      font-family: 'Syne', sans-serif;
+      font-size: 1.7rem;
+      font-weight: 800;
+      line-height: 1;
+      color: var(--text);
+    }
+
+    .stat-label {
+      font-size: 0.72rem;
+      color: var(--text2);
+      font-weight: 500;
+    }
+
+    /* Tool Cards Grid */
+    .tools-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .section-title {
+      font-family: 'Syne', sans-serif;
+      font-size: 0.92rem;
+      font-weight: 700;
+      color: var(--text);
+    }
+
+    .section-sub {
+      font-size: 0.75rem;
+      color: var(--muted);
+      font-style: italic;
+    }
+
+    .tools-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 14px;
+    }
+
+    .tool-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      padding: 24px;
+      cursor: pointer;
+      transition: border-color .2s, transform .2s, background .2s;
+      position: relative;
+      overflow: hidden;
+      animation: slideUp .5s ease both;
+    }
+
+    .tool-card:hover {
+      border-color: var(--border3);
+      transform: translateY(-3px);
+      background: var(--surface2);
+    }
+
+    /* Glow on hover */
+    .tool-card::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      opacity: 0;
+      transition: opacity .3s;
+      pointer-events: none;
+    }
+    .tool-card:hover::after { opacity: 1; }
+    .tc-blue::after   { background: radial-gradient(ellipse at 0% 0%, rgba(79,142,255,0.06) 0%, transparent 60%); }
+    .tc-green::after  { background: radial-gradient(ellipse at 0% 0%, rgba(52,211,153,0.06) 0%, transparent 60%); }
+    .tc-purple::after { background: radial-gradient(ellipse at 0% 0%, rgba(124,58,255,0.06) 0%, transparent 60%); }
+    .tc-amber::after  { background: radial-gradient(ellipse at 0% 0%, rgba(251,191,36,0.06) 0%, transparent 60%); }
+    .tc-cyan::after   { background: radial-gradient(ellipse at 0% 0%, rgba(34,211,238,0.06) 0%, transparent 60%); }
+
+    .tool-card:nth-child(1) { animation-delay: .1s; }
+    .tool-card:nth-child(2) { animation-delay: .16s; }
+    .tool-card:nth-child(3) { animation-delay: .22s; }
+    .tool-card:nth-child(4) { animation-delay: .28s; }
+
+    .tool-icon-wrap {
+      width: 44px; height: 44px;
+      border-radius: 12px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.3rem;
+      margin-bottom: 16px;
+    }
+    .tci-blue   { background: rgba(79,142,255,0.12); border: 1px solid rgba(79,142,255,0.18); }
+    .tci-green  { background: rgba(52,211,153,0.12); border: 1px solid rgba(52,211,153,0.18); }
+    .tci-purple { background: rgba(124,58,255,0.12); border: 1px solid rgba(124,58,255,0.18); }
+    .tci-amber  { background: rgba(251,191,36,0.12); border: 1px solid rgba(251,191,36,0.18); }
+    .tci-cyan   { background: rgba(34,211,238,0.12); border: 1px solid rgba(34,211,238,0.18); }
+
+    .tool-card-title {
+      font-family: 'Syne', sans-serif;
+      font-weight: 700;
+      font-size: 1rem;
+      color: var(--text);
+      margin-bottom: 6px;
+    }
+
+    .tool-card-desc {
+      font-size: 0.8rem;
+      color: var(--text2);
+      line-height: 1.55;
+      margin-bottom: 16px;
+    }
+
+    .tool-card-action {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 0.75rem;
+      font-weight: 600;
+      font-family: 'Syne', sans-serif;
+      transition: gap .2s;
+    }
+    .tool-card:hover .tool-card-action { gap: 9px; }
+    .tca-blue   { color: var(--blue); }
+    .tca-green  { color: var(--green); }
+    .tca-purple { color: var(--purple); }
+    .tca-amber  { color: var(--amber); }
+    .tca-cyan   { color: var(--cyan); }
+
+    /* Daily Brief */
+    .daily-brief {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      overflow: hidden;
+      animation: slideUp .5s ease .3s both;
+    }
+
+    .brief-header {
+      padding: 16px 22px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      border-bottom: 1px solid var(--border);
+      background: linear-gradient(90deg, rgba(79,142,255,0.04) 0%, transparent 100%);
+    }
+
+    .brief-header-icon {
+      width: 28px; height: 28px;
+      border-radius: 7px;
+      background: rgba(79,142,255,0.1);
+      border: 1px solid rgba(79,142,255,0.18);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 0.85rem;
+    }
+
+    .brief-header-title {
+      font-family: 'Syne', sans-serif;
+      font-weight: 700;
+      font-size: 0.82rem;
+    }
+
+    .brief-header-badge {
+      margin-left: auto;
+      font-size: 0.6rem;
+      padding: 2px 8px;
+      background: rgba(52,211,153,0.1);
+      border: 1px solid rgba(52,211,153,0.2);
+      border-radius: 20px;
+      color: var(--green);
+      font-weight: 700;
+      font-family: 'Syne', sans-serif;
+    }
+
+    .brief-body {
+      padding: 20px 22px;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+
+    .brief-tip {
+      font-size: 0.88rem;
+      line-height: 1.7;
+      color: var(--text2);
+    }
+
+    .brief-tip strong { color: var(--text); }
+
+    .brief-cta {
+      align-self: flex-start;
+      padding: 8px 18px;
+      background: rgba(79,142,255,0.08);
+      border: 1px solid rgba(79,142,255,0.2);
+      border-radius: 20px;
+      color: var(--blue);
+      font-size: 0.75rem;
+      font-weight: 600;
+      cursor: pointer;
+      font-family: 'Syne', sans-serif;
+      transition: background .2s, border-color .2s;
+    }
+    .brief-cta:hover { background: rgba(79,142,255,0.14); border-color: rgba(79,142,255,0.35); }
+
+    /* Recent activity */
+    .activity-list {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+      animation: slideUp .5s ease .35s both;
+    }
+
+    .activity-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 10px 14px;
+      border-radius: 10px;
+      transition: background .15s;
+      cursor: pointer;
+    }
+    .activity-item:hover { background: var(--surface2); }
+
+    .activity-icon {
+      width: 32px; height: 32px;
+      border-radius: 8px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 0.9rem;
+      flex-shrink: 0;
+      background: var(--surface);
+      border: 1px solid var(--border);
+    }
+
+    .activity-text {
+      flex: 1;
+      font-size: 0.8rem;
+      color: var(--text2);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .activity-time {
+      font-size: 0.65rem;
+      color: var(--muted);
+      flex-shrink: 0;
+    }
+
+    @keyframes slideUp { from{opacity:0;transform:translateY(18px)} to{opacity:1;transform:translateY(0)} }
+
+    /* ═══════════════════════════════════════════
+       CHAT PANEL
+    ═══════════════════════════════════════════ */
     .chat-area {
       flex: 1;
       overflow-y: auto;
-      padding: 24px 18px;
+      padding: 28px 24px;
       display: flex;
       flex-direction: column;
-      gap: 16px;
+      gap: 18px;
       scrollbar-width: thin;
       scrollbar-color: var(--border) transparent;
     }
@@ -410,109 +817,122 @@
       align-items: center;
       justify-content: center;
       text-align: center;
-      padding: 40px 20px;
-      gap: 24px;
-      min-height: 60vh;
+      gap: 28px;
+      min-height: 50vh;
+    }
+
+    .empty-avatar {
+      width: 56px; height: 56px;
+      border-radius: 16px;
+      background: var(--gradient);
+      display: flex; align-items: center; justify-content: center;
+      font-family: 'Syne', sans-serif;
+      font-weight: 800;
+      font-size: 1.4rem;
+      color: #fff;
+      box-shadow: 0 0 28px var(--glow-blue);
     }
 
     .empty-state h2 {
       font-family: 'Syne', sans-serif;
-      font-size: clamp(1.4rem, 3vw, 1.9rem);
+      font-size: clamp(1.3rem, 3vw, 1.7rem);
       font-weight: 800;
-      letter-spacing: -0.5px;
+      letter-spacing: -0.4px;
       margin-bottom: 8px;
     }
-    .empty-state p { color: var(--muted); font-size: 0.92rem; max-width: 380px; line-height: 1.6; }
+    .empty-state p { color: var(--text2); font-size: 0.9rem; max-width: 360px; line-height: 1.6; }
 
     .suggestion-grid {
       display: grid;
       grid-template-columns: repeat(2, 1fr);
       gap: 10px;
-      max-width: 520px;
+      max-width: 500px;
       width: 100%;
     }
 
-    .suggestion-card {
-      background: var(--card);
+    .sug-card {
+      background: var(--surface);
       border: 1px solid var(--border);
       border-radius: 13px;
       padding: 14px;
       text-align: left;
       cursor: pointer;
-      transition: border-color 0.2s, background 0.2s, transform 0.2s;
+      transition: border-color .2s, transform .2s;
     }
-    .suggestion-card:hover { border-color: rgba(79,142,255,0.3); background: rgba(79,142,255,0.05); transform: translateY(-2px); }
-    .sug-icon  { font-size: 1.3rem; margin-bottom: 6px; }
-    .sug-title { font-family: 'Syne', sans-serif; font-weight: 700; font-size: 0.83rem; margin-bottom: 3px; }
-    .sug-desc  { color: var(--muted); font-size: 0.73rem; line-height: 1.4; }
+    .sug-card:hover { border-color: var(--border2); transform: translateY(-2px); }
+
+    .sug-icon { font-size: 1.2rem; margin-bottom: 6px; }
+    .sug-title { font-family: 'Syne', sans-serif; font-weight: 700; font-size: 0.8rem; margin-bottom: 3px; }
+    .sug-desc { color: var(--text2); font-size: 0.7rem; line-height: 1.4; }
 
     /* Messages */
     .message-row {
       display: flex;
-      gap: 11px;
-      max-width: 780px;
-      width: 100%;
+      gap: 12px;
+      max-width: 760px;
       align-self: flex-start;
-      animation: msgIn 0.25s ease both;
+      animation: msgIn .25s ease both;
     }
     .message-row.user { align-self: flex-end; flex-direction: row-reverse; }
-
     @keyframes msgIn { from{opacity:0;transform:translateY(8px)} to{opacity:1;transform:translateY(0)} }
 
-    .msg-avatar {
-      width: 32px; height: 32px;
+    .msg-av {
+      width: 30px; height: 30px;
       border-radius: 50%;
       flex-shrink: 0;
       display: flex; align-items: center; justify-content: center;
       font-family: 'Syne', sans-serif;
       font-weight: 800;
-      font-size: 0.78rem;
+      font-size: 0.72rem;
     }
-    .msg-avatar.bot     { background: linear-gradient(135deg, var(--accent), var(--accent2)); }
-    .msg-avatar.user-av { background: rgba(255,255,255,0.08); border: 1px solid var(--border2); }
+    .msg-av.bot  { background: var(--gradient); }
+    .msg-av.user { background: var(--surface3); border: 1px solid var(--border2); }
 
     .msg-bubble {
-      padding: 12px 16px;
-      border-radius: 17px;
+      padding: 11px 16px;
+      border-radius: 16px;
       max-width: 78%;
-      font-size: 0.88rem;
+      font-size: 0.87rem;
       line-height: 1.7;
     }
-    .msg-bubble.bot  { background: var(--surface); border: 1px solid var(--border); border-radius: 4px 17px 17px 17px; }
-    .msg-bubble.user { background: linear-gradient(135deg, var(--accent), var(--accent2)); color: #fff; border-radius: 17px 4px 17px 17px; }
-    .msg-bubble strong { color: var(--accent); }
-    .msg-bubble.user strong { color: rgba(255,255,255,0.95); }
+    .msg-bubble.bot  { background: var(--surface); border: 1px solid var(--border); border-radius: 4px 16px 16px 16px; }
+    .msg-bubble.user { background: var(--gradient); color: #fff; border-radius: 16px 4px 16px 16px; }
+    .msg-bubble strong { color: var(--blue); }
+    .msg-bubble.user strong { color: rgba(255,255,255,.9); }
 
-    .typing-indicator { display:flex; align-items:center; gap:5px; padding:3px 0; }
-    .typing-indicator span {
-      width:6px; height:6px; border-radius:50%;
-      background:var(--muted);
-      animation:typeBounce 1.2s infinite;
+    .typing-dots { display:flex; gap:4px; align-items:center; padding:2px 0; }
+    .typing-dots span {
+      width:5px; height:5px; border-radius:50%;
+      background: var(--text2);
+      animation: bounce 1.2s infinite;
     }
-    .typing-indicator span:nth-child(2){animation-delay:.2s}
-    .typing-indicator span:nth-child(3){animation-delay:.4s}
-    @keyframes typeBounce{0%,60%,100%{transform:translateY(0)}30%{transform:translateY(-5px)}}
+    .typing-dots span:nth-child(2){animation-delay:.18s}
+    .typing-dots span:nth-child(3){animation-delay:.36s}
+    @keyframes bounce{0%,60%,100%{transform:translateY(0)}30%{transform:translateY(-5px)}}
 
     /* Chat Input */
     .input-area {
-      padding: 12px 18px 16px;
+      padding: 12px 20px 18px;
       border-top: 1px solid var(--border);
       flex-shrink: 0;
     }
 
     .input-wrap {
-      max-width: 780px;
+      max-width: 760px;
       margin: 0 auto;
       background: var(--surface);
       border: 1px solid var(--border2);
-      border-radius: 15px;
+      border-radius: 14px;
       display: flex;
       align-items: flex-end;
-      gap: 7px;
+      gap: 8px;
       padding: 10px 12px;
-      transition: border-color 0.2s;
+      transition: border-color .2s, box-shadow .2s;
     }
-    .input-wrap:focus-within { border-color: rgba(79,142,255,0.4); }
+    .input-wrap:focus-within {
+      border-color: rgba(79,142,255,0.4);
+      box-shadow: 0 0 0 3px rgba(79,142,255,0.06);
+    }
 
     #chat-input {
       flex: 1;
@@ -523,335 +943,339 @@
       font-family: 'DM Sans', sans-serif;
       font-size: 0.9rem;
       resize: none;
-      min-height: 24px;
+      min-height: 22px;
       max-height: 140px;
       line-height: 1.5;
     }
-    #chat-input::placeholder { color: var(--muted2); }
+    #chat-input::placeholder { color: var(--muted); }
 
-    .input-btns { display:flex; gap:5px; align-items:center; }
+    .input-btns { display:flex; gap:5px; }
 
     .mic-btn {
-      width:32px; height:32px; border-radius:50%;
-      background:var(--card); border:1px solid var(--border2);
-      color:var(--muted); cursor:pointer; font-size:0.9rem;
+      width:30px; height:30px; border-radius:50%;
+      background:var(--bg2); border:1px solid var(--border2);
+      color:var(--muted); cursor:pointer; font-size:0.85rem;
       display:flex; align-items:center; justify-content:center;
-      transition:all 0.2s;
+      transition:all .2s;
     }
-    .mic-btn:hover { background:rgba(255,255,255,0.08); color:var(--text); }
-    .mic-btn.listening { background:rgba(255,70,70,0.15); border-color:rgba(255,70,70,0.4); color:#ff6b6b; animation:micPulse 1s infinite; }
+    .mic-btn:hover { background:var(--surface3); color:var(--text2); }
+    .mic-btn.listening { background:rgba(248,113,113,0.12); border-color:rgba(248,113,113,0.3); color:var(--red); animation:micPulse 1s infinite; }
     @keyframes micPulse{0%,100%{transform:scale(1)}50%{transform:scale(1.1)}}
 
     .send-btn {
-      width:32px; height:32px; border-radius:50%;
-      background:linear-gradient(135deg,var(--accent),var(--accent2));
-      border:none; color:#fff; cursor:pointer; font-size:0.9rem;
+      width:30px; height:30px; border-radius:50%;
+      background:var(--gradient); border:none;
+      color:#fff; cursor:pointer; font-size:0.85rem;
       display:flex; align-items:center; justify-content:center;
-      box-shadow:0 0 12px rgba(79,142,255,0.3);
-      transition:opacity 0.2s, transform 0.2s;
+      transition:opacity .2s, transform .2s;
     }
-    .send-btn:hover { opacity:0.88; transform:scale(1.08); }
-    .send-btn:disabled { opacity:0.35; cursor:not-allowed; transform:none; }
+    .send-btn:hover { opacity:.88; transform:scale(1.08); }
+    .send-btn:disabled { opacity:.3; cursor:not-allowed; transform:none; }
 
-    .input-hint { text-align:center; font-size:0.68rem; color:var(--muted2); margin-top:6px; }
+    .input-hint { text-align:center; font-size:0.65rem; color:var(--muted); margin-top:6px; }
 
-    /* ── [10] VIRAL GENERATOR PANEL ───────────── */
-    .viral-panel {
+    /* ═══════════════════════════════════════════
+       FEATURE PANEL BASE (Viral / PostNext / Calendar / Feedback)
+    ═══════════════════════════════════════════ */
+    .feature-scroll {
       flex: 1;
       overflow-y: auto;
-      padding: 28px 24px 40px;
+      padding: 28px 28px 48px;
       scrollbar-width: thin;
       scrollbar-color: var(--border) transparent;
     }
 
-    .viral-inner {
-      max-width: 820px;
+    .feature-inner {
+      max-width: 860px;
       margin: 0 auto;
       display: flex;
       flex-direction: column;
-      gap: 24px;
+      gap: 22px;
     }
 
-    .viral-input-card {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: 20px;
-      padding: 28px;
+    /* Panel header */
+    .panel-hero {
+      display: flex;
+      align-items: flex-end;
+      justify-content: space-between;
+      gap: 16px;
+      flex-wrap: wrap;
     }
 
-    .viral-input-header { margin-bottom: 20px; }
-    .viral-input-header h2 {
+    .panel-hero-icon {
+      width: 48px; height: 48px;
+      border-radius: 14px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.4rem;
+      margin-bottom: 12px;
+    }
+
+    .panel-hero-title {
       font-family: 'Syne', sans-serif;
-      font-size: 1.35rem;
+      font-size: 1.4rem;
       font-weight: 800;
       letter-spacing: -0.4px;
       margin-bottom: 6px;
     }
-    .viral-input-header h2 span {
-      background: linear-gradient(135deg, var(--accent), var(--accent2));
+
+    .panel-hero-title .hl {
+      background: var(--gradient);
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
       background-clip: text;
     }
-    .viral-input-header p { color: var(--muted); font-size: 0.85rem; line-height: 1.6; }
 
-    .viral-input-row {
+    .panel-hero-sub { color: var(--text2); font-size: 0.85rem; line-height: 1.6; max-width: 520px; }
+
+    /* Shared card */
+    .feature-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 26px;
+    }
+
+    /* Shared input row */
+    .feat-input-row {
       display: flex;
-      gap: 12px;
+      gap: 10px;
       align-items: flex-start;
       flex-wrap: wrap;
     }
 
-    #viral-topic {
+    .feat-input {
       flex: 1;
       min-width: 200px;
-      padding: 14px 18px;
-      background: var(--bg);
+      padding: 13px 16px;
+      background: var(--bg2);
       border: 1px solid var(--border2);
-      border-radius: 12px;
+      border-radius: 11px;
       color: var(--text);
       font-family: 'DM Sans', sans-serif;
-      font-size: 0.92rem;
+      font-size: 0.9rem;
       outline: none;
-      transition: border-color 0.2s, box-shadow 0.2s;
+      transition: border-color .2s, box-shadow .2s;
     }
-    #viral-topic::placeholder { color: var(--muted2); }
-    #viral-topic:focus { border-color: rgba(79,142,255,0.45); box-shadow: 0 0 0 3px rgba(79,142,255,0.08); }
+    .feat-input::placeholder { color: var(--muted); }
+    .feat-input:focus { border-color: rgba(79,142,255,0.4); box-shadow: 0 0 0 3px rgba(79,142,255,0.06); }
 
-    .platform-select {
-      padding: 14px 16px;
-      background: var(--bg);
+    .feat-select {
+      padding: 13px 14px;
+      background: var(--bg2);
       border: 1px solid var(--border2);
-      border-radius: 12px;
+      border-radius: 11px;
       color: var(--text);
       font-family: 'DM Sans', sans-serif;
-      font-size: 0.88rem;
+      font-size: 0.85rem;
       outline: none;
       cursor: pointer;
-      transition: border-color 0.2s;
       appearance: none;
-      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' fill='none'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%238895b0' stroke-width='1.5' stroke-linecap='round'/%3E%3C/svg%3E");
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='11' height='7' fill='none'%3E%3Cpath d='M1 1l4.5 5 4.5-5' stroke='%2358677e' stroke-width='1.5' stroke-linecap='round'/%3E%3C/svg%3E");
       background-repeat: no-repeat;
-      background-position: right 14px center;
-      padding-right: 36px;
+      background-position: right 12px center;
+      padding-right: 32px;
+      transition: border-color .2s;
     }
-    .platform-select:focus { border-color: rgba(79,142,255,0.45); }
-    .platform-select option { background: var(--surface); }
+    .feat-select:focus { border-color: rgba(79,142,255,0.4); }
+    .feat-select option { background: var(--surface); }
 
-    .generate-btn {
-      padding: 14px 24px;
-      background: linear-gradient(135deg, var(--accent), var(--accent2));
+    .feat-btn {
+      padding: 13px 22px;
+      background: var(--gradient);
       border: none;
-      border-radius: 12px;
+      border-radius: 11px;
       color: #fff;
       font-family: 'Syne', sans-serif;
       font-weight: 700;
-      font-size: 0.88rem;
+      font-size: 0.85rem;
       cursor: pointer;
       white-space: nowrap;
-      transition: transform 0.2s, box-shadow 0.2s, opacity 0.2s;
-      box-shadow: 0 0 24px rgba(79,142,255,0.28);
+      transition: transform .2s, box-shadow .2s, opacity .2s;
+      box-shadow: 0 0 20px var(--glow-blue);
       display: flex;
       align-items: center;
-      gap: 8px;
+      gap: 7px;
     }
-    .generate-btn:hover { transform: translateY(-2px); box-shadow: 0 0 36px rgba(79,142,255,0.4); }
-    .generate-btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; box-shadow: none; }
+    .feat-btn:hover { transform: translateY(-2px); box-shadow: 0 0 32px var(--glow-blue); }
+    .feat-btn:disabled { opacity:.45; cursor:not-allowed; transform:none; box-shadow:none; }
 
-    .generate-btn .btn-spinner {
-      width: 14px; height: 14px;
-      border: 2px solid rgba(255,255,255,0.3);
-      border-top-color: #fff;
-      border-radius: 50%;
-      animation: spin 0.7s linear infinite;
-      display: none;
+    .feat-btn .btn-spin {
+      width:13px; height:13px;
+      border:2px solid rgba(255,255,255,0.3);
+      border-top-color:#fff;
+      border-radius:50%;
+      animation:spin .7s linear infinite;
+      display:none;
     }
-    .generate-btn.loading .btn-spinner { display: block; }
-    .generate-btn.loading .btn-text { opacity: 0.7; }
-    @keyframes spin { to { transform: rotate(360deg); } }
+    .feat-btn.loading .btn-spin { display:block; }
+    .feat-btn.loading .btn-text { opacity:.7; }
+    @keyframes spin { to{transform:rotate(360deg)} }
 
-    .viral-output {
+    /* Output section */
+    .output-section {
       display: none;
       flex-direction: column;
       gap: 16px;
-      animation: fadeUp 0.5s ease both;
+      animation: slideUp .4s ease both;
     }
-    .viral-output.visible { display: flex; }
+    .output-section.visible { display: flex; }
 
-    @keyframes fadeUp { from{opacity:0;transform:translateY(16px)} to{opacity:1;transform:translateY(0)} }
-
-    .output-header {
+    .output-section-header {
       display: flex;
       align-items: center;
       justify-content: space-between;
       flex-wrap: wrap;
       gap: 10px;
     }
-    .output-header h3 { font-family: 'Syne', sans-serif; font-weight: 800; font-size: 1rem; color: var(--muted); }
-    .output-header h3 span {
-      background: linear-gradient(135deg, var(--accent), var(--accent2));
+
+    .output-section-title {
+      font-family: 'Syne', sans-serif;
+      font-weight: 700;
+      font-size: 0.88rem;
+      color: var(--text2);
+    }
+
+    .output-section-title span {
+      background: var(--gradient);
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
       background-clip: text;
     }
 
-    .copy-all-btn {
-      padding: 7px 16px;
-      background: var(--card);
+    .copy-all {
+      padding: 6px 14px;
+      background: var(--bg2);
       border: 1px solid var(--border2);
-      border-radius: 50px;
-      color: var(--muted);
-      font-size: 0.75rem;
+      border-radius: 20px;
+      color: var(--text2);
+      font-size: 0.72rem;
       font-weight: 600;
       cursor: pointer;
-      transition: all 0.2s;
+      transition: all .2s;
+      font-family: 'Syne', sans-serif;
     }
-    .copy-all-btn:hover { color: var(--text); border-color: rgba(255,255,255,0.2); }
+    .copy-all:hover { color: var(--text); border-color: var(--border3); }
 
-    .output-grid {
-      display: grid;
-      grid-template-columns: repeat(2, 1fr);
-      gap: 14px;
-    }
+    /* Output grid cards */
+    .output-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; }
 
-    .output-card {
+    .out-card {
       background: var(--surface);
       border: 1px solid var(--border);
-      border-radius: 18px;
-      padding: 22px;
+      border-radius: 16px;
+      padding: 20px;
       display: flex;
       flex-direction: column;
-      gap: 14px;
-      transition: border-color 0.2s, transform 0.2s;
-      animation: fadeUp 0.5s ease both;
+      gap: 12px;
+      transition: border-color .2s, transform .2s;
+      animation: slideUp .4s ease both;
     }
-    .output-card:hover { border-color: rgba(79,142,255,0.2); transform: translateY(-2px); }
-    .output-card:nth-child(1) { animation-delay: 0.05s; }
-    .output-card:nth-child(2) { animation-delay: 0.12s; }
-    .output-card:nth-child(3) { animation-delay: 0.19s; }
-    .output-card:nth-child(4) { animation-delay: 0.26s; }
+    .out-card:hover { border-color: var(--border2); transform: translateY(-2px); }
+    .out-card:nth-child(1){animation-delay:.05s}
+    .out-card:nth-child(2){animation-delay:.11s}
+    .out-card:nth-child(3){animation-delay:.17s}
+    .out-card:nth-child(4){animation-delay:.23s}
 
-    .card-label { display: flex; align-items: center; justify-content: space-between; }
-    .card-label-left { display: flex; align-items: center; gap: 8px; }
+    .out-card-header { display:flex; align-items:center; justify-content:space-between; }
+    .out-card-left   { display:flex; align-items:center; gap:8px; }
 
-    .card-icon {
-      width: 30px; height: 30px;
-      border-radius: 8px;
-      display: flex; align-items: center; justify-content: center;
-      font-size: 0.95rem;
+    .out-chip {
+      width: 28px; height: 28px;
+      border-radius: 7px;
+      display:flex; align-items:center; justify-content:center;
+      font-size: 0.88rem;
     }
-    .card-icon.hook-icon      { background: rgba(255,100,100,0.12); }
-    .card-icon.script-icon    { background: rgba(79,142,255,0.12); }
-    .card-icon.title-icon     { background: rgba(255,200,50,0.12); }
-    .card-icon.thumbnail-icon { background: rgba(100,255,150,0.12); }
+    .oc-red    { background: rgba(248,113,113,0.1); }
+    .oc-blue   { background: rgba(79,142,255,0.1); }
+    .oc-amber  { background: rgba(251,191,36,0.1); }
+    .oc-green  { background: rgba(52,211,153,0.1); }
 
-    .card-name {
+    .out-card-name {
       font-family: 'Syne', sans-serif;
+      font-size: 0.72rem;
       font-weight: 700;
-      font-size: 0.78rem;
       text-transform: uppercase;
-      letter-spacing: 0.1em;
-      color: var(--muted);
+      letter-spacing: .1em;
+      color: var(--text2);
     }
 
     .copy-btn {
-      width: 28px; height: 28px;
-      border-radius: 7px;
-      background: var(--card);
-      border: 1px solid var(--border);
-      color: var(--muted);
-      font-size: 0.78rem;
-      cursor: pointer;
-      display: flex; align-items: center; justify-content: center;
-      transition: all 0.2s;
-      flex-shrink: 0;
+      width:26px; height:26px;
+      border-radius:6px;
+      background:var(--bg2); border:1px solid var(--border);
+      color:var(--muted); font-size:0.7rem;
+      cursor:pointer;
+      display:flex; align-items:center; justify-content:center;
+      transition:all .2s;
     }
-    .copy-btn:hover { background: rgba(79,142,255,0.1); border-color: rgba(79,142,255,0.3); color: var(--accent); }
-    .copy-btn.copied { background: rgba(63,255,136,0.1); border-color: rgba(63,255,136,0.3); color: var(--green); }
+    .copy-btn:hover { background:rgba(79,142,255,0.08); border-color:rgba(79,142,255,0.2); color:var(--blue); }
+    .copy-btn.copied { background:rgba(52,211,153,0.08); border-color:rgba(52,211,153,0.2); color:var(--green); }
 
-    .card-content {
-      font-size: 0.87rem;
+    .out-content {
+      font-size: 0.85rem;
       line-height: 1.75;
       color: var(--text);
       white-space: pre-wrap;
       word-break: break-word;
-      flex: 1;
+      flex:1;
     }
 
-    /* Skeleton */
-    .skeleton-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 14px; }
-    .skeleton-card {
+    /* Skeleton loader */
+    .skeleton-grid { display:grid; grid-template-columns:repeat(2,1fr); gap:12px; }
+    .skel-card {
+      background:var(--surface); border:1px solid var(--border);
+      border-radius:16px; padding:20px;
+      display:flex; flex-direction:column; gap:10px;
+    }
+    .skel-line {
+      height:11px; border-radius:6px;
+      background:linear-gradient(90deg, var(--border) 25%, rgba(255,255,255,0.06) 50%, var(--border) 75%);
+      background-size:200% 100%;
+      animation:shimmer 1.4s ease infinite;
+    }
+    .skel-line.short{width:38%} .skel-line.med{width:65%} .skel-line.tall{height:72px}
+    @keyframes shimmer{0%{background-position:200% 0}100%{background-position:-200% 0}}
+
+    .feat-loading { display:none; flex-direction:column; gap:12px; }
+    .feat-loading.visible { display:flex; }
+
+    .loading-label {
+      text-align:center;
+      font-family:'Syne',sans-serif;
+      font-size:0.78rem;
+      font-weight:600;
+      color:var(--text2);
+      padding:6px 0;
+      animation:statusPulse 2s ease infinite;
+    }
+    @keyframes statusPulse{0%,100%{opacity:.6}50%{opacity:1}}
+
+    /* ═══════════════════════════════════════════
+       POST NEXT PANEL
+    ═══════════════════════════════════════════ */
+    .postnext-hero-card {
       background: var(--surface);
       border: 1px solid var(--border);
-      border-radius: 18px;
-      padding: 22px;
-      display: flex; flex-direction: column; gap: 12px;
-    }
-    .skeleton-line {
-      height: 12px;
-      border-radius: 6px;
-      background: linear-gradient(90deg, var(--border) 25%, rgba(255,255,255,0.08) 50%, var(--border) 75%);
-      background-size: 200% 100%;
-      animation: shimmer 1.4s ease infinite;
-    }
-    .skeleton-line.short { width: 40%; }
-    .skeleton-line.med   { width: 70%; }
-    .skeleton-line.tall  { height: 80px; }
-    @keyframes shimmer { 0%{background-position:200% 0} 100%{background-position:-200% 0} }
-
-    .viral-loading { display: none; flex-direction: column; gap: 14px; }
-    .viral-loading.visible { display: flex; }
-
-    .loading-status {
+      border-radius: 20px;
+      padding: 40px 36px;
       text-align: center;
-      color: var(--muted);
-      font-size: 0.8rem;
-      font-family: 'Syne', sans-serif;
-      font-weight: 600;
-      padding: 8px 0;
-      animation: statusPulse 2s ease infinite;
-    }
-    @keyframes statusPulse { 0%,100%{opacity:0.6} 50%{opacity:1} }
-
-    /* ── [11] POST NEXT PANEL ─────────────────── */
-    .postnext-panel {
-      flex: 1;
-      overflow-y: auto;
-      padding: 28px 24px 40px;
-      scrollbar-width: thin;
-      scrollbar-color: var(--border) transparent;
-    }
-
-    .postnext-inner {
-      max-width: 720px;
-      margin: 0 auto;
-      display: flex;
-      flex-direction: column;
-      gap: 24px;
-    }
-
-    .postnext-hero {
-      text-align: center;
-      padding: 44px 28px;
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: 24px;
       position: relative;
       overflow: hidden;
     }
-    .postnext-hero::before {
+
+    .postnext-hero-card::before {
       content: '';
       position: absolute;
-      top: 50%; left: 50%;
-      transform: translate(-50%,-50%);
+      top: -80px; left: 50%;
+      transform: translateX(-50%);
       width: 400px; height: 200px;
       background: radial-gradient(ellipse, rgba(79,142,255,0.08) 0%, transparent 70%);
       pointer-events: none;
     }
 
-    .postnext-hero-icon { font-size: 2.8rem; margin-bottom: 14px; }
+    .pn-hero-emoji { font-size: 3rem; margin-bottom: 16px; }
 
-    .postnext-hero h2 {
+    .pn-hero-title {
       font-family: 'Syne', sans-serif;
       font-size: 1.5rem;
       font-weight: 800;
@@ -859,1787 +1283,1601 @@
       margin-bottom: 10px;
     }
 
-    .postnext-hero p {
-      color: var(--muted);
+    .pn-hero-sub {
+      color: var(--text2);
       font-size: 0.88rem;
-      margin-bottom: 28px;
-      line-height: 1.6;
-      max-width: 420px;
-      margin-left: auto;
-      margin-right: auto;
+      max-width: 400px;
+      margin: 0 auto 28px;
+      line-height: 1.65;
     }
 
-    .postnext-btn {
-      padding: 15px 34px;
-      background: linear-gradient(135deg, var(--accent), var(--accent2));
-      border: none;
-      border-radius: 50px;
-      color: #fff;
-      font-family: 'Syne', sans-serif;
-      font-weight: 700;
-      font-size: 0.95rem;
-      cursor: pointer;
-      box-shadow: 0 0 28px rgba(79,142,255,0.3);
-      transition: transform 0.2s, box-shadow 0.2s, opacity 0.2s;
-      display: inline-flex;
-      align-items: center;
-      gap: 8px;
-    }
-    .postnext-btn:hover { transform: translateY(-2px); box-shadow: 0 0 40px rgba(79,142,255,0.45); }
-    .postnext-btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; box-shadow: none; }
-
-    .postnext-output {
-      display: none;
-      flex-direction: column;
-      gap: 16px;
-      animation: fadeUp 0.5s ease both;
-    }
-    .postnext-output.visible { display: flex; }
-
-    .postnext-idea-card {
+    .pn-result-card {
       background: var(--surface);
       border: 1px solid var(--border);
-      border-radius: 20px;
+      border-radius: 18px;
       overflow: hidden;
     }
 
-    .postnext-idea-header {
-      padding: 14px 22px;
-      background: linear-gradient(135deg, rgba(79,142,255,0.1), rgba(124,58,255,0.08));
+    .pn-result-badge {
+      padding: 13px 22px;
+      background: linear-gradient(90deg, rgba(79,142,255,0.08), rgba(124,58,255,0.06));
       border-bottom: 1px solid var(--border);
       font-family: 'Syne', sans-serif;
+      font-size: 0.78rem;
       font-weight: 700;
-      font-size: 0.82rem;
-      color: var(--accent);
+      color: var(--blue);
       display: flex;
       align-items: center;
       gap: 8px;
     }
 
-    .postnext-sections {
-      padding: 22px;
-      display: flex;
-      flex-direction: column;
-      gap: 20px;
-    }
+    .pn-sections { padding: 24px; display: flex; flex-direction: column; gap: 22px; }
 
-    .pn-section-label {
+    .pn-sec-label {
       font-family: 'Syne', sans-serif;
-      font-size: 0.68rem;
+      font-size: 0.65rem;
       font-weight: 700;
       text-transform: uppercase;
-      letter-spacing: 0.12em;
+      letter-spacing: .12em;
       color: var(--muted);
-      margin-bottom: 7px;
+      margin-bottom: 8px;
     }
 
-    .pn-section-content {
-      font-size: 0.9rem;
+    .pn-sec-text {
+      font-size: 0.88rem;
       line-height: 1.75;
       color: var(--text);
       white-space: pre-wrap;
     }
 
-    .pn-hook-wrap {
+    .pn-hook-box {
       padding: 14px 18px;
-      background: rgba(79,142,255,0.06);
-      border-left: 3px solid var(--accent);
+      background: rgba(79,142,255,0.05);
+      border-left: 3px solid var(--blue);
       border-radius: 0 10px 10px 0;
     }
 
-    .postnext-regen {
-      text-align: center;
-    }
-
-    /* ── [12] CALENDAR PANEL ──────────────────── */
-    .calendar-panel {
-      flex: 1;
-      overflow-y: auto;
-      padding: 28px 24px 40px;
-      scrollbar-width: thin;
-      scrollbar-color: var(--border) transparent;
-    }
-
-    .calendar-inner {
-      max-width: 960px;
-      margin: 0 auto;
-      display: flex;
-      flex-direction: column;
-      gap: 24px;
-    }
-
-    .calendar-header-card {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: 20px;
-      padding: 28px;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      flex-wrap: wrap;
-      gap: 16px;
-    }
-
-    .calendar-header-card h2 {
-      font-family: 'Syne', sans-serif;
-      font-size: 1.3rem;
-      font-weight: 800;
-      margin-bottom: 6px;
-    }
-    .calendar-header-card h2 span {
-      background: linear-gradient(135deg, var(--accent), var(--accent2));
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      background-clip: text;
-    }
-    .calendar-header-card p { color: var(--muted); font-size: 0.85rem; line-height: 1.5; }
-
-    .cal-btn {
-      padding: 13px 24px;
-      background: linear-gradient(135deg, var(--accent), var(--accent2));
-      border: none;
-      border-radius: 12px;
-      color: #fff;
-      font-family: 'Syne', sans-serif;
-      font-weight: 700;
-      font-size: 0.88rem;
-      cursor: pointer;
-      white-space: nowrap;
-      transition: transform 0.2s, box-shadow 0.2s, opacity 0.2s;
-      box-shadow: 0 0 20px rgba(79,142,255,0.25);
-    }
-    .cal-btn:hover { transform: translateY(-2px); box-shadow: 0 0 32px rgba(79,142,255,0.4); }
-    .cal-btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; box-shadow: none; }
-
-    .calendar-grid {
+    /* ═══════════════════════════════════════════
+       CALENDAR PANEL
+    ═══════════════════════════════════════════ */
+    .cal-grid {
       display: none;
-      grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
-      gap: 14px;
+      grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
+      gap: 12px;
     }
-    .calendar-grid.visible { display: grid; }
+    .cal-grid.visible { display: grid; }
 
     .day-card {
       background: var(--surface);
       border: 1px solid var(--border);
-      border-radius: 18px;
-      padding: 20px;
+      border-radius: 16px;
+      padding: 18px;
       display: flex;
       flex-direction: column;
-      gap: 10px;
-      transition: border-color 0.2s, transform 0.2s;
-      animation: fadeUp 0.5s ease both;
+      gap: 9px;
+      transition: border-color .2s, transform .2s;
+      animation: slideUp .5s ease both;
     }
-    .day-card:hover { border-color: rgba(79,142,255,0.25); transform: translateY(-2px); }
+    .day-card:hover { border-color: var(--border2); transform: translateY(-2px); }
 
-    .day-num {
+    .day-label {
       font-family: 'Syne', sans-serif;
-      font-weight: 800;
-      font-size: 0.7rem;
+      font-size: 0.64rem;
+      font-weight: 700;
       text-transform: uppercase;
-      letter-spacing: 0.12em;
-      color: var(--accent);
+      letter-spacing: .12em;
+      color: var(--blue);
     }
 
     .day-topic {
       font-family: 'Syne', sans-serif;
       font-weight: 700;
-      font-size: 0.95rem;
+      font-size: 0.92rem;
       color: var(--text);
       line-height: 1.3;
     }
 
-    .day-angle {
-      font-size: 0.81rem;
-      color: var(--muted);
-      line-height: 1.5;
-    }
+    .day-angle { font-size: 0.78rem; color: var(--text2); line-height: 1.5; }
 
     .day-hook {
-      padding: 10px 12px;
-      background: rgba(79,142,255,0.06);
-      border-left: 2px solid var(--accent);
-      border-radius: 0 8px 8px 0;
-      font-size: 0.8rem;
+      padding: 9px 12px;
+      background: rgba(79,142,255,0.05);
+      border-left: 2px solid rgba(79,142,255,0.4);
+      border-radius: 0 7px 7px 0;
+      font-size: 0.76rem;
       color: var(--text);
       line-height: 1.5;
       font-style: italic;
     }
 
-    .cal-loading {
+    .cal-loading-label {
       display: none;
       text-align: center;
-      padding: 32px;
-      color: var(--muted);
+      padding: 28px;
       font-family: 'Syne', sans-serif;
+      font-size: 0.82rem;
       font-weight: 600;
-      font-size: 0.85rem;
+      color: var(--text2);
       animation: statusPulse 2s ease infinite;
     }
 
-    /* ── [13] FEEDBACK PANEL ──────────────────── */
-    .feedback-panel {
-      flex: 1;
-      overflow-y: auto;
-      padding: 28px 24px 40px;
-      scrollbar-width: thin;
-      scrollbar-color: var(--border) transparent;
+    /* ═══════════════════════════════════════════
+       FEEDBACK PANEL
+    ═══════════════════════════════════════════ */
+    .fb-textarea {
+      width:100%;
+      min-height:120px;
+      padding:14px 16px;
+      background:var(--bg2);
+      border:1px solid var(--border2);
+      border-radius:11px;
+      color:var(--text);
+      font-family:'DM Sans',sans-serif;
+      font-size:0.88rem;
+      outline:none;
+      resize:vertical;
+      line-height:1.6;
+      transition:border-color .2s;
+      display:block;
+      margin-bottom:14px;
+    }
+    .fb-textarea::placeholder { color:var(--muted); }
+    .fb-textarea:focus { border-color:rgba(79,142,255,0.4); }
+
+    .fb-cards { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+
+    .fb-card {
+      background:var(--surface);
+      border:1px solid var(--border);
+      border-radius:16px;
+      padding:20px;
+      animation:slideUp .4s ease both;
+    }
+    .fb-card:nth-child(1) { animation-delay:.05s; border-top:2px solid rgba(52,211,153,.3); }
+    .fb-card:nth-child(2) { animation-delay:.11s; border-top:2px solid rgba(248,113,113,.3); }
+    .fb-card:nth-child(3) { animation-delay:.17s; grid-column:1/-1; border-top:2px solid rgba(79,142,255,.4); }
+
+    .fb-card-title {
+      display:flex; align-items:center; gap:7px;
+      font-family:'Syne',sans-serif; font-size:0.75rem;
+      font-weight:700; text-transform:uppercase; letter-spacing:.1em;
+      color:var(--text2); margin-bottom:12px;
     }
 
-    .feedback-inner {
-      max-width: 820px;
-      margin: 0 auto;
-      display: flex;
-      flex-direction: column;
-      gap: 24px;
+    .fb-card-body {
+      font-size:0.84rem; line-height:1.8; color:var(--text);
+      white-space:pre-wrap;
     }
 
-    .feedback-input-card {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: 20px;
-      padding: 28px;
+    .verdict-row {
+      display:flex; align-items:center; justify-content:space-between;
+      flex-wrap:wrap; gap:16px;
+      padding:22px 26px;
+      background:linear-gradient(135deg, rgba(79,142,255,0.06), rgba(124,58,255,0.05));
+      border:1px solid rgba(79,142,255,0.18);
+      border-radius:16px;
+      animation:slideUp .4s ease .23s both;
     }
 
-    .feedback-input-card h2 {
-      font-family: 'Syne', sans-serif;
-      font-size: 1.3rem;
-      font-weight: 800;
-      margin-bottom: 8px;
-    }
-    .feedback-input-card h2 span {
-      background: linear-gradient(135deg, var(--accent), var(--accent2));
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      background-clip: text;
-    }
-    .feedback-input-card p { color: var(--muted); font-size: 0.85rem; margin-bottom: 20px; line-height: 1.6; }
+    .verdict-score-block { text-align:center; }
 
-    #feedback-input {
-      width: 100%;
-      min-height: 130px;
-      padding: 16px 18px;
-      background: var(--bg);
-      border: 1px solid var(--border2);
-      border-radius: 12px;
-      color: var(--text);
-      font-family: 'DM Sans', sans-serif;
-      font-size: 0.9rem;
-      outline: none;
-      resize: vertical;
-      line-height: 1.6;
-      transition: border-color 0.2s;
-      margin-bottom: 14px;
-      display: block;
-    }
-    #feedback-input::placeholder { color: var(--muted2); }
-    #feedback-input:focus { border-color: rgba(79,142,255,0.45); }
-
-    .feedback-output {
-      display: none;
-      flex-direction: column;
-      gap: 14px;
-      animation: fadeUp 0.5s ease both;
-    }
-    .feedback-output.visible { display: flex; }
-
-    .feedback-cards-grid {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 14px;
+    .verdict-num {
+      font-family:'Syne',sans-serif;
+      font-size:2.6rem; font-weight:800; line-height:1;
+      background:var(--gradient);
+      -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text;
     }
 
-    .feedback-card {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: 18px;
-      padding: 22px;
-      animation: fadeUp 0.5s ease both;
-    }
-    .feedback-card:nth-child(1) { animation-delay: 0.05s; border-top: 2px solid rgba(63,255,136,0.3); }
-    .feedback-card:nth-child(2) { animation-delay: 0.12s; border-top: 2px solid rgba(255,71,87,0.3); }
-    .feedback-card:nth-child(3) { animation-delay: 0.19s; border-top: 2px solid rgba(79,142,255,0.4); }
+    .verdict-denom { font-size:0.65rem; color:var(--muted); text-transform:uppercase; letter-spacing:.1em; margin-top:3px; }
 
-    .feedback-card-title {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      font-family: 'Syne', sans-serif;
-      font-weight: 700;
-      font-size: 0.8rem;
-      text-transform: uppercase;
-      letter-spacing: 0.1em;
-      color: var(--muted);
-      margin-bottom: 14px;
-    }
+    .verdict-copy { font-size:0.9rem; line-height:1.5; color:var(--text); max-width:500px; }
 
-    .feedback-card-content {
-      font-size: 0.86rem;
-      line-height: 1.8;
-      color: var(--text);
-      white-space: pre-wrap;
-    }
-
-    .verdict-card {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      flex-wrap: wrap;
-      gap: 16px;
-      padding: 22px 28px;
-      background: linear-gradient(135deg, rgba(79,142,255,0.06), rgba(124,58,255,0.06));
-      border: 1px solid rgba(79,142,255,0.2);
-      border-radius: 18px;
-      animation: fadeUp 0.5s ease 0.26s both;
-    }
-
-    .verdict-score-wrap { text-align: center; }
-
-    .verdict-score {
-      font-family: 'Syne', sans-serif;
-      font-size: 2.8rem;
-      font-weight: 800;
-      background: linear-gradient(135deg, var(--accent), var(--accent2));
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      background-clip: text;
-      line-height: 1;
-    }
-
-    .verdict-score-label {
-      font-size: 0.68rem;
-      color: var(--muted);
-      text-transform: uppercase;
-      letter-spacing: 0.1em;
-      font-weight: 600;
-      margin-top: 4px;
-    }
-
-    .verdict-text {
-      font-family: 'Syne', sans-serif;
-      font-weight: 700;
-      font-size: 0.95rem;
-      color: var(--text);
-      max-width: 520px;
-      line-height: 1.5;
-    }
-
-    /* ── [14] MODALS ──────────────────────────── */
+    /* ═══════════════════════════════════════════
+       MODALS
+    ═══════════════════════════════════════════ */
     .modal-overlay {
-      position: fixed; inset: 0; z-index: 1000;
-      background: rgba(0,0,0,0.78);
-      backdrop-filter: blur(8px);
-      display: flex; align-items: center; justify-content: center;
-      opacity: 0; visibility: hidden;
-      transition: opacity 0.3s, visibility 0.3s;
+      position:fixed; inset:0; z-index:1000;
+      background:rgba(0,0,0,.82);
+      backdrop-filter:blur(10px);
+      display:flex; align-items:center; justify-content:center;
+      opacity:0; visibility:hidden;
+      transition:opacity .3s, visibility .3s;
     }
-    .modal-overlay.open { opacity: 1; visibility: visible; }
+    .modal-overlay.open { opacity:1; visibility:visible; }
 
     .modal {
-      background: var(--surface);
-      border: 1px solid var(--border2);
-      border-radius: 22px;
-      padding: 30px;
-      max-width: 440px;
-      width: 94%;
-      transform: translateY(16px);
-      transition: transform 0.3s;
-      max-height: 92vh;
-      overflow-y: auto;
+      background:var(--surface);
+      border:1px solid var(--border2);
+      border-radius:22px;
+      padding:30px;
+      max-width:430px; width:94%;
+      transform:translateY(18px);
+      transition:transform .3s;
+      max-height:90vh; overflow-y:auto;
     }
-    .modal-overlay.open .modal { transform: translateY(0); }
+    .modal-overlay.open .modal { transform:translateY(0); }
 
-    .modal h3 { font-family:'Syne',sans-serif; font-size:1.25rem; font-weight:800; margin-bottom:7px; }
-    .modal > p { color:var(--muted); font-size:0.85rem; margin-bottom:20px; line-height:1.6; }
+    .modal-title { font-family:'Syne',sans-serif; font-size:1.2rem; font-weight:800; margin-bottom:7px; }
+    .modal-desc  { color:var(--text2); font-size:0.83rem; margin-bottom:22px; line-height:1.6; }
 
-    /* Memory modal form */
-    .form-group { display: flex; flex-direction: column; gap: 6px; margin-bottom: 14px; }
-    .form-label {
-      font-family: 'Syne', sans-serif;
-      font-weight: 700;
-      font-size: 0.73rem;
-      color: var(--muted);
-      text-transform: uppercase;
-      letter-spacing: 0.08em;
+    .form-group { display:flex; flex-direction:column; gap:5px; margin-bottom:14px; }
+    .form-label { font-family:'Syne',sans-serif; font-size:0.67rem; font-weight:700; text-transform:uppercase; letter-spacing:.1em; color:var(--muted); }
+    .form-ctrl {
+      padding:11px 14px;
+      background:var(--bg2); border:1px solid var(--border2);
+      border-radius:10px; color:var(--text);
+      font-size:0.87rem; outline:none;
+      font-family:'DM Sans',sans-serif;
+      transition:border-color .2s; width:100%;
     }
-    .form-input, .form-select, .form-textarea {
-      padding: 11px 14px;
-      background: var(--bg);
-      border: 1px solid var(--border2);
-      border-radius: 10px;
-      color: var(--text);
-      font-size: 0.88rem;
-      outline: none;
-      font-family: 'DM Sans', sans-serif;
-      transition: border-color 0.2s;
-      width: 100%;
-    }
-    .form-input:focus, .form-select:focus, .form-textarea:focus { border-color: rgba(79,142,255,0.45); }
-    .form-input::placeholder, .form-textarea::placeholder { color: var(--muted2); }
-    .form-select { appearance: none; cursor: pointer; }
-    .form-select option { background: var(--surface); }
-    .form-textarea { min-height: 70px; resize: vertical; line-height: 1.5; }
+    .form-ctrl:focus { border-color:rgba(79,142,255,0.4); }
+    .form-ctrl::placeholder { color:var(--muted); }
+    textarea.form-ctrl { min-height:68px; resize:vertical; line-height:1.5; }
 
-    /* Upgrade modal */
-    .plan-options { display:flex; flex-direction:column; gap:10px; }
-    .plan-option {
+    .plan-list { display:flex; flex-direction:column; gap:9px; }
+    .plan-opt {
       padding:13px 15px; border:1px solid var(--border2);
       border-radius:12px; cursor:pointer;
       display:flex; align-items:center; justify-content:space-between;
-      transition:border-color 0.2s, background 0.2s;
+      transition:border-color .2s, background .2s;
     }
-    .plan-option:hover { border-color:rgba(79,142,255,0.4); background:rgba(79,142,255,0.05); }
-    .plan-option h4 { font-family:'Syne',sans-serif; font-weight:700; font-size:0.88rem; margin-bottom:2px; }
-    .plan-option p  { color:var(--muted); font-size:0.73rem; margin:0; }
-    .plan-price-tag { font-family:'Syne',sans-serif; font-weight:800; font-size:1rem; color:var(--accent); }
+    .plan-opt:hover { border-color:rgba(79,142,255,0.35); background:rgba(79,142,255,0.04); }
+    .plan-opt h4 { font-family:'Syne',sans-serif; font-weight:700; font-size:0.86rem; margin-bottom:2px; }
+    .plan-opt p  { color:var(--text2); font-size:0.72rem; margin:0; }
+    .plan-opt-price { font-family:'Syne',sans-serif; font-weight:800; color:var(--blue); font-size:1rem; }
 
     .modal-actions { display:flex; gap:8px; margin-top:20px; }
-    .modal-activate {
+
+    .modal-save {
       flex:1; padding:11px;
-      background:linear-gradient(135deg,var(--accent),var(--accent2));
+      background:var(--gradient);
       border:none; border-radius:50px; color:#fff;
-      font-family:'Syne',sans-serif; font-weight:700; cursor:pointer;
-      font-size:0.85rem; transition:opacity 0.2s;
+      font-family:'Syne',sans-serif; font-weight:700;
+      font-size:0.84rem; cursor:pointer;
+      transition:opacity .2s;
     }
-    .modal-activate:hover { opacity:0.88; }
-    .modal-dismiss {
+    .modal-save:hover { opacity:.88; }
+
+    .modal-cancel {
       padding:11px 16px; background:transparent;
       border:1px solid var(--border2); border-radius:50px;
-      color:var(--muted); cursor:pointer; font-size:0.83rem;
-      transition:color 0.2s;
+      color:var(--text2); cursor:pointer; font-size:0.82rem;
+      transition:color .2s;
     }
-    .modal-dismiss:hover { color:var(--text); }
+    .modal-cancel:hover { color:var(--text); }
 
-    /* ── [15] MOBILE ──────────────────────────── */
-    @media (max-width: 768px) {
-      .sidebar {
-        position: fixed;
-        left: -100%; top: 0; z-index: 200;
-        transition: left 0.3s;
-      }
-      .sidebar.open { left: 0; }
-      .mobile-menu-btn { display: block; }
-      .suggestion-grid { grid-template-columns: 1fr; }
-      .chat-area { padding: 14px 12px; }
-      .input-area { padding: 9px 12px 13px; }
-      .topbar { padding: 10px 14px; gap: 8px; }
-      .topbar-title { display: none; }
-      .mode-tab { padding: 6px 10px; font-size: 0.68rem; }
-      .output-grid { grid-template-columns: 1fr; }
-      .skeleton-grid { grid-template-columns: 1fr; }
-      .viral-input-row { flex-direction: column; }
-      .generate-btn { width: 100%; justify-content: center; }
-      .platform-select { width: 100%; }
-      .feedback-cards-grid { grid-template-columns: 1fr; }
-      .verdict-card { flex-direction: column; align-items: flex-start; }
-      .calendar-grid { grid-template-columns: 1fr 1fr; }
-      .upgrade-btn { display: none; }
+    /* ─── MOBILE ─────────────────────────────── */
+    @media (max-width: 800px) {
+      .sidebar { position:fixed; left:-100%; top:0; z-index:200; }
+      .sidebar.open { left:0; }
+      .mobile-menu { display:block; }
+      .stats-row { grid-template-columns:repeat(2,1fr); }
+      .tools-grid { grid-template-columns:1fr; }
+      .suggestion-grid { grid-template-columns:1fr; }
+      .output-grid { grid-template-columns:1fr; }
+      .skeleton-grid { grid-template-columns:1fr; }
+      .fb-cards { grid-template-columns:1fr; }
+      .feat-input-row { flex-direction:column; }
+      .feat-btn { width:100%; justify-content:center; }
+      .feat-select { width:100%; }
+      .cal-grid { grid-template-columns:1fr 1fr; }
+      .feature-scroll { padding:18px 16px 40px; }
+      .dash-scroll { padding:18px 16px 40px; }
+      .topbar-upgrade { display:none; }
+      .status-chip { display:none; }
     }
 
     @media (max-width: 480px) {
-      .calendar-grid { grid-template-columns: 1fr; }
+      .stats-row { grid-template-columns:1fr 1fr; }
+      .cal-grid { grid-template-columns:1fr; }
     }
   </style>
 </head>
 <body>
 
-  <!-- ══════════════════════════════════════════
-       SIDEBAR
-  ══════════════════════════════════════════ -->
-  <aside class="sidebar" id="sidebar">
+<!-- ════════════════════════════════════════
+     SIDEBAR — Navigation Command Center
+════════════════════════════════════════ -->
+<aside class="sidebar" id="sidebar">
 
-    <div class="sidebar-header">
-      <a href="index.html" class="logo">Xarvis AI</a>
-      <span class="plan-pill" id="plan-pill">FREE</span>
+  <!-- Logo -->
+  <a href="index.html" class="sidebar-logo">
+    <div class="logo-mark">X</div>
+    <span class="logo-text">Xarvis AI</span>
+    <span class="logo-version">v3</span>
+  </a>
+
+  <!-- Nav -->
+  <nav class="sidebar-nav">
+    <div class="nav-section-label">Workspace</div>
+
+    <button class="nav-item active" id="nav-dashboard" onclick="switchMode('dashboard')">
+      <div class="nav-icon">🏠</div>
+      <span class="nav-label">Dashboard</span>
+    </button>
+
+    <button class="nav-item" id="nav-chat" onclick="switchMode('chat')">
+      <div class="nav-icon">💬</div>
+      <span class="nav-label">AI Advisor</span>
+    </button>
+
+    <div class="nav-section-label" style="margin-top:4px;">Creator Tools</div>
+
+    <button class="nav-item" id="nav-viral" onclick="switchMode('viral')">
+      <div class="nav-icon">🔥</div>
+      <span class="nav-label">Viral Generator</span>
+    </button>
+
+    <button class="nav-item" id="nav-postnext" onclick="switchMode('postnext')">
+      <div class="nav-icon">🎯</div>
+      <span class="nav-label">Post Next</span>
+      <span class="nav-badge new">AI</span>
+    </button>
+
+    <button class="nav-item" id="nav-calendar" onclick="switchMode('calendar')">
+      <div class="nav-icon">📅</div>
+      <span class="nav-label">7-Day Calendar</span>
+    </button>
+
+    <button class="nav-item" id="nav-feedback" onclick="switchMode('feedback')">
+      <div class="nav-icon">📊</div>
+      <span class="nav-label">Feedback</span>
+    </button>
+
+  </nav>
+
+  <!-- Memory Chip -->
+  <div class="memory-chip unset" id="memory-chip" onclick="openModal('memory-modal')">
+    <div class="memory-chip-top">
+      <span class="memory-chip-label">🧠 Creator Profile</span>
+      <span class="memory-chip-edit">Edit →</span>
     </div>
-
-    <div class="sidebar-top">
-      <button class="new-chat-btn" onclick="newChat()">+ New Chat</button>
-      <button class="tts-btn active" id="tts-btn" onclick="toggleTTS()">🔊 TTS</button>
+    <div class="memory-tags" id="memory-tag-list">
+      <span class="memory-setup-cta">Tap to set up your profile</span>
     </div>
+  </div>
 
-    <!-- Limit Banner -->
-    <div class="limit-banner hidden" id="limit-banner">
-      ⚡ <strong id="limit-text">10 messages left</strong><br/>Upgrade for unlimited access.
-    </div>
+  <div class="sidebar-spacer"></div>
 
-    <!-- Memory Widget — NEW in V3 -->
-    <div class="memory-widget unset" id="memory-widget">
-      <div class="memory-header">
-        <span class="memory-title">🧠 Creator Profile</span>
-        <button class="memory-edit-btn" onclick="openMemoryModal()">Edit ↗</button>
+  <!-- Bottom -->
+  <div class="sidebar-bottom">
+    <div class="plan-card">
+      <div class="plan-card-top">
+        <span class="plan-card-name">Starter Plan</span>
+        <span class="plan-pill" id="plan-pill">FREE</span>
       </div>
-      <div class="memory-tags" id="memory-tags">
-        <span class="memory-empty">Not set — <a onclick="openMemoryModal()">set up now</a></span>
+      <div class="plan-limit-text" id="limit-text">15 of 15 messages remaining</div>
+      <div class="plan-limit-bar">
+        <div class="plan-limit-fill" id="limit-bar" style="width:100%"></div>
       </div>
+      <button class="upgrade-cta" onclick="openModal('upgrade-modal')">⚡ Upgrade to Pro</button>
     </div>
 
-    <!-- Quick Actions — V3 updated -->
-    <div class="sidebar-label">Quick Actions</div>
-    <div class="quick-actions">
-      <button class="quick-btn" onclick="switchMode('viral')">🔥 Generate Viral Content</button>
-      <button class="quick-btn" onclick="switchMode('postnext')">🎯 Post Next Idea</button>
-      <button class="quick-btn" onclick="switchMode('calendar')">📅 7-Day Content Plan</button>
-      <button class="quick-btn" onclick="switchMode('feedback')">📊 Analyze My Content</button>
-      <button class="quick-btn" onclick="openMemoryModal()">🧠 Update My Profile</button>
+    <div class="sidebar-util-btns">
+      <button class="util-btn active" id="tts-btn" onclick="toggleTTS()">🔊 TTS</button>
+      <button class="util-btn" onclick="newChat()">+ New Chat</button>
+    </div>
+  </div>
+
+</aside>
+
+<!-- ════════════════════════════════════════
+     MAIN
+════════════════════════════════════════ -->
+<div class="main">
+
+  <!-- TOPBAR -->
+  <div class="topbar">
+    <button class="mobile-menu" onclick="toggleSidebar()">☰</button>
+
+    <div class="topbar-breadcrumb">
+      <span class="breadcrumb-app">Xarvis AI</span>
+      <span class="breadcrumb-sep">›</span>
+      <span class="breadcrumb-page" id="breadcrumb-page">Dashboard</span>
     </div>
 
-    <div class="sidebar-label" style="margin-top:8px;">Recent</div>
-    <div class="recent-chats" id="recent-chats">
-      <div style="color:var(--muted2);font-size:0.75rem;padding:6px 9px;">No history yet</div>
-    </div>
+    <div class="topbar-center"></div>
 
-    <div class="sidebar-upgrade">
-      <h4>⚡ Go Creator Pro</h4>
-      <p>Unlimited AI, memory, calendar & monetization tools.</p>
-      <a href="index.html#pricing" class="upgrade-link">Upgrade — $12/mo</a>
-    </div>
-
-  </aside>
-
-  <!-- ══════════════════════════════════════════
-       MAIN
-  ══════════════════════════════════════════ -->
-  <div class="main">
-
-    <!-- TOP BAR -->
-    <div class="topbar">
-      <div class="topbar-left">
-        <button class="mobile-menu-btn" onclick="toggleSidebar()">☰</button>
+    <div class="topbar-right">
+      <div class="status-chip">
         <div class="status-dot"></div>
-        <span class="topbar-title">Xarvis AI</span>
+        AI Online
       </div>
-
-      <!-- 5 MODE TABS — V3 Core UI -->
-      <div class="mode-tabs">
-        <button class="mode-tab active" id="tab-chat"     onclick="switchMode('chat')">💬 Chat</button>
-        <button class="mode-tab"        id="tab-viral"    onclick="switchMode('viral')">🔥 Viral</button>
-        <button class="mode-tab"        id="tab-postnext" onclick="switchMode('postnext')">🎯 Post Next</button>
-        <button class="mode-tab"        id="tab-calendar" onclick="switchMode('calendar')">📅 Calendar</button>
-        <button class="mode-tab"        id="tab-feedback" onclick="switchMode('feedback')">📊 Feedback</button>
-      </div>
-
-      <div class="topbar-right">
-        <button class="upgrade-btn" onclick="openModal('upgrade-modal')">⚡ Upgrade</button>
-      </div>
+      <button class="topbar-upgrade" onclick="openModal('upgrade-modal')">⚡ Go Pro</button>
     </div>
+  </div>
 
-    <!-- ══ PANEL 1: CHAT ══ -->
-    <div class="panel active" id="panel-chat">
-      <div class="chat-area" id="chat-area">
-        <div class="empty-state" id="empty-state">
-          <div>
-            <h2>Your AI Co-Founder is Ready.</h2>
-            <p>Ask Xarvis anything about growing your channel, writing hooks, building your strategy, or monetizing your audience.</p>
+  <!-- ══ PANEL: DASHBOARD ══ -->
+  <div class="panel active" id="panel-dashboard">
+    <div class="dash-scroll">
+      <div class="dash-inner">
+
+        <!-- Greeting -->
+        <div class="dash-greeting">
+          <div class="greeting-main">
+            <div class="greeting-eyebrow" id="greeting-time">Good morning, Creator</div>
+            <h1 class="greeting-h1">Ready to <span class="hl">go viral?</span></h1>
+            <p class="greeting-sub">Your AI strategist is live. What are we building today?</p>
           </div>
-          <div class="suggestion-grid">
-            <div class="suggestion-card" data-prompt="Write me 3 viral hooks for my next video in my niche">
-              <div class="sug-icon">🪝</div>
-              <div class="sug-title">Viral Hooks</div>
-              <div class="sug-desc">Get scroll-stopping openers for your next video</div>
-            </div>
-            <div class="suggestion-card" data-prompt="Give me a 90-day growth plan to hit 100k subscribers">
-              <div class="sug-icon">📈</div>
-              <div class="sug-title">Growth Plan</div>
-              <div class="sug-desc">A step-by-step roadmap to scale your audience</div>
-            </div>
-            <div class="suggestion-card" data-prompt="What content is going viral right now in my niche?">
-              <div class="sug-icon">🔮</div>
-              <div class="sug-title">Trend Intel</div>
-              <div class="sug-desc">What's blowing up in your niche right now</div>
-            </div>
-            <div class="suggestion-card" data-prompt="How do I land my first brand sponsorship as a creator?">
-              <div class="sug-icon">💰</div>
-              <div class="sug-title">Monetize</div>
-              <div class="sug-desc">Turn your audience into income with proven strategies</div>
-            </div>
+          <button class="greeting-new-chat" onclick="switchMode('chat')">
+            💬 Open AI Advisor
+          </button>
+        </div>
+
+        <!-- Stats -->
+        <div class="stats-row">
+          <div class="stat-card">
+            <div class="stat-icon si-blue">⚡</div>
+            <div class="stat-value" id="stat-sessions">0</div>
+            <div class="stat-label">AI Sessions Today</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon si-green">🔥</div>
+            <div class="stat-value" id="stat-generated">0</div>
+            <div class="stat-label">Content Pieces Generated</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon si-purple">📅</div>
+            <div class="stat-value" id="stat-streak">1</div>
+            <div class="stat-label">Day Streak</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon si-amber">🧠</div>
+            <div class="stat-value" id="stat-topics">0</div>
+            <div class="stat-label">Ideas in Memory</div>
           </div>
         </div>
-      </div>
 
-      <div class="input-area">
-        <div class="input-wrap">
-          <textarea
-            id="chat-input"
-            placeholder="Ask Xarvis anything about growing your channel…"
-            rows="1"
-            onkeydown="handleKey(event)"
-            oninput="autoResize(this)"
-          ></textarea>
-          <div class="input-btns">
-            <button class="mic-btn" id="mic-btn" onclick="toggleMic()" title="Voice input">🎤</button>
-            <button class="send-btn" id="send-btn" onclick="sendMessage()" title="Send">➤</button>
+        <!-- Tools -->
+        <div>
+          <div class="tools-header" style="margin-bottom:14px;">
+            <span class="section-title">Your Creator Tools</span>
+            <span class="section-sub">Tap any tool to launch it</span>
+          </div>
+          <div class="tools-grid">
+
+            <div class="tool-card tc-blue" onclick="switchMode('viral')">
+              <div class="tool-icon-wrap tci-blue">🔥</div>
+              <div class="tool-card-title">Viral Content Generator</div>
+              <div class="tool-card-desc">Input your idea. Get a scroll-stopping hook, full script, title options, and thumbnail concept — in seconds.</div>
+              <div class="tool-card-action tca-blue">Generate now →</div>
+            </div>
+
+            <div class="tool-card tc-green" onclick="switchMode('postnext')">
+              <div class="tool-icon-wrap tci-green">🎯</div>
+              <div class="tool-card-title">What Should I Post Today?</div>
+              <div class="tool-card-desc">Xarvis reads your niche and history, picks your ONE highest-potential idea for today, and hands you the hook.</div>
+              <div class="tool-card-action tca-green">Get today's idea →</div>
+            </div>
+
+            <div class="tool-card tc-purple" onclick="switchMode('calendar')">
+              <div class="tool-icon-wrap tci-purple">📅</div>
+              <div class="tool-card-title">7-Day Content Calendar</div>
+              <div class="tool-card-desc">A full week of personalized content — topics, angles, and hooks ready to post, built around your niche and goals.</div>
+              <div class="tool-card-action tca-purple">Plan my week →</div>
+            </div>
+
+            <div class="tool-card tc-amber" onclick="switchMode('feedback')">
+              <div class="tool-icon-wrap tci-amber">📊</div>
+              <div class="tool-card-title">Content Feedback Analyzer</div>
+              <div class="tool-card-desc">Paste any video idea. Xarvis scores it, tells you what's weak, and gives you the exact fixes before you post.</div>
+              <div class="tool-card-action tca-amber">Analyze content →</div>
+            </div>
+
           </div>
         </div>
-        <div class="input-hint">Enter to send · Shift+Enter for new line</div>
-      </div>
-    </div>
 
-    <!-- ══ PANEL 2: VIRAL GENERATOR ══ -->
-    <div class="panel" id="panel-viral">
-      <div class="viral-panel">
-        <div class="viral-inner">
-
-          <div class="viral-input-card">
-            <div class="viral-input-header">
-              <h2>🔥 <span>Viral Content Generator</span></h2>
-              <p>Enter your idea — Xarvis builds the full package: hook, script, title & thumbnail. Your creator profile is injected automatically.</p>
-            </div>
-            <div class="viral-input-row">
-              <input
-                type="text"
-                id="viral-topic"
-                placeholder="e.g. gym motivation, morning routines, making money at 17…"
-                onkeydown="if(event.key==='Enter') generateViralContent()"
-              />
-              <select class="platform-select" id="viral-platform">
-                <option value="YouTube Shorts">▶ YouTube Shorts</option>
-                <option value="TikTok">♪ TikTok</option>
-                <option value="Instagram Reels">◉ Instagram Reels</option>
-                <option value="YouTube">▶ YouTube Long-form</option>
-              </select>
-              <button class="generate-btn" id="generate-btn" onclick="generateViralContent()">
-                <div class="btn-spinner"></div>
-                <span class="btn-text">⚡ Generate</span>
-              </button>
-            </div>
+        <!-- Daily Brief -->
+        <div class="daily-brief" id="daily-brief">
+          <div class="brief-header">
+            <div class="brief-header-icon">💡</div>
+            <span style="font-family:'Syne',sans-serif;font-weight:700;font-size:0.82rem;">Daily Creator Insight</span>
+            <span class="brief-header-badge">DAILY</span>
           </div>
-
-          <!-- Loading Skeletons -->
-          <div class="viral-loading" id="viral-loading">
-            <div class="loading-status" id="loading-status">🧠 Xarvis is engineering your viral moment…</div>
-            <div class="skeleton-grid">
-              <div class="skeleton-card"><div class="skeleton-line short"></div><div class="skeleton-line tall"></div><div class="skeleton-line med"></div></div>
-              <div class="skeleton-card"><div class="skeleton-line short"></div><div class="skeleton-line tall"></div><div class="skeleton-line med"></div></div>
-              <div class="skeleton-card"><div class="skeleton-line short"></div><div class="skeleton-line tall"></div><div class="skeleton-line med"></div></div>
-              <div class="skeleton-card"><div class="skeleton-line short"></div><div class="skeleton-line tall"></div><div class="skeleton-line med"></div></div>
-            </div>
-          </div>
-
-          <!-- Output Cards -->
-          <div class="viral-output" id="viral-output">
-            <div class="output-header">
-              <h3>Results: <span id="output-topic-label"></span></h3>
-              <button class="copy-all-btn" onclick="copyAll()">📋 Copy All</button>
-            </div>
-            <div class="output-grid">
-              <div class="output-card">
-                <div class="card-label">
-                  <div class="card-label-left"><div class="card-icon hook-icon">🪝</div><span class="card-name">Hook</span></div>
-                  <button class="copy-btn" onclick="copyCard('hook-content', this)">📋</button>
-                </div>
-                <div class="card-content" id="hook-content"></div>
-              </div>
-              <div class="output-card">
-                <div class="card-label">
-                  <div class="card-label-left"><div class="card-icon title-icon">✏️</div><span class="card-name">Title</span></div>
-                  <button class="copy-btn" onclick="copyCard('title-content', this)">📋</button>
-                </div>
-                <div class="card-content" id="title-content"></div>
-              </div>
-              <div class="output-card" style="grid-column: 1 / -1;">
-                <div class="card-label">
-                  <div class="card-label-left"><div class="card-icon script-icon">📝</div><span class="card-name">Script</span></div>
-                  <button class="copy-btn" onclick="copyCard('script-content', this)">📋</button>
-                </div>
-                <div class="card-content" id="script-content"></div>
-              </div>
-              <div class="output-card" style="grid-column: 1 / -1;">
-                <div class="card-label">
-                  <div class="card-label-left"><div class="card-icon thumbnail-icon">🖼</div><span class="card-name">Thumbnail Concept</span></div>
-                  <button class="copy-btn" onclick="copyCard('thumbnail-content', this)">📋</button>
-                </div>
-                <div class="card-content" id="thumbnail-content"></div>
-              </div>
-            </div>
-          </div>
-
-        </div>
-      </div>
-    </div>
-
-    <!-- ══ PANEL 3: POST NEXT ══ -->
-    <div class="panel" id="panel-postnext">
-      <div class="postnext-panel">
-        <div class="postnext-inner">
-
-          <div class="postnext-hero">
-            <div class="postnext-hero-icon">🎯</div>
-            <h2>What Should I Post Today?</h2>
-            <p>Xarvis analyzes your niche, tone, and past content to suggest the ONE idea most likely to perform right now. One click. One direction. Go.</p>
-            <button class="postnext-btn" id="postnext-btn" onclick="generatePostNext()">
-              🎯 What should I post today?
+          <div class="brief-body">
+            <p class="brief-tip" id="brief-tip">
+              <strong>Hook rule #1:</strong> The first 2 seconds decide everything. If your hook doesn't create a question in the viewer's mind — they're gone. The best hooks do one of four things: make a bold claim, tease a shocking result, trigger FOMO, or spark instant curiosity. Anything else is noise.
+            </p>
+            <button class="brief-cta" onclick="switchMode('viral')">
+              🔥 Apply this to my next video →
             </button>
           </div>
+        </div>
 
-          <!-- Output -->
-          <div class="postnext-output" id="postnext-output">
-            <div class="postnext-idea-card">
-              <div class="postnext-idea-header">⚡ Today's Recommended Post</div>
-              <div class="postnext-sections">
-                <div>
-                  <div class="pn-section-label">💡 The Idea</div>
-                  <div class="pn-section-content" id="pn-idea"></div>
-                </div>
-                <div>
-                  <div class="pn-section-label">🪝 Your Hook</div>
-                  <div class="pn-hook-wrap">
-                    <div class="pn-section-content" id="pn-hook"></div>
-                  </div>
-                </div>
-                <div>
-                  <div class="pn-section-label">📊 Why It Will Work</div>
-                  <div class="pn-section-content" id="pn-why"></div>
-                </div>
-                <div>
-                  <div class="pn-section-label">⏰ Best Time to Post</div>
-                  <div class="pn-section-content" id="pn-timing"></div>
-                </div>
-              </div>
-            </div>
-            <div class="postnext-regen">
-              <button class="postnext-btn" style="font-size:0.85rem;padding:12px 28px;" onclick="generatePostNext()">
-                ↻ Give Me Another Idea
-              </button>
+        <!-- Recent Activity -->
+        <div>
+          <div style="margin-bottom:12px;"><span class="section-title">Recent Activity</span></div>
+          <div class="activity-list" id="activity-list">
+            <div style="color:var(--muted);font-size:0.78rem;padding:10px 14px;">
+              No activity yet — start using the tools above 👆
             </div>
           </div>
-
         </div>
-      </div>
-    </div>
 
-    <!-- ══ PANEL 4: CALENDAR ══ -->
-    <div class="panel" id="panel-calendar">
-      <div class="calendar-panel">
-        <div class="calendar-inner">
-
-          <div class="calendar-header-card">
-            <div>
-              <h2>📅 <span>7-Day Content Calendar</span></h2>
-              <p>A full week of content ideas — personalized to your niche, tone, and goals. Each day includes a topic, angle, and hook ready to use.</p>
-            </div>
-            <button class="cal-btn" id="calendar-btn" onclick="generateCalendar()">
-              📅 Generate 7-Day Plan
-            </button>
-          </div>
-
-          <div class="cal-loading" id="cal-loading">
-            🧠 Building your 7-day strategy…
-          </div>
-
-          <div class="calendar-grid" id="calendar-grid">
-            <!-- Days injected by JS -->
-          </div>
-
-        </div>
-      </div>
-    </div>
-
-    <!-- ══ PANEL 5: FEEDBACK ══ -->
-    <div class="panel" id="panel-feedback">
-      <div class="feedback-panel">
-        <div class="feedback-inner">
-
-          <div class="feedback-input-card">
-            <h2>📊 <span>Performance Feedback</span></h2>
-            <p>Paste your video idea, description, or concept. Xarvis scores it, finds the weaknesses, and tells you exactly how to fix it before you post.</p>
-            <textarea
-              id="feedback-input"
-              placeholder="e.g. 'I want to make a video about 5 habits that helped me go from 0 to 50k in 6 months. I'll show before/after analytics and explain each habit with clips...' "
-            ></textarea>
-            <button class="generate-btn" id="feedback-btn" onclick="analyzeFeedback()">
-              <div class="btn-spinner"></div>
-              <span class="btn-text">🔍 Analyze My Content</span>
-            </button>
-          </div>
-
-          <!-- Output -->
-          <div class="feedback-output" id="feedback-output">
-            <div class="feedback-cards-grid">
-              <div class="feedback-card">
-                <div class="feedback-card-title">✅ Strengths</div>
-                <div class="feedback-card-content" id="fb-strengths"></div>
-              </div>
-              <div class="feedback-card">
-                <div class="feedback-card-title">⚠️ Weaknesses</div>
-                <div class="feedback-card-content" id="fb-weaknesses"></div>
-              </div>
-              <div class="feedback-card" style="grid-column: 1 / -1;">
-                <div class="feedback-card-title">🚀 Improvements</div>
-                <div class="feedback-card-content" id="fb-improvements"></div>
-              </div>
-            </div>
-            <div class="verdict-card">
-              <div class="verdict-score-wrap">
-                <div class="verdict-score" id="fb-score">?</div>
-                <div class="verdict-score-label">Viral Score / 10</div>
-              </div>
-              <div class="verdict-text" id="fb-verdict">Xarvis verdict loading…</div>
-            </div>
-          </div>
-
-        </div>
-      </div>
-    </div>
-
-  </div><!-- /main -->
-
-  <!-- ══ MODAL: UPGRADE ══ -->
-  <div class="modal-overlay" id="upgrade-modal">
-    <div class="modal">
-      <h3>⚡ Upgrade Xarvis</h3>
-      <p>You've hit the free limit. Pick a plan and keep building.</p>
-      <div class="plan-options">
-        <div class="plan-option" onclick="activatePlan('pro')">
-          <div>
-            <h4>Creator Pro</h4>
-            <p>Unlimited chat, scripts, hooks, calendar & growth plans</p>
-          </div>
-          <div class="plan-price-tag">$12/mo</div>
-        </div>
-        <div class="plan-option" onclick="activatePlan('elite')">
-          <div>
-            <h4>Creator Elite</h4>
-            <p>Everything + monetization, sponsorship scripts & priority AI</p>
-          </div>
-          <div class="plan-price-tag">$39/mo</div>
-        </div>
-      </div>
-      <div class="modal-actions">
-        <button class="modal-dismiss" onclick="closeModal('upgrade-modal')">Maybe later</button>
       </div>
     </div>
   </div>
 
-  <!-- ══ MODAL: MEMORY SETUP ══ -->
-  <div class="modal-overlay" id="memory-modal">
-    <div class="modal">
-      <h3>🧠 Creator Profile</h3>
-      <p>Xarvis uses this to personalize every hook, script, calendar, and suggestion to your exact niche. Set it once, benefit forever.</p>
-
-      <div class="form-group">
-        <label class="form-label">Your Niche *</label>
-        <input type="text" class="form-input" id="mem-niche" placeholder="e.g. fitness, business, gaming, self-improvement, finance…" />
+  <!-- ══ PANEL: CHAT ══ -->
+  <div class="panel" id="panel-chat">
+    <div class="chat-area" id="chat-area">
+      <div class="empty-state" id="empty-state">
+        <div class="empty-avatar">X</div>
+        <div>
+          <h2>Your AI Advisor is Ready.</h2>
+          <p>Ask anything about growing your channel, viral hooks, content strategy, or monetizing your audience.</p>
+        </div>
+        <div class="suggestion-grid">
+          <div class="sug-card" data-prompt="Write me 3 viral hooks for my next video in my niche">
+            <div class="sug-icon">🪝</div>
+            <div class="sug-title">Viral Hooks</div>
+            <div class="sug-desc">Scroll-stopping openers for your next video</div>
+          </div>
+          <div class="sug-card" data-prompt="Give me a 90-day growth plan to hit 100k subscribers">
+            <div class="sug-icon">📈</div>
+            <div class="sug-title">Growth Plan</div>
+            <div class="sug-desc">A roadmap to scale your audience fast</div>
+          </div>
+          <div class="sug-card" data-prompt="What content is going viral right now in my niche?">
+            <div class="sug-icon">🔮</div>
+            <div class="sug-title">Trend Intel</div>
+            <div class="sug-desc">What's blowing up in your niche right now</div>
+          </div>
+          <div class="sug-card" data-prompt="How do I land my first brand sponsorship as a creator?">
+            <div class="sug-icon">💰</div>
+            <div class="sug-title">Monetize</div>
+            <div class="sug-desc">Turn your audience into income</div>
+          </div>
+        </div>
       </div>
+    </div>
 
-      <div class="form-group">
-        <label class="form-label">Content Tone</label>
-        <select class="form-select" id="mem-tone">
-          <option value="motivational">🔥 Motivational — high energy, push people to act</option>
-          <option value="educational">📚 Educational — teach, explain, break things down</option>
-          <option value="storytelling">📖 Storytelling — narrative, relatable, emotional</option>
-          <option value="entertaining">🎭 Entertaining — funny, surprising, high entertainment</option>
-          <option value="bold and controversial">⚡ Bold / Controversial — strong opinions, debate-starting</option>
-        </select>
+    <div class="input-area">
+      <div class="input-wrap">
+        <textarea id="chat-input" placeholder="Ask Xarvis anything…" rows="1"
+          onkeydown="handleKey(event)" oninput="autoResize(this)"></textarea>
+        <div class="input-btns">
+          <button class="mic-btn" id="mic-btn" onclick="toggleMic()">🎤</button>
+          <button class="send-btn" id="send-btn" onclick="sendMessage()">➤</button>
+        </div>
       </div>
+      <div class="input-hint">Enter to send · Shift+Enter for new line</div>
+    </div>
+  </div>
 
-      <div class="form-group">
-        <label class="form-label">Main Platform</label>
-        <select class="form-select" id="mem-platform">
-          <option value="YouTube Shorts">▶ YouTube Shorts</option>
-          <option value="TikTok">♪ TikTok</option>
-          <option value="Instagram Reels">◉ Instagram Reels</option>
-          <option value="YouTube">▶ YouTube Long-form</option>
-        </select>
-      </div>
+  <!-- ══ PANEL: VIRAL GENERATOR ══ -->
+  <div class="panel" id="panel-viral">
+    <div class="feature-scroll">
+      <div class="feature-inner">
 
-      <div class="form-group">
-        <label class="form-label">Your #1 Goal</label>
-        <textarea class="form-textarea" id="mem-goals" placeholder="e.g. Hit 100k subscribers in 6 months and monetize through brand deals and digital products…"></textarea>
-      </div>
+        <div class="panel-hero">
+          <div>
+            <div class="panel-hero-icon tci-blue" style="background:rgba(79,142,255,0.1);border:1px solid rgba(79,142,255,0.18);">🔥</div>
+            <div class="panel-hero-title"><span class="hl">Viral Content</span> Generator</div>
+            <div class="panel-hero-sub">Drop your idea — Xarvis engineers a scroll-stopping hook, full script, title options, and thumbnail concept. Your creator profile is woven in automatically.</div>
+          </div>
+        </div>
 
-      <div class="modal-actions">
-        <button class="modal-activate" onclick="saveMemory()">💾 Save Profile</button>
-        <button class="modal-dismiss" onclick="closeModal('memory-modal')">Skip for now</button>
+        <div class="feature-card">
+          <div class="feat-input-row">
+            <input type="text" class="feat-input" id="viral-topic"
+              placeholder="e.g. gym motivation, morning routines, making money at 17…"
+              onkeydown="if(event.key==='Enter') generateViralContent()" />
+            <select class="feat-select" id="viral-platform">
+              <option value="YouTube Shorts">▶ YouTube Shorts</option>
+              <option value="TikTok">♪ TikTok</option>
+              <option value="Instagram Reels">◉ Instagram Reels</option>
+              <option value="YouTube">▶ YouTube Long-form</option>
+            </select>
+            <button class="feat-btn" id="generate-btn" onclick="generateViralContent()">
+              <div class="btn-spin"></div>
+              <span class="btn-text">⚡ Generate</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Skeleton -->
+        <div class="feat-loading" id="viral-loading">
+          <div class="loading-label" id="loading-status">🧠 Engineering your viral moment…</div>
+          <div class="skeleton-grid">
+            <div class="skel-card"><div class="skel-line short"></div><div class="skel-line tall"></div><div class="skel-line med"></div></div>
+            <div class="skel-card"><div class="skel-line short"></div><div class="skel-line tall"></div><div class="skel-line med"></div></div>
+            <div class="skel-card"><div class="skel-line short"></div><div class="skel-line tall"></div><div class="skel-line med"></div></div>
+            <div class="skel-card"><div class="skel-line short"></div><div class="skel-line tall"></div><div class="skel-line med"></div></div>
+          </div>
+        </div>
+
+        <!-- Output -->
+        <div class="output-section" id="viral-output">
+          <div class="output-section-header">
+            <div class="output-section-title">Generated for: <span id="output-label"></span></div>
+            <button class="copy-all" onclick="copyAll()">📋 Copy All</button>
+          </div>
+          <div class="output-grid">
+            <div class="out-card">
+              <div class="out-card-header">
+                <div class="out-card-left"><div class="out-chip oc-red">🪝</div><span class="out-card-name">Hook</span></div>
+                <button class="copy-btn" onclick="copyCard('hook-out',this)">📋</button>
+              </div>
+              <div class="out-content" id="hook-out"></div>
+            </div>
+            <div class="out-card">
+              <div class="out-card-header">
+                <div class="out-card-left"><div class="out-chip oc-amber">✏️</div><span class="out-card-name">Title</span></div>
+                <button class="copy-btn" onclick="copyCard('title-out',this)">📋</button>
+              </div>
+              <div class="out-content" id="title-out"></div>
+            </div>
+            <div class="out-card" style="grid-column:1/-1;">
+              <div class="out-card-header">
+                <div class="out-card-left"><div class="out-chip oc-blue">📝</div><span class="out-card-name">Script</span></div>
+                <button class="copy-btn" onclick="copyCard('script-out',this)">📋</button>
+              </div>
+              <div class="out-content" id="script-out"></div>
+            </div>
+            <div class="out-card" style="grid-column:1/-1;">
+              <div class="out-card-header">
+                <div class="out-card-left"><div class="out-chip oc-green">🖼</div><span class="out-card-name">Thumbnail Concept</span></div>
+                <button class="copy-btn" onclick="copyCard('thumb-out',this)">📋</button>
+              </div>
+              <div class="out-content" id="thumb-out"></div>
+            </div>
+          </div>
+        </div>
+
       </div>
     </div>
   </div>
 
-  <!-- ══════════════════════════════════════════
-       JAVASCRIPT — XARVIS CREATOR OS v3
-       Modular. Clean. Ready to scale.
-  ══════════════════════════════════════════ -->
-  <script>
+  <!-- ══ PANEL: POST NEXT ══ -->
+  <div class="panel" id="panel-postnext">
+    <div class="feature-scroll">
+      <div class="feature-inner">
 
-    // ════════════════════════════════════════════
-    // [1] CONFIG
-    // ════════════════════════════════════════════
-    // 👇 Paste your Groq API key here (get one free at console.groq.com)
-    const CONFIG = {
-      GROQ_API_KEY: 'YOUR_GROQ_API_KEY_HERE',
-      MODEL:        'llama-3.3-70b-versatile',
-      API_BASE:     'https://api.groq.com/openai/v1/chat/completions',
-      FREE_MSG_LIMIT: 15,
-      LOADING_MSGS: [
-        '🧠 Xarvis is engineering your viral moment…',
-        '🔥 Applying viral psychology to your topic…',
-        '📊 Optimizing for retention and scroll-stopping power…',
-        '⚡ Finalizing your content package…',
-      ],
-    };
+        <div class="panel-hero">
+          <div>
+            <div class="panel-hero-icon tci-green">🎯</div>
+            <div class="panel-hero-title"><span class="hl">Post Next</span> — AI Picks For You</div>
+            <div class="panel-hero-sub">Stop guessing what to post. One click. Xarvis reads your niche, tone, and past content — then picks your highest-potential idea right now.</div>
+          </div>
+        </div>
 
-    // ════════════════════════════════════════════
-    // [2] MEMORY MODULE
-    // Stores & injects creator context into every AI call.
-    // Swap to a real DB here when you add user accounts.
-    // ════════════════════════════════════════════
-    const Memory = {
-      KEY: 'xarvis_v3_memory',
+        <div class="postnext-hero-card">
+          <div class="pn-hero-emoji">🎯</div>
+          <div class="pn-hero-title">What should I post today?</div>
+          <div class="pn-hero-sub">Xarvis analyzes your creator profile and surfaces the ONE idea most likely to get you views, follows, and engagement right now.</div>
+          <button class="feat-btn" id="postnext-btn" onclick="generatePostNext()" style="margin:0 auto;">
+            <div class="btn-spin"></div>
+            <span class="btn-text">🎯 Tell me what to post</span>
+          </button>
+        </div>
 
-      get() {
-        try { return JSON.parse(localStorage.getItem(this.KEY) || '{}'); }
-        catch { return {}; }
-      },
+        <div class="output-section" id="postnext-output">
+          <div class="pn-result-card">
+            <div class="pn-result-badge">⚡ Today's Highest-Potential Post</div>
+            <div class="pn-sections">
+              <div>
+                <div class="pn-sec-label">💡 The Idea</div>
+                <div class="pn-sec-text" id="pn-idea"></div>
+              </div>
+              <div>
+                <div class="pn-sec-label">🪝 Your Hook</div>
+                <div class="pn-hook-box"><div class="pn-sec-text" id="pn-hook"></div></div>
+              </div>
+              <div>
+                <div class="pn-sec-label">📊 Why It Will Work</div>
+                <div class="pn-sec-text" id="pn-why"></div>
+              </div>
+              <div>
+                <div class="pn-sec-label">⏰ Best Time to Post</div>
+                <div class="pn-sec-text" id="pn-timing"></div>
+              </div>
+            </div>
+          </div>
+          <div style="text-align:center;">
+            <button class="feat-btn" onclick="generatePostNext()" style="margin:0 auto;font-size:.83rem;padding:11px 26px;">
+              <div class="btn-spin"></div>
+              <span class="btn-text">↻ Give me another idea</span>
+            </button>
+          </div>
+        </div>
 
-      save(data) {
-        const updated = { ...this.get(), ...data };
-        localStorage.setItem(this.KEY, JSON.stringify(updated));
-        renderMemoryWidget();
-        return updated;
-      },
+      </div>
+    </div>
+  </div>
 
-      // Tracks past topics — avoids repeating ideas over time
-      addTopic(topic) {
-        if (!topic || topic.length < 3) return;
-        const mem = this.get();
-        const topics = mem.topics || [];
-        if (!topics.includes(topic)) {
-          mem.topics = [topic, ...topics].slice(0, 20);
-          localStorage.setItem(this.KEY, JSON.stringify(mem));
-        }
-      },
+  <!-- ══ PANEL: CALENDAR ══ -->
+  <div class="panel" id="panel-calendar">
+    <div class="feature-scroll">
+      <div class="feature-inner">
 
-      // Injects creator context into AI prompts
-      buildContext() {
-        const m = this.get();
-        if (!m.niche) return '';
-        let ctx = '\n\n━━━ CREATOR CONTEXT (personalize to this) ━━━';
-        if (m.niche)          ctx += `\nNiche: ${m.niche}`;
-        if (m.tone)           ctx += `\nContent Tone: ${m.tone}`;
-        if (m.platform)       ctx += `\nMain Platform: ${m.platform}`;
-        if (m.goals)          ctx += `\nGoals: ${m.goals}`;
-        if (m.topics?.length) ctx += `\nPast topics covered: ${m.topics.slice(0,6).join(', ')}`;
-        ctx += '\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━';
-        return ctx;
-      },
+        <div class="panel-hero">
+          <div>
+            <div class="panel-hero-icon tci-purple">📅</div>
+            <div class="panel-hero-title"><span class="hl">7-Day Content</span> Calendar</div>
+            <div class="panel-hero-sub">A full week of personalized content — topics, unique angles, and ready-to-use hooks. Built around your niche and goals, generated in seconds.</div>
+          </div>
+          <button class="feat-btn" id="calendar-btn" onclick="generateCalendar()">
+            <div class="btn-spin"></div>
+            <span class="btn-text">📅 Generate My Week</span>
+          </button>
+        </div>
 
-      isSet() { return !!(this.get().niche); },
-    };
+        <div class="cal-loading-label" id="cal-loading">
+          🧠 Building your 7-day strategy…
+        </div>
 
-    // ════════════════════════════════════════════
-    // [3] STATE
-    // ════════════════════════════════════════════
-    const state = {
-      messages:    [],
-      recentChats: [],
-      ttsEnabled:  true,
-      isListening: false,
-      recognition: null,
-      plan:        'starter',
-      msgCount:    0,
-      isPro:       false,
-      currentMode: 'chat',
-    };
+        <div class="cal-grid" id="cal-grid">
+          <!-- Injected by JS -->
+        </div>
 
-    // ════════════════════════════════════════════
-    // [4] INIT
-    // ════════════════════════════════════════════
-    window.addEventListener('DOMContentLoaded', () => {
-      const urlPlan = new URLSearchParams(location.search).get('plan');
-      if (urlPlan === 'pro' || urlPlan === 'elite') activatePlan(urlPlan, true);
+      </div>
+    </div>
+  </div>
 
-      loadRecentChats();
-      renderRecentChats();
-      updateLimitBanner();
-      bindSuggestions();
-      renderMemoryWidget();
+  <!-- ══ PANEL: FEEDBACK ══ -->
+  <div class="panel" id="panel-feedback">
+    <div class="feature-scroll">
+      <div class="feature-inner">
 
-      // Show memory setup on first visit (after 1.2s delay)
-      if (!Memory.isSet()) {
-        setTimeout(() => openModal('memory-modal'), 1200);
-      }
+        <div class="panel-hero">
+          <div>
+            <div class="panel-hero-icon tci-amber">📊</div>
+            <div class="panel-hero-title"><span class="hl">Feedback</span> Analyzer</div>
+            <div class="panel-hero-sub">Paste your video idea or description. Xarvis gives you a viral score, calls out the weaknesses, and tells you exactly how to fix it — before you waste a shoot day.</div>
+          </div>
+        </div>
+
+        <div class="feature-card">
+          <textarea class="fb-textarea" id="feedback-input"
+            placeholder="e.g. 'I want to make a video showing 5 habits that took me from broke to making $3k/month. I'll include before/after results and each habit with screen recordings…'"></textarea>
+          <button class="feat-btn" id="feedback-btn" onclick="analyzeFeedback()">
+            <div class="btn-spin"></div>
+            <span class="btn-text">🔍 Analyze My Content</span>
+          </button>
+        </div>
+
+        <div class="output-section" id="feedback-output">
+          <div class="fb-cards">
+            <div class="fb-card">
+              <div class="fb-card-title">✅ Strengths</div>
+              <div class="fb-card-body" id="fb-strengths"></div>
+            </div>
+            <div class="fb-card">
+              <div class="fb-card-title">⚠️ Weaknesses</div>
+              <div class="fb-card-body" id="fb-weaknesses"></div>
+            </div>
+            <div class="fb-card">
+              <div class="fb-card-title">🚀 Improvements</div>
+              <div class="fb-card-body" id="fb-improvements"></div>
+            </div>
+          </div>
+          <div class="verdict-row">
+            <div class="verdict-score-block">
+              <div class="verdict-num" id="fb-score">?</div>
+              <div class="verdict-denom">Viral Score / 10</div>
+            </div>
+            <div class="verdict-copy" id="fb-verdict">Xarvis verdict loading…</div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+</div><!-- /main -->
+
+<!-- ══ MODAL: UPGRADE ══ -->
+<div class="modal-overlay" id="upgrade-modal">
+  <div class="modal">
+    <div class="modal-title">⚡ Upgrade Xarvis</div>
+    <p class="modal-desc">You've hit the free limit. Pick a plan and keep building your audience.</p>
+    <div class="plan-list">
+      <div class="plan-opt" onclick="activatePlan('pro')">
+        <div><h4>Creator Pro</h4><p>Unlimited AI, scripts, hooks, calendar & memory</p></div>
+        <span class="plan-opt-price">$12/mo</span>
+      </div>
+      <div class="plan-opt" onclick="activatePlan('elite')">
+        <div><h4>Creator Elite</h4><p>Everything + monetization, sponsorship scripts & priority AI</p></div>
+        <span class="plan-opt-price">$39/mo</span>
+      </div>
+    </div>
+    <div class="modal-actions">
+      <button class="modal-cancel" onclick="closeModal('upgrade-modal')">Maybe later</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ MODAL: MEMORY SETUP ══ -->
+<div class="modal-overlay" id="memory-modal">
+  <div class="modal">
+    <div class="modal-title">🧠 Creator Profile</div>
+    <p class="modal-desc">Set this once and Xarvis personalizes every hook, script, and idea to your exact niche. This is what separates generic output from content that actually hits.</p>
+
+    <div class="form-group">
+      <label class="form-label">Your Niche *</label>
+      <input type="text" class="form-ctrl" id="mem-niche" placeholder="e.g. fitness, business, gaming, self-improvement…" />
+    </div>
+
+    <div class="form-group">
+      <label class="form-label">Content Tone</label>
+      <select class="form-ctrl" id="mem-tone">
+        <option value="motivational">🔥 Motivational — high energy, push people to act</option>
+        <option value="educational">📚 Educational — teach, explain, break it down</option>
+        <option value="storytelling">📖 Storytelling — narrative, relatable, emotional</option>
+        <option value="entertaining">🎭 Entertaining — funny, surprising, high energy</option>
+        <option value="bold and controversial">⚡ Bold / Controversial — strong opinions, debate-starting</option>
+      </select>
+    </div>
+
+    <div class="form-group">
+      <label class="form-label">Main Platform</label>
+      <select class="form-ctrl" id="mem-platform">
+        <option value="YouTube Shorts">▶ YouTube Shorts</option>
+        <option value="TikTok">♪ TikTok</option>
+        <option value="Instagram Reels">◉ Instagram Reels</option>
+        <option value="YouTube">▶ YouTube Long-form</option>
+      </select>
+    </div>
+
+    <div class="form-group">
+      <label class="form-label">Your #1 Goal</label>
+      <textarea class="form-ctrl" id="mem-goals" placeholder="e.g. Hit 100k subscribers in 6 months and start landing brand deals…"></textarea>
+    </div>
+
+    <div class="modal-actions">
+      <button class="modal-save" onclick="saveMemory()">💾 Save Profile</button>
+      <button class="modal-cancel" onclick="closeModal('memory-modal')">Skip</button>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════
+     JAVASCRIPT — XARVIS CREATOR OS v3
+════════════════════════════════════════ -->
+<script>
+
+  // ══════════════════════════════════════
+  // [1] CONFIG — change API key here
+  // ══════════════════════════════════════
+  const CONFIG = {
+    GROQ_API_KEY: 'YOUR_GROQ_API_KEY_HERE', // ← paste your key
+    MODEL:        'llama-3.3-70b-versatile',
+    API_BASE:     'https://api.groq.com/openai/v1/chat/completions',
+    FREE_LIMIT:   15,
+    LOADING_MSGS: [
+      '🧠 Engineering your viral moment…',
+      '🔥 Applying viral psychology…',
+      '📊 Optimizing for scroll-stopping power…',
+      '⚡ Finalizing your content package…',
+    ],
+    DAILY_TIPS: [
+      '<strong>Hook rule #1:</strong> The first 2 seconds decide everything. If your hook doesn\'t create a question in the viewer\'s mind — they\'re gone. Bold claim, shocking result, FOMO, or curiosity gap. Pick one. Commit hard.',
+      '<strong>The retention trick MrBeast uses:</strong> Tease what\'s coming at the very start. "By the end of this, you\'ll know exactly how to..." makes viewers stay for the payoff.',
+      '<strong>Algorithm truth:</strong> CTR (click-through rate) and watch time are what matter. A mid hook kills your CTR. A boring middle kills watch time. Fix both before you shoot.',
+      '<strong>The 80/20 of going viral:</strong> 80% of your success is the thumbnail and title. Most creators spend 80% of their effort on the video. Flip it.',
+      '<strong>Consistency beats virality:</strong> One viral video grows you. Daily content KEEPS you. Build a system, not just a one-off moment.',
+    ],
+  };
+
+  // ══════════════════════════════════════
+  // [2] MEMORY MODULE
+  // ══════════════════════════════════════
+  const Memory = {
+    KEY: 'xarvis_v3_mem',
+    get()   { try { return JSON.parse(localStorage.getItem(this.KEY)||'{}'); } catch { return {}; } },
+    save(d) { const u={...this.get(),...d}; localStorage.setItem(this.KEY,JSON.stringify(u)); renderMemoryChip(); return u; },
+    addTopic(t) {
+      if(!t||t.length<3) return;
+      const m=this.get(); const ts=m.topics||[];
+      if(!ts.includes(t)) { m.topics=[t,...ts].slice(0,20); localStorage.setItem(this.KEY,JSON.stringify(m)); }
+    },
+    context() {
+      const m=this.get(); if(!m.niche) return '';
+      let c='\n\n━━━ CREATOR PROFILE ━━━';
+      if(m.niche)    c+=`\nNiche: ${m.niche}`;
+      if(m.tone)     c+=`\nTone: ${m.tone}`;
+      if(m.platform) c+=`\nPlatform: ${m.platform}`;
+      if(m.goals)    c+=`\nGoals: ${m.goals}`;
+      if(m.topics?.length) c+=`\nPast topics: ${m.topics.slice(0,6).join(', ')}`;
+      c+='\n━━━━━━━━━━━━━━━━━━━━━━━━';
+      return c;
+    },
+    isSet() { return !!(this.get().niche); },
+    topicCount() { return (this.get().topics||[]).length; },
+  };
+
+  // ══════════════════════════════════════
+  // [3] STATE
+  // ══════════════════════════════════════
+  const state = {
+    messages: [], recentActivity: [],
+    ttsEnabled: true, isListening: false, recognition: null,
+    isPro: false, plan: 'starter', msgCount: 0,
+    generated: 0, sessions: 0, mode: 'dashboard',
+  };
+
+  // ══════════════════════════════════════
+  // [4] INIT
+  // ══════════════════════════════════════
+  window.addEventListener('DOMContentLoaded', () => {
+    const urlPlan = new URLSearchParams(location.search).get('plan');
+    if (urlPlan==='pro'||urlPlan==='elite') activatePlan(urlPlan, true);
+
+    // Load persisted stats
+    try {
+      const s = JSON.parse(localStorage.getItem('xarvis_stats')||'{}');
+      state.msgCount  = s.msgCount  || 0;
+      state.generated = s.generated || 0;
+      state.sessions  = s.sessions  || 0;
+    } catch {}
+
+    loadActivity();
+    renderDashboard();
+    renderMemoryChip();
+    setGreeting();
+    updateLimitUI();
+
+    if (!Memory.isSet()) {
+      setTimeout(() => openModal('memory-modal'), 1400);
+    }
+  });
+
+  function setGreeting() {
+    const h = new Date().getHours();
+    const g = h < 12 ? 'Good morning' : h < 17 ? 'Good afternoon' : 'Good evening';
+    const el = document.getElementById('greeting-time');
+    if (el) el.textContent = `${g}, Creator`;
+
+    // Rotate daily tip
+    const tip = CONFIG.DAILY_TIPS[new Date().getDate() % CONFIG.DAILY_TIPS.length];
+    setText('brief-tip', '');
+    const tipEl = document.getElementById('brief-tip');
+    if (tipEl) tipEl.innerHTML = tip;
+  }
+
+  // ══════════════════════════════════════
+  // [5] API LAYER (swap provider here)
+  // ══════════════════════════════════════
+  async function callAI(messages, system='', opts={}) {
+    const key = CONFIG.GROQ_API_KEY;
+    if (!key || key==='YOUR_GROQ_API_KEY_HERE') {
+      throw new Error('Add your Groq API key to CONFIG.GROQ_API_KEY at the top of the script. Get one free at console.groq.com');
+    }
+    const built = [];
+    if (system) built.push({ role:'system', content:system });
+    built.push(...messages.map(m=>({ role:m.role==='bot'?'assistant':m.role, content:m.content })));
+    const res = await fetch(CONFIG.API_BASE, {
+      method:'POST',
+      headers:{ 'Content-Type':'application/json', 'Authorization':`Bearer ${key}` },
+      body: JSON.stringify({
+        model:       opts.model    || CONFIG.MODEL,
+        messages:    built,
+        max_tokens:  opts.maxTok   || 1400,
+        temperature: opts.temp     || 0.85,
+      }),
     });
+    if (!res.ok) { const e=await res.json().catch(()=>({})); throw new Error(e?.error?.message||`API error ${res.status}`); }
+    const data = await res.json();
+    return data?.choices?.[0]?.message?.content || '';
+  }
 
-    // ════════════════════════════════════════════
-    // [5] API LAYER
-    // Flexible — swap to OpenAI or Anthropic here later.
-    // Just change API_PROVIDER and add a new callX() function.
-    // ════════════════════════════════════════════
-    const API_PROVIDER = 'groq'; // 'groq' | 'openai' | 'anthropic'
+  // ══════════════════════════════════════
+  // [6] MODE SWITCHING
+  // ══════════════════════════════════════
+  const panelLabels = {
+    dashboard:'Dashboard', chat:'AI Advisor',
+    viral:'Viral Generator', postnext:'Post Next',
+    calendar:'7-Day Calendar', feedback:'Feedback'
+  };
 
-    async function callAI(messages, system = '', options = {}) {
-      if (API_PROVIDER === 'groq') return callGroq(messages, system, options);
-      // Future: add 'openai', 'anthropic' cases here
-      throw new Error('Unknown API provider: ' + API_PROVIDER);
-    }
+  function switchMode(mode) {
+    state.mode = mode;
+    document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
+    document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
+    document.getElementById(`panel-${mode}`)?.classList.add('active');
+    document.getElementById(`nav-${mode}`)?.classList.add('active');
+    setText('breadcrumb-page', panelLabels[mode]||mode);
+    document.getElementById('sidebar')?.classList.remove('open');
+  }
 
-    async function callGroq(messages, system = '', options = {}) {
-      const key = CONFIG.GROQ_API_KEY;
-      if (!key || key === 'YOUR_GROQ_API_KEY_HERE') {
-        throw new Error('Paste your Groq API key into CONFIG.GROQ_API_KEY at the top of the script.');
-      }
-
-      const built = [];
-      if (system) built.push({ role: 'system', content: system });
-      built.push(...messages.map(m => ({
-        role: m.role === 'bot' ? 'assistant' : m.role,
-        content: m.content,
-      })));
-
-      const res = await fetch(CONFIG.API_BASE, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${key}`,
-        },
-        body: JSON.stringify({
-          model:       options.model    || CONFIG.MODEL,
-          messages:    built,
-          max_tokens:  options.maxTokens || 1400,
-          temperature: options.temp     || 0.85,
-        }),
-      });
-
-      if (!res.ok) {
-        const err = await res.json().catch(() => ({}));
-        throw new Error(err?.error?.message || `API error ${res.status}`);
-      }
-
-      const data = await res.json();
-      return data?.choices?.[0]?.message?.content || '';
-    }
-
-    // ════════════════════════════════════════════
-    // [6] MODE SWITCHING
-    // ════════════════════════════════════════════
-    function switchMode(mode) {
-      state.currentMode = mode;
-      document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
-      document.querySelectorAll('.mode-tab').forEach(t => t.classList.remove('active'));
-      document.getElementById(`panel-${mode}`)?.classList.add('active');
-      document.getElementById(`tab-${mode}`)?.classList.add('active');
-      document.getElementById('sidebar')?.classList.remove('open');
-    }
-
-    // ════════════════════════════════════════════
-    // [7] CHAT SYSTEM
-    // Memory context is auto-injected into every message.
-    // ════════════════════════════════════════════
-    const CHAT_SYSTEM = `You are Xarvis AI — an elite AI co-founder for content creators. You think like MrBeast's strategy team, Alex Hormozi's marketing brain, and David Goggins' mindset coach combined.
+  // ══════════════════════════════════════
+  // [7] CHAT
+  // ══════════════════════════════════════
+  const CHAT_SYS = `You are Xarvis AI — an elite AI co-founder for content creators. You think like MrBeast's strategy team, Alex Hormozi's marketing brain, and David Goggins' mindset coach combined.
 
 Rules:
-- Be direct, bold, and specific. Zero fluff.
-- Use short paragraphs and line breaks for readability.
-- Give actionable advice — no generic platitudes.
-- When writing hooks or scripts, make them scroll-stopping.
-- Format responses with **bold** for key points.
-- Always sound like a creator who's done it, not a textbook.`;
+- Be direct, bold, specific. No fluff.
+- Short paragraphs, line breaks for readability.
+- Actionable advice only — no generic platitudes.
+- **Bold** key points.
+- Sound like a creator who's done it, not a textbook.`;
 
-    async function sendMessage(prefill) {
-      const input = document.getElementById('chat-input');
-      const userText = (prefill || input?.value || '').trim();
-      if (!userText) return;
+  async function sendMessage(prefill) {
+    const input = document.getElementById('chat-input');
+    const text  = (prefill || input?.value || '').trim();
+    if (!text) return;
+    if (!state.isPro && state.msgCount >= CONFIG.FREE_LIMIT) { openModal('upgrade-modal'); return; }
 
-      if (!state.isPro && state.msgCount >= CONFIG.FREE_MSG_LIMIT) {
-        openModal('upgrade-modal'); return;
-      }
+    document.getElementById('empty-state')?.remove();
+    if (input) { input.value=''; autoResize(input); }
 
-      document.getElementById('empty-state')?.remove();
-      if (input) { input.value = ''; autoResize(input); }
+    pushMsg('user', text);
+    bumpCount();
+    setSendDisabled(true);
 
-      pushMessage('user', userText);
-      state.msgCount++;
-      updateLimitBanner();
-      setSendDisabled(true);
-
-      const typing = showTyping();
-
-      try {
-        // Memory context injected here automatically
-        const system = CHAT_SYSTEM + Memory.buildContext();
-        const reply  = await callAI([...state.messages], system);
-        typing.remove();
-        pushMessage('bot', reply);
-        if (state.ttsEnabled) speak(reply);
-        saveRecentChat(userText);
-        Memory.addTopic(userText.slice(0, 50));
-      } catch (err) {
-        typing.remove();
-        pushMessage('bot', `⚠️ ${err.message || 'Something went wrong. Check your API key.'}`);
-        console.error(err);
-      }
-
-      setSendDisabled(false);
-      scrollBottom();
+    const typing = showTyping();
+    try {
+      const reply = await callAI([...state.messages], CHAT_SYS + Memory.context());
+      typing.remove();
+      pushMsg('bot', reply);
+      if (state.ttsEnabled) speak(reply);
+      logActivity('💬', text.slice(0,42));
+      Memory.addTopic(text.slice(0,50));
+    } catch(err) {
+      typing.remove();
+      pushMsg('bot', `⚠️ ${err.message}`);
     }
+    setSendDisabled(false);
+  }
 
-    function pushMessage(role, text) {
-      state.messages.push({ role, content: text });
-      renderMessage(role, text);
+  function pushMsg(role, text) {
+    state.messages.push({role, content:text});
+    const area = document.getElementById('chat-area');
+    if (!area) return;
+    const row    = document.createElement('div');
+    row.className= `message-row ${role==='user'?'user':''}`;
+    const av = document.createElement('div');
+    av.className = `msg-av ${role==='bot'?'bot':'user'}`;
+    av.textContent = role==='bot'?'X':'U';
+    const bub = document.createElement('div');
+    bub.className = `msg-bubble ${role}`;
+    bub.innerHTML = fmt(text);
+    row.appendChild(av); row.appendChild(bub);
+    area.appendChild(row);
+    scrollBottom();
+  }
+
+  function fmt(t) {
+    return String(t).replace(/\*\*(.*?)\*\*/g,'<strong>$1</strong>').replace(/\n/g,'<br/>');
+  }
+
+  function showTyping() {
+    const area = document.getElementById('chat-area');
+    if (!area) return { remove:()=>{} };
+    const row = document.createElement('div');
+    row.className='message-row';
+    row.innerHTML=`<div class="msg-av bot">X</div><div class="msg-bubble bot"><div class="typing-dots"><span></span><span></span><span></span></div></div>`;
+    area.appendChild(row); scrollBottom();
+    return row;
+  }
+
+  function newChat() {
+    state.messages = [];
+    const area = document.getElementById('chat-area');
+    if (area) {
+      area.innerHTML = `<div class="empty-state" id="empty-state">
+        <div class="empty-avatar">X</div>
+        <div><h2>Your AI Advisor is Ready.</h2><p>Ask anything about growing your channel, viral hooks, strategy, or monetization.</p></div>
+        <div class="suggestion-grid">
+          <div class="sug-card" data-prompt="Write me 3 viral hooks for my next video in my niche"><div class="sug-icon">🪝</div><div class="sug-title">Viral Hooks</div><div class="sug-desc">Scroll-stopping openers for your next video</div></div>
+          <div class="sug-card" data-prompt="Give me a 90-day growth plan to hit 100k subscribers"><div class="sug-icon">📈</div><div class="sug-title">Growth Plan</div><div class="sug-desc">A roadmap to scale your audience fast</div></div>
+          <div class="sug-card" data-prompt="What content is going viral right now in my niche?"><div class="sug-icon">🔮</div><div class="sug-title">Trend Intel</div><div class="sug-desc">What's blowing up right now</div></div>
+          <div class="sug-card" data-prompt="How do I land my first brand sponsorship?"><div class="sug-icon">💰</div><div class="sug-title">Monetize</div><div class="sug-desc">Turn your audience into income</div></div>
+        </div></div>`;
+      bindSugs();
     }
+    switchMode('chat');
+  }
 
-    function renderMessage(role, text) {
-      const area = document.getElementById('chat-area');
-      if (!area) return;
-      const row    = document.createElement('div');
-      row.className = `message-row ${role === 'user' ? 'user' : ''}`;
-      const avatar  = document.createElement('div');
-      avatar.className = `msg-avatar ${role === 'bot' ? 'bot' : 'user-av'}`;
-      avatar.textContent = role === 'bot' ? 'X' : 'U';
-      const bubble  = document.createElement('div');
-      bubble.className = `msg-bubble ${role}`;
-      bubble.innerHTML = formatText(text);
-      row.appendChild(avatar);
-      row.appendChild(bubble);
-      area.appendChild(row);
-      scrollBottom();
-    }
+  function bindSugs() {
+    document.querySelectorAll('.sug-card').forEach(el=>{
+      el.onclick = () => sendMessage(el.dataset.prompt);
+    });
+  }
 
-    function formatText(t) {
-      return String(t)
-        .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
-        .replace(/\n/g, '<br/>');
-    }
+  // ══════════════════════════════════════
+  // [8] VIRAL GENERATOR
+  // ══════════════════════════════════════
+  const VIRAL_SYS = `You are the world's best viral content strategist. You've studied every MrBeast video, every Hormozi reel, every Goggins clip.
 
-    function showTyping() {
-      const area = document.getElementById('chat-area');
-      if (!area) return { remove: () => {} };
-      const row = document.createElement('div');
-      row.className = 'message-row';
-      row.innerHTML = `
-        <div class="msg-avatar bot">X</div>
-        <div class="msg-bubble bot">
-          <div class="typing-indicator"><span></span><span></span><span></span></div>
-        </div>`;
-      area.appendChild(row);
-      scrollBottom();
-      return row;
-    }
+RULES:
+- Never write generic output. Every word specific, punchy, ready to post.
+- Hooks trigger emotion in under 2 seconds: curiosity, FOMO, shock, relatability.
+- Scripts: short sentences, hard line breaks, one pattern interrupt mid-way.
+- Titles: numbers, power words, curiosity gap. Max 60 chars.
+- Thumbnails: visual, simple, instant emotional reaction.
+- Zero filler. Zero "in today's video".`;
 
-    function newChat() {
-      state.messages = [];
-      const area = document.getElementById('chat-area');
-      if (area) {
-        area.innerHTML = `
-          <div class="empty-state" id="empty-state">
-            <div>
-              <h2>Your AI Co-Founder is Ready.</h2>
-              <p>Ask Xarvis anything about growing your channel, writing hooks, building your strategy, or monetizing your audience.</p>
-            </div>
-            <div class="suggestion-grid">
-              <div class="suggestion-card" data-prompt="Write me 3 viral hooks for my next video in my niche"><div class="sug-icon">🪝</div><div class="sug-title">Viral Hooks</div><div class="sug-desc">Scroll-stopping openers for your next video</div></div>
-              <div class="suggestion-card" data-prompt="Give me a 90-day growth plan to hit 100k subscribers"><div class="sug-icon">📈</div><div class="sug-title">Growth Plan</div><div class="sug-desc">A roadmap to scale your audience fast</div></div>
-              <div class="suggestion-card" data-prompt="What content is going viral right now in my niche?"><div class="sug-icon">🔮</div><div class="sug-title">Trend Intel</div><div class="sug-desc">What's blowing up in your niche right now</div></div>
-              <div class="suggestion-card" data-prompt="How do I land my first brand sponsorship as a creator?"><div class="sug-icon">💰</div><div class="sug-title">Monetize</div><div class="sug-desc">Turn your audience into income</div></div>
-            </div>
-          </div>`;
-        bindSuggestions();
-      }
-      switchMode('chat');
-    }
+  function viralPrompt(topic, platform) {
+    return `Create a complete viral content package for ${platform} about: "${topic}"${Memory.context()}
 
-    function bindSuggestions() {
-      document.querySelectorAll('.suggestion-card').forEach(el => {
-        el.onclick = () => sendMessage(el.dataset.prompt);
-      });
-    }
-
-    // ════════════════════════════════════════════
-    // [8] VIRAL GENERATOR
-    // Memory context injected into every generation.
-    // ════════════════════════════════════════════
-    const VIRAL_SYSTEM = `You are the world's best viral content strategist. You've studied every MrBeast video, every Hormozi reel, every Goggins clip. You know exactly what makes content stop a scroll in 2 seconds.
-
-RULES — follow exactly:
-- NEVER write generic advice. Every word must be specific, punchy, and ready to post.
-- Hooks trigger emotion in under 2 seconds: curiosity, FOMO, shock, or relatability.
-- Scripts use SHORT sentences. Hard line breaks for pacing. One pattern interrupt mid-way.
-- Titles: numbers, power words, or a curiosity gap. Max 60 characters.
-- Thumbnails: visual, simple, strong emotional reaction instantly.
-- Zero filler. Zero "in today's video". Zero "let's get started".`;
-
-    function buildViralPrompt(topic, platform) {
-      return `Create a complete viral content package for ${platform} about: "${topic}"${Memory.buildContext()}
-
-Return in EXACTLY this format — no preamble, no extra text:
+Return in EXACTLY this format — no preamble:
 
 HOOK:
-[Single scroll-stopping opener. Max 2 sentences. Triggers emotion in under 2 seconds. Use curiosity gap, bold claim, or shocking stat.]
+[Single scroll-stopping opener. Max 2 sentences. Triggers emotion in 2 seconds.]
 
 SCRIPT:
-[Full 60-90 second script. Short sentences. Hard line breaks between beats. One unexpected pattern interrupt mid-way. No intro fluff. End with strong CTA.]
+[Full 60-90 second script. Short sentences. Hard line breaks. One pattern interrupt mid-way. No intro fluff. Strong CTA at end.]
 
 TITLE:
-[3 title options, one per line. Under 60 chars each. Use numbers, power words, or curiosity gaps. Mark best one with ★]
+[3 title options, one per line. Under 60 chars each. Mark best with ★]
 
 THUMBNAIL:
-[Describe in 3 parts:
+[3 bullet description:
 • VISUAL: Subject, expression, setting
-• TEXT OVERLAY: 3-5 bold words maximum
-• EMOTION: The gut feeling triggered in 0.5 seconds]`;
+• TEXT OVERLAY: 3-5 bold words max
+• EMOTION: Gut feeling in 0.5 seconds]`;
+  }
+
+  function parseViral(text) {
+    const ex=(l,n)=>{const r=new RegExp(`${l}:\\s*([\\s\\S]*?)(?=${n}:|$)`,'i');const m=text.match(r);return m?m[1].trim():'';};
+    return {
+      hook:  ex('HOOK','SCRIPT'),
+      script:ex('SCRIPT','TITLE'),
+      title: ex('TITLE','THUMBNAIL'),
+      thumb: ex('THUMBNAIL','XARVIS_END'),
+    };
+  }
+
+  async function generateViralContent() {
+    const topic    = document.getElementById('viral-topic').value.trim();
+    const platform = document.getElementById('viral-platform').value;
+    if (!topic) { shake('viral-topic'); return; }
+    if (!state.isPro && state.msgCount >= CONFIG.FREE_LIMIT) { openModal('upgrade-modal'); return; }
+
+    setBtnLoading('generate-btn', true);
+    setVis('viral-loading', true);
+    setVis('viral-output', false);
+
+    let si=0;
+    const sEl=document.getElementById('loading-status');
+    const iv=setInterval(()=>{ si=(si+1)%CONFIG.LOADING_MSGS.length; if(sEl)sEl.textContent=CONFIG.LOADING_MSGS[si]; },1400);
+
+    try {
+      const raw  = await callAI([{role:'user',content:viralPrompt(topic,platform)}], VIRAL_SYS);
+      const s    = parseViral(raw);
+      setText('hook-out',   s.hook   || 'Generation failed — try again.');
+      setText('script-out', s.script || 'Generation failed — try again.');
+      setText('title-out',  s.title  || 'Generation failed — try again.');
+      setText('thumb-out',  s.thumb  || 'Generation failed — try again.');
+      document.getElementById('output-label').textContent = `"${topic}" · ${platform}`;
+      setVis('viral-loading', false);
+      setVis('viral-output', true);
+      bumpCount(); bumpGenerated();
+      logActivity('🔥', `Generated: ${topic}`);
+      Memory.addTopic(topic);
+    } catch(err) {
+      setVis('viral-loading', false);
+      alert(`Error: ${err.message}`);
     }
+    clearInterval(iv);
+    setBtnLoading('generate-btn', false);
+  }
 
-    function parseViralResponse(text) {
-      const extract = (label, next) => {
-        const r = new RegExp(`${label}:\\s*([\\s\\S]*?)(?=${next}:|$)`, 'i');
-        const m = text.match(r);
-        return m ? m[1].trim() : '';
-      };
-      return {
-        hook:      extract('HOOK',      'SCRIPT'),
-        script:    extract('SCRIPT',    'TITLE'),
-        title:     extract('TITLE',     'THUMBNAIL'),
-        thumbnail: extract('THUMBNAIL', 'XARVIS_END_NEVER_MATCHES'),
-      };
-    }
+  // ══════════════════════════════════════
+  // [9] POST NEXT
+  // ══════════════════════════════════════
+  function postNextPrompt() {
+    const m = Memory.get();
+    return `You are a viral content strategist. Based on this creator's profile, suggest ONE perfect content idea to post TODAY.
 
-    async function generateViralContent() {
-      const topic    = document.getElementById('viral-topic').value.trim();
-      const platform = document.getElementById('viral-platform').value;
-
-      if (!topic) {
-        const inp = document.getElementById('viral-topic');
-        inp.style.borderColor = 'rgba(255,71,87,0.6)';
-        inp.focus();
-        setTimeout(() => { inp.style.borderColor = ''; }, 1500);
-        return;
-      }
-
-      if (!state.isPro && state.msgCount >= CONFIG.FREE_MSG_LIMIT) {
-        openModal('upgrade-modal'); return;
-      }
-
-      setGenLoading('generate-btn', true);
-      setVisible('viral-loading', true);
-      setVisible('viral-output', false);
-
-      let si = 0;
-      const statusEl = document.getElementById('loading-status');
-      const interval = setInterval(() => {
-        si = (si + 1) % CONFIG.LOADING_MSGS.length;
-        if (statusEl) statusEl.textContent = CONFIG.LOADING_MSGS[si];
-      }, 1400);
-
-      try {
-        const prompt   = buildViralPrompt(topic, platform);
-        const response = await callAI([{ role: 'user', content: prompt }], VIRAL_SYSTEM);
-        const s        = parseViralResponse(response);
-
-        setText('hook-content',      s.hook      || 'Generation failed — try again.');
-        setText('script-content',    s.script    || 'Generation failed — try again.');
-        setText('title-content',     s.title     || 'Generation failed — try again.');
-        setText('thumbnail-content', s.thumbnail || 'Generation failed — try again.');
-        document.getElementById('output-topic-label').textContent = `"${topic}" · ${platform}`;
-
-        setVisible('viral-loading', false);
-        setVisible('viral-output',  true);
-
-        state.msgCount++;
-        updateLimitBanner();
-        saveRecentChat(`[Viral] ${topic}`);
-        Memory.addTopic(topic);
-      } catch (err) {
-        setVisible('viral-loading', false);
-        alert(`Generation failed: ${err.message}`);
-        console.error(err);
-      }
-
-      clearInterval(interval);
-      setGenLoading('generate-btn', false);
-    }
-
-    // ════════════════════════════════════════════
-    // [9] POST NEXT
-    // One high-potential idea based on creator memory.
-    // ════════════════════════════════════════════
-    function buildPostNextPrompt() {
-      const m = Memory.get();
-      return `You are a viral content strategist. Based on this creator's profile, suggest ONE perfect content idea they should post TODAY.
-
-Creator Profile:
-- Niche: ${m.niche || 'content creation'}
-- Platform: ${m.platform || 'YouTube Shorts'}
-- Tone: ${m.tone || 'motivational'}
-- Goals: ${m.goals || 'grow audience and get views'}
-- Past topics covered: ${(m.topics || []).slice(0,6).join(', ') || 'none yet — this is their first'}
+Creator:
+- Niche: ${m.niche||'content creation'}
+- Platform: ${m.platform||'YouTube Shorts'}
+- Tone: ${m.tone||'motivational'}
+- Goals: ${m.goals||'grow audience'}
+- Past topics covered: ${(m.topics||[]).slice(0,6).join(', ')||'none yet'}
 
 Pick an idea that:
 1. Hasn't been covered yet (based on past topics)
-2. Is trending or high-potential RIGHT NOW in their niche
-3. Matches their tone and platform perfectly
+2. Is high-potential and trending in this niche
+3. Matches tone and platform perfectly
 
 Return EXACTLY in this format:
 
 IDEA:
-[One specific, concrete content concept — not generic. One sentence.]
+[One specific, concrete concept. One sentence.]
 
 HOOK:
-[The exact opening line they should say or show — scroll-stopping, under 2 sentences.]
+[Exact opening line. Scroll-stopping. Max 2 sentences.]
 
 WHY IT WILL WORK:
-[3 specific reasons based on niche psychology and current trends. Each on its own line starting with ✦]
+[3 specific reasons. Each on its own line starting with ✦]
 
 BEST TIME TO POST:
 [Day + time + one-sentence reason]`;
-    }
+  }
 
-    function parsePostNext(text) {
-      const extract = (label, next) => {
-        const r = new RegExp(`${label}:\\s*([\\s\\S]*?)(?=${next}:|$)`, 'i');
-        const m = text.match(r);
-        return m ? m[1].trim() : '';
-      };
-      return {
-        idea:   extract('IDEA',   'HOOK'),
-        hook:   extract('HOOK',   'WHY'),
-        why:    extract('WHY IT WILL WORK', 'BEST TIME'),
-        timing: extract('BEST TIME TO POST', 'END_SENTINEL'),
-      };
-    }
+  function parsePostNext(text) {
+    const ex=(l,n)=>{const r=new RegExp(`${l}:\\s*([\\s\\S]*?)(?=${n}:|$)`,'i');const m=text.match(r);return m?m[1].trim():'';};
+    return {
+      idea:   ex('IDEA','HOOK'),
+      hook:   ex('HOOK','WHY'),
+      why:    ex('WHY IT WILL WORK','BEST TIME'),
+      timing: ex('BEST TIME TO POST','END_SENTINEL'),
+    };
+  }
 
-    async function generatePostNext() {
-      if (!Memory.isSet()) {
-        openModal('memory-modal'); return;
+  async function generatePostNext() {
+    if (!Memory.isSet()) { openModal('memory-modal'); return; }
+    if (!state.isPro && state.msgCount >= CONFIG.FREE_LIMIT) { openModal('upgrade-modal'); return; }
+
+    document.querySelectorAll('[onclick*="generatePostNext"]').forEach(b=>b.disabled=true);
+    setBtnLoading('postnext-btn', true);
+    setVis('postnext-output', false);
+
+    try {
+      const raw = await callAI([{role:'user',content:postNextPrompt()}], '');
+      const s   = parsePostNext(raw);
+      setText('pn-idea',   s.idea   || 'Try again.');
+      setText('pn-hook',   s.hook   || '');
+      setText('pn-why',    s.why    || '');
+      setText('pn-timing', s.timing || '');
+      setVis('postnext-output', true);
+      bumpCount(); bumpGenerated();
+      logActivity('🎯', 'Post Next idea generated');
+    } catch(err) { alert(`Error: ${err.message}`); }
+
+    document.querySelectorAll('[onclick*="generatePostNext"]').forEach(b=>b.disabled=false);
+    setBtnLoading('postnext-btn', false);
+  }
+
+  // ══════════════════════════════════════
+  // [10] CALENDAR
+  // ══════════════════════════════════════
+  function calPrompt() {
+    const m=Memory.get();
+    return `Create a 7-day content calendar for this creator:
+- Niche: ${m.niche||'content creation'}
+- Platform: ${m.platform||'YouTube Shorts'}
+- Tone: ${m.tone||'motivational'}
+- Goals: ${m.goals||'grow audience'}
+
+Return EXACTLY 7 lines in pipe-separated format — no headers, no extra text:
+DAY 1 | [Specific topic] | [Unique angle] | [Hook — exact opening line]
+DAY 2 | [Specific topic] | [Unique angle] | [Hook — exact opening line]
+DAY 3 | [Specific topic] | [Unique angle] | [Hook — exact opening line]
+DAY 4 | [Specific topic] | [Unique angle] | [Hook — exact opening line]
+DAY 5 | [Specific topic] | [Unique angle] | [Hook — exact opening line]
+DAY 6 | [Specific topic] | [Unique angle] | [Hook — exact opening line]
+DAY 7 | [Specific topic] | [Unique angle] | [Hook — exact opening line]
+
+Vary content types across the week (story, tutorial, hot take, breakdown, challenge, collab idea).`;
+  }
+
+  async function generateCalendar() {
+    if (!Memory.isSet()) { openModal('memory-modal'); return; }
+    if (!state.isPro && state.msgCount >= CONFIG.FREE_LIMIT) { openModal('upgrade-modal'); return; }
+
+    setBtnLoading('calendar-btn', true);
+    const loader = document.getElementById('cal-loading');
+    if (loader) loader.style.display='block';
+    setVis('cal-grid', false);
+
+    try {
+      const raw  = await callAI([{role:'user',content:calPrompt()}], '');
+      const days = raw.split('\n')
+        .filter(l=>/^DAY\s*\d/i.test(l.trim()))
+        .map((line,i)=>{
+          const p=line.split('|').map(x=>x.trim());
+          return { day:p[0]?.replace(/^DAY\s*/i,'Day ')||`Day ${i+1}`, topic:p[1]||'', angle:p[2]||'', hook:p[3]||'' };
+        }).filter(d=>d.topic);
+
+      const grid = document.getElementById('cal-grid');
+      if (grid && days.length) {
+        grid.innerHTML = days.map((d,i)=>`
+          <div class="day-card" style="animation-delay:${i*.07}s">
+            <div class="day-label">📅 ${d.day}</div>
+            <div class="day-topic">${d.topic}</div>
+            <div class="day-angle">${d.angle}</div>
+            <div class="day-hook">"${d.hook}"</div>
+          </div>`).join('');
+        setVis('cal-grid', true);
+      } else {
+        alert('Could not parse calendar. Try again.');
       }
-      if (!state.isPro && state.msgCount >= CONFIG.FREE_MSG_LIMIT) {
-        openModal('upgrade-modal'); return;
-      }
+      bumpCount(); bumpGenerated();
+      logActivity('📅', '7-day calendar generated');
+    } catch(err) { alert(`Error: ${err.message}`); }
 
-      const btn = document.getElementById('postnext-btn');
-      const regenBtns = document.querySelectorAll('[onclick="generatePostNext()"]');
-      regenBtns.forEach(b => { b.disabled = true; });
-      if (btn) btn.textContent = '⏳ Thinking…';
+    if (loader) loader.style.display='none';
+    setBtnLoading('calendar-btn', false);
+    document.getElementById('calendar-btn').querySelector('.btn-text').textContent='🔄 Regenerate Plan';
+  }
 
-      setVisible('postnext-output', false);
-
-      try {
-        const prompt   = buildPostNextPrompt();
-        const response = await callAI([{ role: 'user', content: prompt }], '');
-        const s        = parsePostNext(response);
-
-        setText('pn-idea',   s.idea   || 'Try again.');
-        setText('pn-hook',   s.hook   || '');
-        setText('pn-why',    s.why    || '');
-        setText('pn-timing', s.timing || '');
-
-        setVisible('postnext-output', true);
-        state.msgCount++;
-        updateLimitBanner();
-        saveRecentChat('[Post Next] Idea generated');
-      } catch (err) {
-        alert(`Error: ${err.message}`);
-        console.error(err);
-      }
-
-      regenBtns.forEach(b => { b.disabled = false; });
-      if (btn) btn.textContent = '🎯 What should I post today?';
-    }
-
-    // ════════════════════════════════════════════
-    // [10] CALENDAR
-    // 7-day plan built from creator memory.
-    // ════════════════════════════════════════════
-    function buildCalendarPrompt() {
-      const m = Memory.get();
-      return `Create a 7-day content calendar for this creator:
-- Niche: ${m.niche || 'content creation'}
-- Platform: ${m.platform || 'YouTube Shorts'}
-- Tone: ${m.tone || 'motivational'}
-- Goals: ${m.goals || 'grow audience and get views'}
-
-Return EXACTLY 7 lines, each in this pipe-separated format — no headers, no extra text:
-DAY 1 | [Specific topic] | [Unique angle or approach] | [The hook — exact opening line]
-DAY 2 | [Specific topic] | [Unique angle or approach] | [The hook — exact opening line]
-DAY 3 | [Specific topic] | [Unique angle or approach] | [The hook — exact opening line]
-DAY 4 | [Specific topic] | [Unique angle or approach] | [The hook — exact opening line]
-DAY 5 | [Specific topic] | [Unique angle or approach] | [The hook — exact opening line]
-DAY 6 | [Specific topic] | [Unique angle or approach] | [The hook — exact opening line]
-DAY 7 | [Specific topic] | [Unique angle or approach] | [The hook — exact opening line]
-
-Be specific. Vary content types across the week (e.g. story, tutorial, hot take, breakdown, challenge).`;
-    }
-
-    function parseCalendar(text) {
-      return text
-        .split('\n')
-        .filter(l => /^DAY\s*\d/i.test(l.trim()))
-        .map((line, i) => {
-          const parts = line.split('|').map(p => p.trim());
-          return {
-            day:   parts[0]?.replace(/^DAY\s*/i, 'Day ') || `Day ${i+1}`,
-            topic: parts[1] || '',
-            angle: parts[2] || '',
-            hook:  parts[3] || '',
-          };
-        })
-        .filter(d => d.topic);
-    }
-
-    async function generateCalendar() {
-      if (!Memory.isSet()) {
-        openModal('memory-modal'); return;
-      }
-      if (!state.isPro && state.msgCount >= CONFIG.FREE_MSG_LIMIT) {
-        openModal('upgrade-modal'); return;
-      }
-
-      const btn = document.getElementById('calendar-btn');
-      if (btn) { btn.disabled = true; btn.textContent = '⏳ Building plan…'; }
-
-      setVisible('calendar-grid', false);
-      const loading = document.getElementById('cal-loading');
-      if (loading) loading.style.display = 'block';
-
-      try {
-        const prompt   = buildCalendarPrompt();
-        const response = await callAI([{ role: 'user', content: prompt }], '');
-        const days     = parseCalendar(response);
-
-        const grid = document.getElementById('calendar-grid');
-        if (grid && days.length) {
-          grid.innerHTML = days.map((d, i) => `
-            <div class="day-card" style="animation-delay:${i * 0.07}s">
-              <div class="day-num">📅 ${d.day}</div>
-              <div class="day-topic">${d.topic}</div>
-              <div class="day-angle">${d.angle}</div>
-              <div class="day-hook">"${d.hook}"</div>
-            </div>
-          `).join('');
-          setVisible('calendar-grid', true);
-        } else {
-          alert('Could not parse calendar. Please try again.');
-        }
-
-        state.msgCount++;
-        updateLimitBanner();
-        saveRecentChat('[Calendar] 7-day plan generated');
-      } catch (err) {
-        alert(`Error: ${err.message}`);
-        console.error(err);
-      }
-
-      if (loading) loading.style.display = 'none';
-      if (btn) { btn.disabled = false; btn.textContent = '🔄 Regenerate Plan'; }
-    }
-
-    // ════════════════════════════════════════════
-    // [11] FEEDBACK
-    // Strengths, weaknesses, improvements + viral score.
-    // ════════════════════════════════════════════
-    function buildFeedbackPrompt(content) {
-      const m = Memory.get();
-      return `Analyze this content idea for a ${m.platform || 'YouTube Shorts'} creator in the ${m.niche || 'content creation'} niche:
-
-"${content}"
+  // ══════════════════════════════════════
+  // [11] FEEDBACK
+  // ══════════════════════════════════════
+  function fbPrompt(content) {
+    const m=Memory.get();
+    return `Analyze this content idea for a ${m.platform||'YouTube Shorts'} creator in the ${m.niche||'content creation'} niche.
 
 Be brutally honest. Creators need real feedback, not cheerleading.
+
+Content idea:
+"${content}"
 
 Return EXACTLY in this format:
 
 STRENGTHS:
-[2-3 specific strengths. Each on its own line starting with ✓]
+[2-3 specific strengths. Each starting with ✓]
 
 WEAKNESSES:
-[2-3 specific weaknesses. Each on its own line starting with ✗]
+[2-3 specific weaknesses. Each starting with ✗]
 
 IMPROVEMENTS:
-[2-3 concrete, actionable improvements. Each on its own line starting with →]
+[2-3 concrete actionable improvements. Each starting with →]
 
 VIRAL SCORE: [number 1-10]/10
 VERDICT:
-[One punchy, direct sentence. Be honest.]`;
+[One punchy, direct sentence. Be honest — don't sugarcoat.]`;
+  }
+
+  function parseFB(text) {
+    const ex=(l,n)=>{const r=new RegExp(`${l}:\\s*([\\s\\S]*?)(?=${n}:|$)`,'i');const m=text.match(r);return m?m[1].trim():'';};
+    const sc=text.match(/VIRAL SCORE:\s*(\d+)\s*\/\s*10/i);
+    return {
+      strengths:    ex('STRENGTHS','WEAKNESSES'),
+      weaknesses:   ex('WEAKNESSES','IMPROVEMENTS'),
+      improvements: ex('IMPROVEMENTS','VIRAL SCORE'),
+      score:        sc?sc[1]:'?',
+      verdict:      ex('VERDICT','END_SENTINEL'),
+    };
+  }
+
+  async function analyzeFeedback() {
+    const content=document.getElementById('feedback-input')?.value.trim();
+    if (!content) { document.getElementById('feedback-input')?.focus(); return; }
+    if (!state.isPro && state.msgCount >= CONFIG.FREE_LIMIT) { openModal('upgrade-modal'); return; }
+
+    setBtnLoading('feedback-btn', true);
+    setVis('feedback-output', false);
+
+    try {
+      const raw = await callAI([{role:'user',content:fbPrompt(content)}], '');
+      const s   = parseFB(raw);
+      setText('fb-strengths',    s.strengths    || 'Analysis failed. Try again.');
+      setText('fb-weaknesses',   s.weaknesses   || '');
+      setText('fb-improvements', s.improvements || '');
+      setText('fb-score',        s.score);
+      setText('fb-verdict',      s.verdict      || '');
+      setVis('feedback-output', true);
+      bumpCount(); bumpGenerated();
+      logActivity('📊', 'Content analyzed');
+    } catch(err) { alert(`Error: ${err.message}`); }
+
+    setBtnLoading('feedback-btn', false);
+  }
+
+  // ══════════════════════════════════════
+  // [12] DASHBOARD
+  // ══════════════════════════════════════
+  function renderDashboard() {
+    setText('stat-sessions',  state.sessions.toString());
+    setText('stat-generated', state.generated.toString());
+    setText('stat-topics',    Memory.topicCount().toString());
+    // Streak: simple — count days with any activity
+    const streak = parseInt(localStorage.getItem('xarvis_streak')||'1');
+    setText('stat-streak', streak.toString());
+  }
+
+  function logActivity(icon, text) {
+    const time = new Date().toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'});
+    state.recentActivity.unshift({icon, text, time});
+    state.recentActivity = state.recentActivity.slice(0, 6);
+    localStorage.setItem('xarvis_activity', JSON.stringify(state.recentActivity));
+    renderActivity();
+    renderDashboard();
+  }
+
+  function loadActivity() {
+    try { state.recentActivity = JSON.parse(localStorage.getItem('xarvis_activity')||'[]'); } catch { state.recentActivity=[]; }
+    renderActivity();
+  }
+
+  function renderActivity() {
+    const el = document.getElementById('activity-list');
+    if (!el) return;
+    if (!state.recentActivity.length) {
+      el.innerHTML = '<div style="color:var(--muted);font-size:0.78rem;padding:10px 14px;">No activity yet — start using the tools above 👆</div>';
+      return;
     }
+    el.innerHTML = state.recentActivity.map(a=>`
+      <div class="activity-item">
+        <div class="activity-icon">${a.icon}</div>
+        <span class="activity-text">${a.text}</span>
+        <span class="activity-time">${a.time}</span>
+      </div>`).join('');
+  }
 
-    function parseFeedback(text) {
-      const extract = (label, next) => {
-        const r = new RegExp(`${label}:\\s*([\\s\\S]*?)(?=${next}:|$)`, 'i');
-        const m = text.match(r);
-        return m ? m[1].trim() : '';
-      };
-      const scoreMatch = text.match(/VIRAL SCORE:\s*(\d+)\s*\/\s*10/i);
-      return {
-        strengths:    extract('STRENGTHS',   'WEAKNESSES'),
-        weaknesses:   extract('WEAKNESSES',  'IMPROVEMENTS'),
-        improvements: extract('IMPROVEMENTS','VIRAL SCORE'),
-        score:        scoreMatch ? scoreMatch[1] : '?',
-        verdict:      extract('VERDICT', 'END_SENTINEL'),
-      };
+  // ══════════════════════════════════════
+  // [13] MEMORY CHIP
+  // ══════════════════════════════════════
+  function renderMemoryChip() {
+    const chip = document.getElementById('memory-chip');
+    const tags = document.getElementById('memory-tag-list');
+    if (!chip || !tags) return;
+    const m = Memory.get();
+    if (!m.niche) {
+      chip.classList.add('unset');
+      tags.innerHTML = '<span class="memory-setup-cta">Tap to set up your profile</span>';
+      return;
     }
+    chip.classList.remove('unset');
+    const t = [];
+    if (m.niche)    t.push(`🎯 ${m.niche}`);
+    if (m.tone)     t.push(`🎭 ${m.tone.split(' ')[0]}`);
+    if (m.platform) t.push(`📱 ${m.platform.split(' ').slice(1).join(' ')||m.platform}`);
+    tags.innerHTML = t.map(x=>`<span class="m-tag">${x}</span>`).join('');
+    setText('stat-topics', Memory.topicCount().toString());
+  }
 
-    async function analyzeFeedback() {
-      const content = document.getElementById('feedback-input')?.value.trim();
-      if (!content) {
-        document.getElementById('feedback-input')?.focus(); return;
-      }
-      if (!state.isPro && state.msgCount >= CONFIG.FREE_MSG_LIMIT) {
-        openModal('upgrade-modal'); return;
-      }
+  function openMemoryModal() { openModal('memory-modal'); }
 
-      setGenLoading('feedback-btn', true);
-      setVisible('feedback-output', false);
+  function saveMemory() {
+    const niche    = document.getElementById('mem-niche')?.value.trim();
+    const tone     = document.getElementById('mem-tone')?.value;
+    const platform = document.getElementById('mem-platform')?.value;
+    const goals    = document.getElementById('mem-goals')?.value.trim();
+    if (!niche) { shake('mem-niche'); return; }
+    Memory.save({niche,tone,platform,goals});
+    closeModal('memory-modal');
+    renderDashboard();
+  }
 
-      try {
-        const prompt   = buildFeedbackPrompt(content);
-        const response = await callAI([{ role: 'user', content: prompt }], '');
-        const s        = parseFeedback(response);
-
-        setText('fb-strengths',    s.strengths    || 'Analysis failed. Try again.');
-        setText('fb-weaknesses',   s.weaknesses   || '');
-        setText('fb-improvements', s.improvements || '');
-        setText('fb-score',        s.score);
-        setText('fb-verdict',      s.verdict      || '');
-
-        setVisible('feedback-output', true);
-        state.msgCount++;
-        updateLimitBanner();
-        saveRecentChat('[Feedback] Content analyzed');
-      } catch (err) {
-        alert(`Error: ${err.message}`);
-        console.error(err);
-      }
-
-      setGenLoading('feedback-btn', false);
-    }
-
-    // ════════════════════════════════════════════
-    // [12] MEMORY WIDGET + MODAL
-    // ════════════════════════════════════════════
-    function renderMemoryWidget() {
-      const tagsEl  = document.getElementById('memory-tags');
-      const widget  = document.getElementById('memory-widget');
-      if (!tagsEl || !widget) return;
-
-      const mem = Memory.get();
-
-      if (!mem.niche) {
-        widget.classList.add('unset');
-        tagsEl.innerHTML = `<span class="memory-empty">Not set — <a onclick="openMemoryModal()">set up now</a></span>`;
-        return;
-      }
-
-      widget.classList.remove('unset');
-      const tags = [];
-      if (mem.niche)    tags.push(`🎯 ${mem.niche}`);
-      if (mem.tone)     tags.push(`🎭 ${mem.tone.split(' ')[0]}`);
-      if (mem.platform) tags.push(`📱 ${mem.platform.split(' ').slice(1).join(' ') || mem.platform}`);
-      tagsEl.innerHTML = tags.map(t => `<span class="memory-tag">${t}</span>`).join('');
-    }
-
-    function openMemoryModal() {
-      const mem = Memory.get();
-      const fields = { 'mem-niche': 'niche', 'mem-tone': 'tone', 'mem-platform': 'platform', 'mem-goals': 'goals' };
-      Object.entries(fields).forEach(([id, key]) => {
-        const el = document.getElementById(id);
-        if (el && mem[key]) el.value = mem[key];
-      });
-      openModal('memory-modal');
-    }
-
-    function saveMemory() {
-      const niche    = document.getElementById('mem-niche')?.value.trim();
-      const tone     = document.getElementById('mem-tone')?.value;
-      const platform = document.getElementById('mem-platform')?.value;
-      const goals    = document.getElementById('mem-goals')?.value.trim();
-
-      if (!niche) {
-        document.getElementById('mem-niche')?.focus();
-        document.getElementById('mem-niche').style.borderColor = 'rgba(255,71,87,0.5)';
-        setTimeout(() => { document.getElementById('mem-niche').style.borderColor = ''; }, 1500);
-        return;
-      }
-
-      Memory.save({ niche, tone, platform, goals });
-      closeModal('memory-modal');
-    }
-
-    // ════════════════════════════════════════════
-    // [13] COPY SYSTEM
-    // ════════════════════════════════════════════
-    function copyCard(elementId, btn) {
-      const text = document.getElementById(elementId)?.textContent || '';
-      navigator.clipboard.writeText(text).then(() => {
-        const orig = btn.textContent;
-        btn.textContent = '✓';
-        btn.classList.add('copied');
-        setTimeout(() => { btn.textContent = orig; btn.classList.remove('copied'); }, 1800);
-      });
-    }
-
-    function copyAll() {
-      const hook      = document.getElementById('hook-content')?.textContent || '';
-      const script    = document.getElementById('script-content')?.textContent || '';
-      const title     = document.getElementById('title-content')?.textContent || '';
-      const thumbnail = document.getElementById('thumbnail-content')?.textContent || '';
-      const topic     = document.getElementById('output-topic-label')?.textContent || '';
-
-      const full = `XARVIS AI — Viral Content Package\nTopic: ${topic}\n\n🪝 HOOK:\n${hook}\n\n📝 SCRIPT:\n${script}\n\n✏️ TITLE OPTIONS:\n${title}\n\n🖼 THUMBNAIL:\n${thumbnail}`;
-      navigator.clipboard.writeText(full).then(() => {
-        const btn = document.querySelector('.copy-all-btn');
-        if (btn) { btn.textContent = '✓ Copied!'; setTimeout(() => { btn.textContent = '📋 Copy All'; }, 2000); }
-      });
-    }
-
-    // ════════════════════════════════════════════
-    // [14] RECENT CHATS
-    // ════════════════════════════════════════════
-    function saveRecentChat(text) {
-      const label = text.length > 42 ? text.slice(0, 42) + '…' : text;
-      state.recentChats.unshift(label);
-      state.recentChats = state.recentChats.slice(0, 12);
-      localStorage.setItem('xarvis_recent', JSON.stringify(state.recentChats));
-      renderRecentChats();
-    }
-
-    function loadRecentChats() {
-      try { state.recentChats = JSON.parse(localStorage.getItem('xarvis_recent') || '[]'); }
-      catch { state.recentChats = []; }
-    }
-
-    function renderRecentChats() {
-      const el = document.getElementById('recent-chats');
-      if (!el) return;
-      el.innerHTML = state.recentChats.length
-        ? state.recentChats.map((c, i) =>
-            `<div class="recent-chat-item ${i===0?'active':''}">${c}</div>`
-          ).join('')
-        : '<div style="color:var(--muted2);font-size:0.75rem;padding:6px 9px;">No history yet</div>';
-    }
-
-    // ════════════════════════════════════════════
-    // [15] LIMIT + PLAN SYSTEM
-    // ════════════════════════════════════════════
-    function updateLimitBanner() {
-      const banner = document.getElementById('limit-banner');
-      const text   = document.getElementById('limit-text');
-      if (!banner || !text) return;
-      if (state.isPro) { banner.classList.add('hidden'); return; }
-      const remaining = CONFIG.FREE_MSG_LIMIT - state.msgCount;
-      if (remaining <= 5) {
-        banner.classList.remove('hidden');
-        text.textContent = `${remaining} message${remaining !== 1 ? 's' : ''} left`;
-      } else {
-        banner.classList.add('hidden');
-      }
-    }
-
-    function setSendDisabled(v) {
-      const btn = document.getElementById('send-btn');
-      if (btn) btn.disabled = v;
-    }
-
-    function activatePlan(plan, silent = false) {
-      state.plan  = plan;
-      state.isPro = true;
-      const pill  = document.getElementById('plan-pill');
-      if (pill) {
-        pill.textContent   = plan === 'elite' ? 'ELITE' : 'PRO';
-        pill.style.background   = 'rgba(79,142,255,0.12)';
-        pill.style.borderColor  = 'rgba(79,142,255,0.3)';
-        pill.style.color        = 'var(--accent)';
-      }
-      updateLimitBanner();
-      if (!silent) closeModal('upgrade-modal');
-    }
-
-    // ════════════════════════════════════════════
-    // [16] TTS + MIC
-    // ════════════════════════════════════════════
-    function toggleTTS() {
-      state.ttsEnabled = !state.ttsEnabled;
-      const btn = document.getElementById('tts-btn');
-      if (btn) {
-        btn.classList.toggle('active', state.ttsEnabled);
-        btn.textContent = state.ttsEnabled ? '🔊 TTS' : '🔇 TTS';
-      }
-    }
-
-    function speak(text) {
-      if (!state.ttsEnabled || !window.speechSynthesis) return;
-      window.speechSynthesis.cancel();
-      const clean = text.replace(/<[^>]+>/g, '').replace(/\*\*/g, '').slice(0, 300);
-      const utt = new SpeechSynthesisUtterance(clean);
-      utt.rate = 1.05;
-      window.speechSynthesis.speak(utt);
-    }
-
-    function toggleMic() {
-      if (!('webkitSpeechRecognition' in window || 'SpeechRecognition' in window)) {
-        alert('Voice input not supported. Try Chrome.'); return;
-      }
-      if (state.isListening) { state.recognition?.stop(); return; }
-
-      const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
-      state.recognition = new SR();
-      state.recognition.lang = 'en-US';
-      state.recognition.continuous = false;
-
-      state.recognition.onstart = () => {
-        state.isListening = true;
-        document.getElementById('mic-btn')?.classList.add('listening');
-      };
-      state.recognition.onresult = (e) => {
-        const t = e.results[0][0].transcript;
-        const inp = document.getElementById('chat-input');
-        if (inp) { inp.value = t; autoResize(inp); }
-      };
-      state.recognition.onend = () => {
-        state.isListening = false;
-        document.getElementById('mic-btn')?.classList.remove('listening');
-      };
-      state.recognition.start();
-    }
-
-    // ════════════════════════════════════════════
-    // [17] UI UTILITIES
-    // Small reusable helpers — keeps feature code clean.
-    // ════════════════════════════════════════════
-
-    // Show or hide an element by adding/removing .visible class
-    function setVisible(id, show) {
-      const el = document.getElementById(id);
-      if (!el) return;
-      if (show) el.classList.add('visible');
-      else      el.classList.remove('visible');
-    }
-
-    // Set text content of an element by ID
-    function setText(id, text) {
-      const el = document.getElementById(id);
-      if (el) el.textContent = text;
-    }
-
-    // Toggle loading state on a button with .btn-spinner
-    function setGenLoading(btnId, loading) {
-      const btn = document.getElementById(btnId);
-      if (!btn) return;
-      btn.disabled = loading;
-      btn.classList.toggle('loading', loading);
-    }
-
-    function autoResize(el) {
-      el.style.height = 'auto';
-      el.style.height = Math.min(el.scrollHeight, 140) + 'px';
-    }
-
-    function handleKey(e) {
-      if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); }
-    }
-
-    function scrollBottom() {
-      const area = document.getElementById('chat-area');
-      if (area) setTimeout(() => { area.scrollTop = area.scrollHeight; }, 50);
-    }
-
-    function openModal(id)  { document.getElementById(id)?.classList.add('open'); }
-    function closeModal(id) { document.getElementById(id)?.classList.remove('open'); }
-    function toggleSidebar() { document.getElementById('sidebar')?.classList.toggle('open'); }
-
-    // Close any modal when clicking the backdrop
-    document.querySelectorAll('.modal-overlay').forEach(overlay => {
-      overlay.addEventListener('click', (e) => {
-        if (e.target === overlay) overlay.classList.remove('open');
-      });
+  // ══════════════════════════════════════
+  // [14] COPY UTILITIES
+  // ══════════════════════════════════════
+  function copyCard(id, btn) {
+    navigator.clipboard.writeText(document.getElementById(id)?.textContent||'').then(()=>{
+      const orig=btn.textContent; btn.textContent='✓'; btn.classList.add('copied');
+      setTimeout(()=>{ btn.textContent=orig; btn.classList.remove('copied'); },1800);
     });
+  }
 
-  </script>
+  function copyAll() {
+    const h=document.getElementById('hook-out')?.textContent||'';
+    const s=document.getElementById('script-out')?.textContent||'';
+    const t=document.getElementById('title-out')?.textContent||'';
+    const th=document.getElementById('thumb-out')?.textContent||'';
+    const lbl=document.getElementById('output-label')?.textContent||'';
+    const full=`XARVIS AI — Viral Package\nTopic: ${lbl}\n\n🪝 HOOK:\n${h}\n\n📝 SCRIPT:\n${s}\n\n✏️ TITLES:\n${t}\n\n🖼 THUMBNAIL:\n${th}`;
+    navigator.clipboard.writeText(full).then(()=>{
+      const btn=document.querySelector('.copy-all');
+      if(btn){btn.textContent='✓ Copied!';setTimeout(()=>{btn.textContent='📋 Copy All';},2000);}
+    });
+  }
+
+  // ══════════════════════════════════════
+  // [15] COUNTERS + LIMIT
+  // ══════════════════════════════════════
+  function bumpCount() {
+    state.msgCount++;
+    state.sessions++;
+    saveStats();
+    updateLimitUI();
+  }
+
+  function bumpGenerated() {
+    state.generated++;
+    saveStats();
+    renderDashboard();
+  }
+
+  function saveStats() {
+    localStorage.setItem('xarvis_stats', JSON.stringify({
+      msgCount: state.msgCount, generated: state.generated, sessions: state.sessions
+    }));
+  }
+
+  function updateLimitUI() {
+    if (state.isPro) {
+      const limitEl=document.getElementById('limit-text');
+      if(limitEl) limitEl.textContent='Unlimited — Creator Pro';
+      const bar=document.getElementById('limit-bar');
+      if(bar) bar.style.width='100%';
+      return;
+    }
+    const remaining = Math.max(0, CONFIG.FREE_LIMIT - state.msgCount);
+    const pct = (remaining / CONFIG.FREE_LIMIT) * 100;
+    const limitEl=document.getElementById('limit-text');
+    if(limitEl) limitEl.textContent=`${remaining} of ${CONFIG.FREE_LIMIT} messages remaining`;
+    const bar=document.getElementById('limit-bar');
+    if(bar) bar.style.width=`${pct}%`;
+  }
+
+  function activatePlan(plan, silent=false) {
+    state.isPro=true; state.plan=plan;
+    const pill=document.getElementById('plan-pill');
+    if(pill){ pill.textContent=plan==='elite'?'ELITE':'PRO'; pill.classList.add('pro'); }
+    updateLimitUI();
+    if(!silent) closeModal('upgrade-modal');
+  }
+
+  function setSendDisabled(v) {
+    const b=document.getElementById('send-btn'); if(b) b.disabled=v;
+  }
+
+  // ══════════════════════════════════════
+  // [16] TTS + MIC
+  // ══════════════════════════════════════
+  function toggleTTS() {
+    state.ttsEnabled=!state.ttsEnabled;
+    const btn=document.getElementById('tts-btn');
+    if(btn){ btn.classList.toggle('active',state.ttsEnabled); btn.textContent=state.ttsEnabled?'🔊 TTS':'🔇 TTS'; }
+  }
+
+  function speak(text) {
+    if(!state.ttsEnabled||!window.speechSynthesis) return;
+    window.speechSynthesis.cancel();
+    const utt=new SpeechSynthesisUtterance(text.replace(/<[^>]+>/g,'').replace(/\*\*/g,'').slice(0,300));
+    utt.rate=1.05;
+    window.speechSynthesis.speak(utt);
+  }
+
+  function toggleMic() {
+    if(!('webkitSpeechRecognition'in window||'SpeechRecognition'in window)){alert('Voice input requires Chrome.');return;}
+    if(state.isListening){state.recognition?.stop();return;}
+    const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
+    state.recognition=new SR();
+    state.recognition.lang='en-US';
+    state.recognition.onstart=()=>{ state.isListening=true; document.getElementById('mic-btn')?.classList.add('listening'); };
+    state.recognition.onresult=(e)=>{ const t=e.results[0][0].transcript; const i=document.getElementById('chat-input'); if(i){i.value=t;autoResize(i);} };
+    state.recognition.onend=()=>{ state.isListening=false; document.getElementById('mic-btn')?.classList.remove('listening'); };
+    state.recognition.start();
+  }
+
+  // ══════════════════════════════════════
+  // [17] UI UTILITIES
+  // ══════════════════════════════════════
+  function setVis(id, show) {
+    const el=document.getElementById(id);
+    if(!el) return;
+    if(show) el.classList.add('visible');
+    else     el.classList.remove('visible');
+  }
+
+  function setText(id, text) {
+    const el=document.getElementById(id); if(el) el.textContent=text;
+  }
+
+  function setBtnLoading(id, loading) {
+    const btn=document.getElementById(id); if(!btn) return;
+    btn.disabled=loading; btn.classList.toggle('loading',loading);
+  }
+
+  function shake(id) {
+    const el=document.getElementById(id); if(!el) return;
+    el.style.borderColor='rgba(248,113,113,0.6)'; el.focus();
+    setTimeout(()=>{ el.style.borderColor=''; },1600);
+  }
+
+  function autoResize(el) {
+    el.style.height='auto';
+    el.style.height=Math.min(el.scrollHeight,140)+'px';
+  }
+
+  function handleKey(e) {
+    if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();sendMessage();}
+  }
+
+  function scrollBottom() {
+    const a=document.getElementById('chat-area');
+    if(a) setTimeout(()=>{a.scrollTop=a.scrollHeight;},50);
+  }
+
+  function openModal(id)    { document.getElementById(id)?.classList.add('open'); }
+  function closeModal(id)   { document.getElementById(id)?.classList.remove('open'); }
+  function toggleSidebar()  { document.getElementById('sidebar')?.classList.toggle('open'); }
+
+  document.querySelectorAll('.modal-overlay').forEach(o=>{
+    o.addEventListener('click',e=>{ if(e.target===o) o.classList.remove('open'); });
+  });
+
+  // Init suggestion cards
+  bindSugs();
+
+</script>
 </body>
 </html>
