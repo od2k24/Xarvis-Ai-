@@ -2141,15 +2141,16 @@
   // [1] CONFIG — change API key here
   // ══════════════════════════════════════
   const CONFIG = {
-    API_BASE: 'https://YOUR-RAILWAY-URL.up.railway.app/api/generate',
-    FREE_LIMIT: 15,
+    GROQ_API_KEY: 'YOUR_GROQ_API_KEY_HERE', // ← paste your key
+    MODEL:        'llama-3.3-70b-versatile',
+    API_BASE:     'https://api.groq.com/openai/v1/chat/completions',
+    FREE_LIMIT:   15,
     LOADING_MSGS: [
       '🧠 Engineering your viral moment…',
       '🔥 Applying viral psychology…',
       '📊 Optimizing for scroll-stopping power…',
       '⚡ Finalizing your content package…',
-    ]
-};
+    ],
     DAILY_TIPS: [
       '<strong>Hook rule #1:</strong> The first 2 seconds decide everything. If your hook doesn\'t create a question in the viewer\'s mind — they\'re gone. Bold claim, shocking result, FOMO, or curiosity gap. Pick one. Commit hard.',
       '<strong>The retention trick MrBeast uses:</strong> Tease what\'s coming at the very start. "By the end of this, you\'ll know exactly how to..." makes viewers stay for the payoff.',
@@ -2238,40 +2239,11 @@
   // ══════════════════════════════════════
   // [5] API LAYER (swap provider here)
   // ══════════════════════════════════════
-async function callAI(messages, system = '', opts = {}) {
-  const key = CONFIG.GROQ_API_KEY;
-
-  // 🔥 cleaner validation
-  if (!key || key.trim() === '' || key.includes('YOUR_GROQ_API_KEY')) {
-    console.error('Missing or invalid Groq API key:', key);
-    throw new Error('Invalid API key. Please set CONFIG.GROQ_API_KEY correctly.');
-  }
-
-  const res = await fetch(CONFIG.API_BASE, {
-    method: 'POST',
-    headers: {
-      'Authorization': `Bearer ${key}`,
-      'Content-Type': 'application/json'
-    },
-    body: JSON.stringify({
-      model: CONFIG.MODEL,
-      messages: [
-        ...(system ? [{ role: 'system', content: system }] : []),
-        ...messages
-      ],
-      temperature: opts.temperature ?? 0.7
-    })
-  });
-
-  if (!res.ok) {
-    const err = await res.text();
-    console.error('Groq API error:', err);
-    throw new Error(`API request failed: ${res.status}`);
-  }
-
-  const data = await res.json();
-  return data.choices?.[0]?.message?.content || '';
-}
+  async function callAI(messages, system='', opts={}) {
+    const key = CONFIG.GROQ_API_KEY;
+    if (!key || key==='YOUR_GROQ_API_KEY_HERE') {
+      throw new Error('Add your Groq API key to CONFIG.GROQ_API_KEY at the top of the script. Get one free at console.groq.com');
+    }
     const built = [];
     if (system) built.push({ role:'system', content:system });
     built.push(...messages.map(m=>({ role:m.role==='bot'?'assistant':m.role, content:m.content })));
