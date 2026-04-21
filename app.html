@@ -2140,12 +2140,13 @@
   // ══════════════════════════════════════
   // [1] CONFIG — change API key here
   // ══════════════════════════════════════
-  const CONFIG = {
-    GROQ_API_KEY: 'YOUR_GROQ_API_KEY_HERE', // ← paste your key
-    MODEL:        'llama-3.3-70b-versatile',
-    API_BASE:     'https://api.groq.com/openai/v1/chat/completions',
-    FREE_LIMIT:   15,
-    LOADING_MSGS: [
+  async function callAI(messages) {
+  return new Promise(res => {
+    setTimeout(() => {
+      res("mock: " + (messages?.at(-1)?.content || "hi"));
+    }, 400);
+  });
+}
       '🧠 Engineering your viral moment…',
       '🔥 Applying viral psychology…',
       '📊 Optimizing for scroll-stopping power…',
