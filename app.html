@@ -2140,16 +2140,18 @@
   // ══════════════════════════════════════
   // [1] CONFIG — change API key here
   // ══════════════════════════════════════
-  const CONFIG = {
-    GROQ_API_KEY: 'YOUR_GROQ_API_KEY_HERE', // ← paste your key
-    MODEL:        'llama-3.3-70b-versatile',
-    API_BASE:     'https://api.groq.com/openai/v1/chat/completions',
-    FREE_LIMIT:   15,
-    LOADING_MSGS: [
-      '🧠 Engineering your viral moment…',
-      '🔥 Applying viral psychology…',
-      '📊 Optimizing for scroll-stopping power…',
-      '⚡ Finalizing your content package…',
+ const CONFIG = {
+  BACKEND_URL: "https://xarvis-ai.up.railway.app/chat",
+
+  FREE_LIMIT: 15,
+
+  LOADING_MSGS: [
+    "🧠 Thinking…",
+    "⚡ Processing your request…",
+    "🔥 Generating response…",
+    "📡 Xarvis AI is working…"
+  ]
+};
     ],
     DAILY_TIPS: [
       '<strong>Hook rule #1:</strong> The first 2 seconds decide everything. If your hook doesn\'t create a question in the viewer\'s mind — they\'re gone. Bold claim, shocking result, FOMO, or curiosity gap. Pick one. Commit hard.',
