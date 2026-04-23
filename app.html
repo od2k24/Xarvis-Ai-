@@ -1,139 +1,157 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>Xarvis AI</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Xarvis AI</title>
 
-<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;700&display=swap" rel="stylesheet"/>
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@600;700;800&family=DM+Sans:wght@300;400;500;700&display=swap" rel="stylesheet" />
 
-<style>
-body{
-  margin:0;
-  font-family:DM Sans,sans-serif;
-  background:#050810;
-  color:#fff;
-  display:flex;
-  flex-direction:column;
-  height:100vh;
-}
+  <style>
+    body{
+      margin:0;
+      font-family:'DM Sans',sans-serif;
+      background:#050810;
+      color:#f0f4ff;
+    }
 
-/* HEADER */
-header{
-  padding:14px 18px;
-  font-weight:700;
-  background:#0d1120;
-  border-bottom:1px solid rgba(255,255,255,0.08);
-}
+    /* TOP NAV */
+    nav{
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      padding:14px 20px;
+      background:#0d1120;
+      border-bottom:1px solid rgba(255,255,255,0.08);
+    }
 
-/* CHAT */
-#chat{
-  flex:1;
-  overflow-y:auto;
-  padding:18px;
-  display:flex;
-  flex-direction:column;
-  gap:10px;
-}
+    .logo{
+      font-family:'Syne',sans-serif;
+      font-weight:800;
+      font-size:18px;
+    }
 
-/* MSG */
-.msg{
-  max-width:75%;
-  padding:10px 14px;
-  border-radius:12px;
-  font-size:14px;
-  white-space:pre-wrap;
-  line-height:1.4;
-}
+    .status{
+      font-size:12px;
+      padding:6px 10px;
+      border-radius:20px;
+      background:rgba(79,142,255,0.15);
+      color:#4f8eff;
+    }
 
-.user{
-  align-self:flex-end;
-  background:linear-gradient(135deg,#4f8eff,#7c3aff);
-}
+    /* HERO */
+    .hero{
+      padding:40px 20px 20px;
+      text-align:center;
+    }
 
-.bot{
-  align-self:flex-start;
-  background:rgba(255,255,255,0.06);
-  border:1px solid rgba(255,255,255,0.08);
-}
+    .hero h1{
+      font-family:'Syne',sans-serif;
+      font-size:34px;
+      margin:0;
+    }
 
-/* INPUT */
-.bar{
-  display:flex;
-  padding:12px;
-  border-top:1px solid rgba(255,255,255,0.08);
-  background:#0d1120;
-}
+    .hero p{
+      color:#8895b0;
+      margin-top:10px;
+      font-size:14px;
+    }
 
-input{
-  flex:1;
-  padding:12px;
-  border:none;
-  border-radius:10px;
-  outline:none;
-  background:rgba(255,255,255,0.06);
-  color:white;
-}
+    /* CHAT BOX */
+    .chat{
+      max-width:700px;
+      margin:20px auto;
+      padding:20px;
+      display:flex;
+      flex-direction:column;
+      gap:10px;
+    }
 
-button{
-  margin-left:10px;
-  padding:12px 16px;
-  border:none;
-  border-radius:10px;
-  font-weight:700;
-  color:white;
-  cursor:pointer;
-  background:linear-gradient(135deg,#4f8eff,#7c3aff);
-}
+    .msg{
+      padding:10px 14px;
+      border-radius:12px;
+      font-size:14px;
+      max-width:80%;
+      white-space:pre-wrap;
+    }
 
-button:hover{opacity:0.9}
+    .user{
+      align-self:flex-end;
+      background:linear-gradient(135deg,#4f8eff,#7c3aff);
+    }
 
-.typing{
-  font-size:12px;
-  opacity:0.6;
-}
-</style>
+    .bot{
+      align-self:flex-start;
+      background:rgba(255,255,255,0.06);
+      border:1px solid rgba(255,255,255,0.08);
+    }
+
+    /* INPUT */
+    .input{
+      position:fixed;
+      bottom:0;
+      left:0;
+      right:0;
+      display:flex;
+      gap:10px;
+      padding:12px;
+      background:#0d1120;
+      border-top:1px solid rgba(255,255,255,0.08);
+    }
+
+    input{
+      flex:1;
+      padding:12px;
+      border-radius:10px;
+      border:none;
+      outline:none;
+      background:rgba(255,255,255,0.06);
+      color:white;
+    }
+
+    button{
+      padding:12px 16px;
+      border:none;
+      border-radius:10px;
+      background:linear-gradient(135deg,#4f8eff,#7c3aff);
+      color:white;
+      font-weight:700;
+      cursor:pointer;
+    }
+  </style>
 </head>
-
 <body>
 
-<header>⚡ Xarvis AI</header>
+<nav>
+  <div class="logo">Xarvis AI</div>
+  <div class="status">AI Online</div>
+</nav>
 
-<div id="chat"></div>
+<div class="hero">
+  <h1>Ready to go viral?</h1>
+  <p>Your AI co-founder for content, scripts & growth strategy.</p>
+</div>
 
-<div class="bar">
-  <input id="input" placeholder="Ask Xarvis anything..." />
+<div class="chat" id="chat"></div>
+
+<div class="input">
+  <input id="input" placeholder="Ask Xarvis..." />
   <button onclick="send()">Send</button>
 </div>
 
 <script>
-
-const BACKEND = "https://xarvis-ai.up.railway.app/api/chat";
-
+const BACKEND_URL = "https://xarvis-ai.up.railway.app/api/chat";
 const chat = document.getElementById("chat");
 const input = document.getElementById("input");
 
 let history = [];
 
 function add(text,type){
-  const div=document.createElement("div");
-  div.className="msg "+type;
-  div.textContent=text;
-  chat.appendChild(div);
+  const d=document.createElement("div");
+  d.className="msg "+type;
+  d.textContent=text;
+  chat.appendChild(d);
   chat.scrollTop=chat.scrollHeight;
-}
-
-function typing(){
-  const t=document.createElement("div");
-  t.id="typing";
-  t.className="typing";
-  t.textContent="Xarvis is thinking...";
-  chat.appendChild(t);
-}
-
-function stopTyping(){
-  const t=document.getElementById("typing");
-  if(t) t.remove();
 }
 
 async function send(){
@@ -143,20 +161,12 @@ async function send(){
   add(msg,"user");
   input.value="";
 
-  typing();
-
   try{
-    const res=await fetch(BACKEND,{
-      method:"POST",
-      headers:{"Content-Type":"application/json"},
-      body:JSON.stringify({message:msg,history})
-    });
-
+    const res=await fetch(BACKEND_URL,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({message:msg,history})});
     const data=await res.json();
-    stopTyping();
 
     if(!res.ok){
-      add(data.error || "Server error","bot");
+      add(data.error||"Error","bot");
       return;
     }
 
@@ -166,15 +176,11 @@ async function send(){
     history.push({role:"model",parts:[{text:data.reply}]});
 
   }catch(e){
-    stopTyping();
-    add("Server error. Try again.","bot");
+    add("Server error","bot");
   }
 }
 
-input.addEventListener("keypress",(e)=>{
-  if(e.key==="Enter") send();
-});
-
+input.addEventListener("keypress",e=>{if(e.key=="Enter")send();});
 </script>
 
 </body>
