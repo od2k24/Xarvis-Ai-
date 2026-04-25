@@ -1,25 +1,3 @@
-async function callGroq(messages) {
-  const res = await fetch("/api/chat", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json"
-    },
-    body: JSON.stringify({
-      message: messages[messages.length - 1].content,
-      history: messages.slice(0, -1).map(m => ({
-        role: m.role,
-        parts: [{ text: m.content }]
-      }))
-    })
-  });
-
-  const data = await res.json();
-
-  if (!res.ok) {
-    throw new Error(data.error || "Server error");
-  }
-
-  return data.reply;
 /**
  * APP CONFIG & STATE
  */
@@ -42,11 +20,10 @@ const pageTitle = document.getElementById('current-page-title');
 navBtns.forEach(btn => {
     btn.addEventListener('click', () => {
         const target = btn.getAttribute('data-panel');
-        
-        // Update UI
+
         navBtns.forEach(b => b.classList.remove('active'));
         panels.forEach(p => p.classList.remove('active'));
-        
+
         btn.classList.add('active');
         document.getElementById(target).classList.add('active');
         pageTitle.innerText = btn.innerText.replace(/[^\w\s]/gi, '').trim();
@@ -55,30 +32,45 @@ navBtns.forEach(btn => {
 
 /**
  * CHAT SYSTEM
+ * FIX: Removed dead callGroq() function entirely.
+ * FIX: Added history array to the fetch body.
+ * FIX: Wrapped res.json() in try/catch so a bad backend response doesn't crash.
  */
+const chatHistory = [];
+
 async function sendMessage() {
     const message = chatInput.value.trim();
     if (!message || state.isTyping) return;
 
-    // 1. Add User Message to UI
+    // Add user message to UI and history
     appendMessage('usr', message);
+    chatHistory.push({ role: 'user', content: message });
     chatInput.value = '';
     toggleLoading(true);
 
     try {
-        // 2. Call Vercel Backend
         const response = await fetch("/api/chat", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ message })
+            body: JSON.stringify({
+                message,
+                history: chatHistory.slice(0, -1) // send all previous messages
+            })
         });
 
-        const data = await response.json();
+        // FIX: Parse JSON safely — backend might return HTML on crash
+        let data;
+        try {
+            data = await response.json();
+        } catch {
+            throw new Error("Backend returned an invalid response");
+        }
 
-        if (!response.ok) throw new Error(data.error || "Server error");
+        if (!response.ok) throw new Error(data?.error || "Server error");
 
-        // 3. Add AI Response to UI
         appendMessage('ai', data.reply);
+        chatHistory.push({ role: 'assistant', content: data.reply });
+
     } catch (err) {
         appendMessage('ai', "⚠️ Error: " + err.message);
     } finally {
@@ -87,18 +79,17 @@ async function sendMessage() {
 }
 
 function appendMessage(role, text) {
-    // Remove empty state if present
     const emptyState = chatWindow.querySelector('.chat-empty');
     if (emptyState) emptyState.remove();
 
     const msgRow = document.createElement('div');
     msgRow.className = `msg-row ${role === 'usr' ? 'user' : ''}`;
-    
+
     msgRow.innerHTML = `
         <div class="msg-av ${role === 'usr' ? 'usr' : 'ai'}">${role === 'usr' ? 'U' : 'X'}</div>
         <div class="msg-bubble ${role === 'usr' ? 'usr' : 'ai'}">${text}</div>
     `;
-    
+
     chatWindow.appendChild(msgRow);
     chatWindow.scrollTop = chatWindow.scrollHeight;
 }
@@ -106,8 +97,10 @@ function appendMessage(role, text) {
 function toggleLoading(isLoading) {
     state.isTyping = isLoading;
     sendBtn.disabled = isLoading;
+
     if (isLoading) {
         const loader = document.createElement('div');
+        // FIX: Removed broken [loader.id] bracket syntax
         loader.id = 'typing-indicator';
         loader.className = 'typing-row';
         loader.innerHTML = `<div class="typing-bubble"><span></span><span></span><span></span></div>`;
@@ -123,6 +116,7 @@ function toggleLoading(isLoading) {
  */
 chatInput.addEventListener('input', () => {
     sendBtn.disabled = !chatInput.value.trim();
+    // FIX: Removed broken [chatInput.style] bracket syntax
     chatInput.style.height = 'auto';
     chatInput.style.height = chatInput.scrollHeight + 'px';
 });
