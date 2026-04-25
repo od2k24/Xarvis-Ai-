@@ -667,9 +667,16 @@ textarea.form-ctrl{min-height:68px;resize:vertical;line-height:1.5;}
 'use strict';
 
 /* ─── CONSTANTS ────────────────────────────────────────────── */
-const API      = 'https://xarvis-ai.up.railway.app/chat';
-const FREE_LIM = 15;
-const TIMEOUT  = 20000; // 20s
+const API_DIRECT = 'https://xarvis-ai.up.railway.app/chat';
+const FREE_LIM   = 15;
+const TIMEOUT    = 30000; // 30s — Railway cold starts can take ~15s
+
+// CORS proxy endpoints tried in order when direct fails.
+// corsproxy.io is fast & free; allorigins is the fallback.
+const PROXIES = [
+  url => `https://corsproxy.io/?${encodeURIComponent(url)}`,
+  url => `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`,
+];
 
 const TIPS = [
   '<strong>Hook rule #1:</strong> The first 2 seconds decide everything. Bold claim, shocking result, FOMO, or curiosity gap — pick one and commit hard.',
@@ -843,31 +850,69 @@ function closeSidebar() {
 
 /* ─── CORE API CALL ────────────────────────────────────────── */
 /*
- * FIX: Single fetch wrapper.
- * - Correct endpoint: POST https://xarvis-ai.up.railway.app/chat
- * - Correct body: { message: "..." }
- * - Correct response: data.reply
- * - AbortController for 20s timeout
- * - Throws on non-OK HTTP status so callers can catch uniformly
+ * Root cause of "Error connecting to server" on GitHub Pages:
+ * CORS — the browser blocks cross-origin fetch from github.io → railway.app
+ * unless the server sends Access-Control-Allow-Origin headers.
+ *
+ * Strategy: try direct first (works on Replit / local / if Railway has CORS),
+ * then fall back through two free CORS proxies.
+ * Each attempt gets its own AbortController so timeouts are independent.
  */
 async function callAPI(message) {
+  // Build the body once — same for direct and proxy calls
+  const body    = JSON.stringify({ message });
+  const headers = { 'Content-Type': 'application/json' };
+
+  // ── Attempt 1: direct (works if Railway has CORS headers) ──
+  try {
+    const reply = await fetchWithTimeout(API_DIRECT, { method: 'POST', headers, body });
+    if (reply) return reply;
+  } catch (e) {
+    if (e.name === 'AbortError') throw e; // timeout — don't try proxies
+    // TypeError / CORS / network — fall through to proxies
+  }
+
+  // ── Attempts 2+: route through CORS proxies ──
+  for (const makeURL of PROXIES) {
+    const proxyURL = makeURL(API_DIRECT);
+    try {
+      // Proxies accept GET with ?url= OR POST — allorigins needs GET, corsproxy supports POST
+      // We POST to corsproxy (it forwards the body) and GET to allorigins (it just fetches)
+      let reply;
+      if (proxyURL.includes('allorigins')) {
+        // allorigins: wrap as GET, pass message in the forwarded URL isn't possible,
+        // so we encode the full POST payload and use corsproxy-style forwarding.
+        // Fallback: POST to allorigins raw endpoint (it proxies transparently).
+        reply = await fetchWithTimeout(
+          `https://api.allorigins.win/raw?url=${encodeURIComponent(API_DIRECT)}`,
+          { method: 'POST', headers, body }
+        );
+      } else {
+        reply = await fetchWithTimeout(proxyURL, { method: 'POST', headers, body });
+      }
+      if (reply) return reply;
+    } catch (e) {
+      if (e.name === 'AbortError') throw e;
+      // Try next proxy
+    }
+  }
+
+  throw new Error('All connection attempts failed. Check your internet or try again.');
+}
+
+/* Single timed fetch — resolves to the reply string or throws */
+async function fetchWithTimeout(url, options) {
   const ctrl  = new AbortController();
   const timer = setTimeout(() => ctrl.abort(), TIMEOUT);
   try {
-    const res = await fetch(API, {
-      method:  'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body:    JSON.stringify({ message }),
-      signal:  ctrl.signal,
-    });
-    if (!res.ok) throw new Error(`Server returned ${res.status}`);
+    const res = await fetch(url, { ...options, signal: ctrl.signal });
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
     const data = await res.json();
-    // FIX: explicit fallback chain — data.reply is the correct field
     const reply = data.reply ?? data.text ?? data.content ?? data.message ?? '';
-    if (!reply) throw new Error('Empty response from server');
+    if (!reply) throw new Error('Empty response');
     return reply;
   } finally {
-    clearTimeout(timer); // always clear timer
+    clearTimeout(timer);
   }
 }
 
@@ -912,8 +957,8 @@ async function sendChat() {
     typing.remove();
     // FIX: distinguish timeout from server error
     const msg = err.name === 'AbortError'
-      ? '⚠️ Request timed out (20s). Please try again.'
-      : '⚠️ Error connecting to server. Please try again.';
+      ? '⚠️ Request timed out (30s). The server may be starting up — please try again in a moment.'
+      : '⚠️ Could not reach the server. Retrying through backup routes… Please send your message again.';
     appendMsg('ai', msg);
   }
 
