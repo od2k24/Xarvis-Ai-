@@ -1,148 +1,74 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-<meta charset="UTF-8"/>
-<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
-<title>Xarvis AI</title>
-
-<style>
-body{
-  margin:0;
-  font-family:Arial, sans-serif;
-  background:#050816;
-  color:white;
-  height:100vh;
-  display:flex;
-  flex-direction:column;
-}
-
-/* HEADER */
-.header{
-  padding:15px;
-  background:#0b1020;
-  border-bottom:1px solid #222;
-  font-weight:bold;
-}
-
-/* CHAT AREA */
-.chat{
-  flex:1;
-  padding:15px;
-  overflow:auto;
-  display:flex;
-  flex-direction:column;
-  gap:10px;
-}
-
-/* MESSAGES */
-.msg{
-  padding:10px 14px;
-  border-radius:10px;
-  max-width:70%;
-  line-height:1.4;
-}
-
-.user{
-  background:linear-gradient(135deg,#4f8eff,#7c3aff);
-  align-self:flex-end;
-}
-
-.ai{
-  background:#111a33;
-  align-self:flex-start;
-  border:1px solid rgba(255,255,255,0.08);
-}
-
-/* INPUT */
-.input-box{
-  display:flex;
-  padding:10px;
-  border-top:1px solid #222;
-  background:#0b1020;
-}
-
-input{
-  flex:1;
-  padding:12px;
-  border:none;
-  border-radius:8px;
-  outline:none;
-  background:#111a33;
-  color:white;
-}
-
-button{
-  margin-left:10px;
-  padding:12px 16px;
-  border:none;
-  border-radius:8px;
-  background:linear-gradient(135deg,#4f8eff,#7c3aff);
-  color:white;
-  cursor:pointer;
-}
-button:disabled{
-  opacity:0.5;
-  cursor:not-allowed;
-}
-</style>
-</head>
-
-<body>
-
-<div class="header">⚡ Xarvis AI</div>
-
-<div class="chat" id="chat"></div>
-
-<div class="input-box">
-  <input id="input" placeholder="Ask Xarvis..." />
-  <button id="sendBtn" onclick="send()">Send</button>
-</div>
-
-<script>
 const chat = document.getElementById("chat");
 const input = document.getElementById("input");
-const btn = document.getElementById("sendBtn");
 
-/* ADD MESSAGE */
-function addMsg(text, type){
+let messages = [];
+
+function addMessage(text, type) {
   const div = document.createElement("div");
   div.className = "msg " + type;
   div.textContent = text;
   chat.appendChild(div);
   chat.scrollTop = chat.scrollHeight;
+  return div;
 }
 
-/* SEND MESSAGE */
-async function send(){
+async function send() {
   const text = input.value.trim();
-  if(!text) return;
+  if (!text) return;
 
-  addMsg(text,"user");
   input.value = "";
-  btn.disabled = true;
+
+  // store user message
+  messages.push({ role: "user", content: text });
+  addMessage(text, "user");
+
+  // typing indicator
+  const typing = addMessage("Thinking...", "ai");
 
   try {
     const res = await fetch("/api/chat", {
-      method:"POST",
-      headers:{"Content-Type":"application/json"},
-      body:JSON.stringify({ message:text })
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        message: text,
+        history: messages.slice(0, -1)
+      })
     });
 
     const data = await res.json();
-    addMsg(data.reply || "No response","ai");
 
-  } catch(err){
-    addMsg("Error connecting to server","ai");
+    if (!res.ok) {
+      typing.textContent = "Error: " + (data.error || "Failed");
+      return;
+    }
+
+    // replace typing
+    typing.textContent = "";
+
+    // 🔥 STREAM EFFECT (fake streaming for now)
+    typeText(typing, data.reply || "No response");
+
+    messages.push({ role: "assistant", content: data.reply });
+
+  } catch (err) {
+    typing.textContent = "Server error";
   }
-
-  btn.disabled = false;
 }
 
-/* ENTER KEY SUPPORT */
-input.addEventListener("keydown",(e)=>{
-  if(e.key==="Enter") send();
-});
-</script>
+/* ✨ typing animation */
+function typeText(el, text) {
+  let i = 0;
+  el.textContent = "";
 
-</body>
-</html>
+  const interval = setInterval(() => {
+    el.textContent += text[i];
+    i++;
+    chat.scrollTop = chat.scrollHeight;
+
+    if (i >= text.length) clearInterval(interval);
+  }, 15);
+}
+
+input.addEventListener("keydown", (e) => {
+  if (e.key === "Enter") send();
+});
