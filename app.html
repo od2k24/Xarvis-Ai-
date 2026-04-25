@@ -664,65 +664,43 @@ textarea.form-ctrl{min-height:68px;resize:vertical;line-height:1.5;}
 <script>
 'use strict';
 
-/* ═══════════════════════════════════════════════════════════
-   BACKEND CONFIGURATION
-   ─────────────────────────────────────────────────────────
-   Point BACKEND_URL at your Node.js server.
-   All AI calls go through POST /api/chat — the server holds
-   the API key; the browser never sees it.
-
-   Development:  'http://localhost:3000'
-   Production:   'https://your-backend.railway.app'   ← change this
-   ═══════════════════════════════════════════════════════════ */
-const BACKEND_URL = 'https://your-backend.railway.app'; // ← set your backend URL here
-
-/* ─── callAPI — single entry point for all AI requests ─── */
-/**
- * Sends a prompt to the backend /api/chat endpoint.
+/* ─── callAPI — single entry point for all AI requests ───────────────────
  *
- * Expected request body:  { prompt: string }
- * Expected response body: { reply: string }  — or error JSON with .error field
+ * Calls the Vercel serverless function at /api/chat (same origin — no CORS,
+ * no hardcoded URLs, no API keys in the browser).
  *
- * @param {string} prompt  The full prompt string to send.
- * @returns {Promise<string>} The AI text reply.
- * @throws On network failure, non-OK HTTP status, or empty reply.
- */
+ * Request body:   { message: string }
+ * Response body:  { reply: string }  |  { error: string } on failure
+ * ─────────────────────────────────────────────────────────────────────── */
 async function callAPI(prompt) {
   const controller = new AbortController();
-  const timeoutId  = setTimeout(() => controller.abort(), 30_000); // 30 s hard timeout
+  const timeoutId  = setTimeout(() => controller.abort(), 30_000); // 30 s hard limit
 
   let response;
   try {
-    response = await fetch(`${BACKEND_URL}/api/chat`, {
+    response = await fetch('/api/chat', {
       method:  'POST',
       signal:  controller.signal,
       headers: { 'Content-Type': 'application/json' },
-      body:    JSON.stringify({ prompt }),
+      body:    JSON.stringify({ message: prompt }),
     });
   } catch (err) {
-    if (err.name === 'AbortError') {
-      throw new Error('TIMEOUT');
-    }
-    // Network-level failure (server down, no internet, CORS blocked, etc.)
+    if (err.name === 'AbortError') throw new Error('TIMEOUT');
     throw new Error('NETWORK');
   } finally {
     clearTimeout(timeoutId);
   }
 
-  /* ── Parse response body regardless of status so we can surface the
-        server's error message when it provides one. ── */
+  // Always parse JSON so we can forward the server's error message
   let body;
   try {
     body = await response.json();
   } catch {
-    // Body wasn't valid JSON (e.g. a 502 HTML page from the proxy)
     throw new Error(`SERVER_${response.status}`);
   }
 
   if (!response.ok) {
-    // Forward the server's human-readable error when present
-    const msg = body?.error || `Server error ${response.status}`;
-    throw new Error(msg);
+    throw new Error(body?.error || `Server error ${response.status}`);
   }
 
   const reply = body?.reply?.trim?.() ?? '';
@@ -735,7 +713,7 @@ async function callAPI(prompt) {
 function friendlyError(err) {
   switch (err.message) {
     case 'TIMEOUT':      return '⚠️ Request timed out (30 s). Check your connection and try again.';
-    case 'NETWORK':      return '⚠️ Could not reach the server. Make sure your backend is running and CORS is enabled.';
+    case 'NETWORK':      return '⚠️ Could not reach /api/chat. Check your Vercel deployment and function logs.';
     case 'EMPTY_REPLY':  return '⚠️ The AI returned an empty response. Please try again.';
     default:
       if (err.message.startsWith('SERVER_429')) return '⚠️ Rate limit hit — wait a moment then try again.';
