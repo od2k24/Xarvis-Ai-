@@ -664,77 +664,91 @@ textarea.form-ctrl{min-height:68px;resize:vertical;line-height:1.5;}
 <script>
 'use strict';
 
-/* ─── CORE API — Direct Anthropic (no Railway dependency) ─── */
-/*
- * ROOT CAUSE OF YOUR ERROR:
- * Your Railway backend (xarvis-ai.up.railway.app) is unreachable from
- * GitHub Pages due to CORS — the server isn't sending
- * Access-Control-Allow-Origin headers, so the browser blocks every request.
- * All three proxy fallbacks also fail because the origin server is down/sleeping.
+/* ═══════════════════════════════════════════════════════════
+   BACKEND CONFIGURATION
+   ─────────────────────────────────────────────────────────
+   Point BACKEND_URL at your Node.js server.
+   All AI calls go through POST /api/chat — the server holds
+   the API key; the browser never sees it.
+
+   Development:  'http://localhost:3000'
+   Production:   'https://your-backend.railway.app'   ← change this
+   ═══════════════════════════════════════════════════════════ */
+const BACKEND_URL = 'https://your-backend.railway.app'; // ← set your backend URL here
+
+/* ─── callAPI — single entry point for all AI requests ─── */
+/**
+ * Sends a prompt to the backend /api/chat endpoint.
  *
- * FIX: Call the Anthropic API directly. No Railway. No CORS proxy.
- * The API is called from the browser with your key in the Authorization header.
- * NOTE: For production, move this to a backend to protect your key.
- * For a GitHub Pages demo/MVP this is standard practice.
+ * Expected request body:  { prompt: string }
+ * Expected response body: { reply: string }  — or error JSON with .error field
+ *
+ * @param {string} prompt  The full prompt string to send.
+ * @returns {Promise<string>} The AI text reply.
+ * @throws On network failure, non-OK HTTP status, or empty reply.
  */
-const ANTHROPIC_API = 'https://api.anthropic.com/v1/messages';
-const MODEL         = 'claude-sonnet-4-20250514';
-
-// ── PASTE YOUR ANTHROPIC API KEY HERE ──
-// Get one at: https://console.anthropic.com/
-const API_KEY = 'YOUR_ANTHROPIC_API_KEY_HERE';
-
 async function callAPI(prompt) {
-  // Guard: remind user to add key
-  if (!API_KEY || API_KEY === 'YOUR_ANTHROPIC_API_KEY_HERE') {
-    throw new Error('NO_KEY');
-  }
+  const controller = new AbortController();
+  const timeoutId  = setTimeout(() => controller.abort(), 30_000); // 30 s hard timeout
 
-  console.log('[Xarvis] Sending request to Anthropic API…');
-
-  const ctrl  = new AbortController();
-  const timer = setTimeout(() => ctrl.abort(), 30000);
-
-  let res;
+  let response;
   try {
-    res = await fetch(ANTHROPIC_API, {
+    response = await fetch(`${BACKEND_URL}/api/chat`, {
       method:  'POST',
-      signal:  ctrl.signal,
-      headers: {
-        'Content-Type':            'application/json',
-        'x-api-key':               API_KEY,
-        'anthropic-version':       '2023-06-01',
-        'anthropic-dangerous-direct-browser-access': 'true',
-      },
-      body: JSON.stringify({
-        model:      MODEL,
-        max_tokens: 1500,
-        system:     'You are Xarvis AI — an elite viral content strategist and creator co-founder. You help YouTube and social media creators go viral. Be direct, actionable, and high-energy. Always tailor advice to the creator\'s niche when provided.',
-        messages:   [{ role: 'user', content: prompt }],
-      }),
+      signal:  controller.signal,
+      headers: { 'Content-Type': 'application/json' },
+      body:    JSON.stringify({ prompt }),
     });
+  } catch (err) {
+    if (err.name === 'AbortError') {
+      throw new Error('TIMEOUT');
+    }
+    // Network-level failure (server down, no internet, CORS blocked, etc.)
+    throw new Error('NETWORK');
   } finally {
-    clearTimeout(timer);
+    clearTimeout(timeoutId);
   }
 
-  if (!res.ok) {
-    const errBody = await res.json().catch(() => ({}));
-    console.error('[Xarvis] API error:', res.status, errBody);
-    if (res.status === 401) throw new Error('Invalid API key. Check your key in the script.');
-    if (res.status === 429) throw new Error('Rate limit hit. Wait a moment then try again.');
-    throw new Error(`API error ${res.status}`);
+  /* ── Parse response body regardless of status so we can surface the
+        server's error message when it provides one. ── */
+  let body;
+  try {
+    body = await response.json();
+  } catch {
+    // Body wasn't valid JSON (e.g. a 502 HTML page from the proxy)
+    throw new Error(`SERVER_${response.status}`);
   }
 
-  const data  = await res.json();
-  const reply = data?.content?.[0]?.text || '';
+  if (!response.ok) {
+    // Forward the server's human-readable error when present
+    const msg = body?.error || `Server error ${response.status}`;
+    throw new Error(msg);
+  }
 
-  if (!reply) throw new Error('Empty response from API.');
+  const reply = body?.reply?.trim?.() ?? '';
+  if (!reply) throw new Error('EMPTY_REPLY');
 
-  console.log('[Xarvis] Response received ✓');
   return reply;
 }
 
-/* ─── CONSTANTS ── */
+/* ─── Centralised error → user-facing message mapper ─── */
+function friendlyError(err) {
+  switch (err.message) {
+    case 'TIMEOUT':      return '⚠️ Request timed out (30 s). Check your connection and try again.';
+    case 'NETWORK':      return '⚠️ Could not reach the server. Make sure your backend is running and CORS is enabled.';
+    case 'EMPTY_REPLY':  return '⚠️ The AI returned an empty response. Please try again.';
+    default:
+      if (err.message.startsWith('SERVER_429')) return '⚠️ Rate limit hit — wait a moment then try again.';
+      if (err.message.startsWith('SERVER_5'))   return '⚠️ Backend server error. Check your server logs.';
+      return `⚠️ ${err.message}`;
+  }
+}
+
+/* ══════════════════════════════════════════════════════════ */
+/*  Everything below this line is unchanged application logic */
+/* ══════════════════════════════════════════════════════════ */
+
+/* ─── CONSTANTS ─── */
 const FREE_LIM  = 15;
 const TIPS = [
   '<strong>Hook rule #1:</strong> The first 2 seconds decide everything. Bold claim, shocking result, FOMO, or curiosity gap — pick one and commit hard.',
@@ -750,7 +764,7 @@ const LOAD_MSGS = [
   '⚡ Finalizing your content package…',
 ];
 
-/* ─── MEMORY ── */
+/* ─── MEMORY (localStorage — no sensitive data) ─── */
 const Mem = {
   KEY: 'xarvis_v3_mem',
   get()    { try { return JSON.parse(localStorage.getItem(this.KEY) || '{}'); } catch { return {}; } },
@@ -776,14 +790,14 @@ const Mem = {
   topicCount() { return (this.get().topics || []).length; },
 };
 
-/* ─── STATE ── */
+/* ─── RUNTIME STATE ─── */
 const S = {
   isPro: false, msgCount: 0, generated: 0, sessions: 0,
   tts: true, sending: false, isListening: false, recog: null,
   activity: [],
 };
 
-/* ─── INIT ── */
+/* ─── INIT ─── */
 document.addEventListener('DOMContentLoaded', () => {
   try {
     const s = JSON.parse(localStorage.getItem('xarvis_stats') || '{}');
@@ -796,11 +810,6 @@ document.addEventListener('DOMContentLoaded', () => {
   const plan = new URLSearchParams(location.search).get('plan');
   if (plan === 'pro' || plan === 'elite') activatePro(plan, true);
 
-  // Warn if key not set
-  if (!API_KEY || API_KEY === 'YOUR_ANTHROPIC_API_KEY_HERE') {
-    console.warn('[Xarvis] ⚠️ API key not set. Open app.html and paste your Anthropic key into the API_KEY variable.');
-  }
-
   setGreeting();
   renderDashStats();
   renderActivity();
@@ -811,7 +820,7 @@ document.addEventListener('DOMContentLoaded', () => {
   if (!Mem.isSet()) setTimeout(() => openModal('modal-profile'), 1500);
 });
 
-/* ─── BIND ── */
+/* ─── EVENT BINDINGS ─── */
 function bind() {
   document.querySelectorAll('.nav-btn[data-panel]').forEach(b =>
     b.addEventListener('click', () => goPanel(b.dataset.panel))
@@ -870,7 +879,7 @@ function bindSugs() {
   });
 }
 
-/* ─── PANEL SWITCHING ── */
+/* ─── PANEL NAVIGATION ─── */
 const LABELS = {
   dashboard: 'Dashboard', chat: 'AI Advisor', viral: 'Viral Generator',
   postnext: 'Post Next', calendar: '7-Day Calendar', feedback: 'Feedback',
@@ -884,7 +893,7 @@ function goPanel(p) {
   closeSidebar();
 }
 
-/* ─── SIDEBAR ── */
+/* ─── SIDEBAR ─── */
 function toggleSidebar() {
   document.getElementById('sidebar').classList.toggle('open');
   document.getElementById('sb-overlay').classList.toggle('show');
@@ -894,7 +903,7 @@ function closeSidebar() {
   document.getElementById('sb-overlay').classList.remove('show');
 }
 
-/* ─── CHAT ── */
+/* ─── CHAT ─── */
 async function sendChat() {
   if (S.sending) return;
   const ci   = document.getElementById('chat-input');
@@ -922,15 +931,7 @@ async function sendChat() {
     bumpCount();
   } catch (err) {
     typing.remove();
-    let msg;
-    if (err.name === 'AbortError') {
-      msg = '⚠️ Request timed out (30s). Check your internet and try again.';
-    } else if (err.message === 'NO_KEY') {
-      msg = '⚠️ No API key set. Open app.html and paste your Anthropic API key into the API_KEY variable at the top of the script.';
-    } else {
-      msg = `⚠️ Error: ${err.message}`;
-    }
-    appendMsg('ai', msg);
+    appendMsg('ai', friendlyError(err));
     console.error('[Xarvis] Chat error:', err);
   }
 
@@ -985,7 +986,7 @@ function newChat() {
   goPanel('chat');
 }
 
-/* ─── VIRAL GENERATOR ── */
+/* ─── VIRAL GENERATOR ─── */
 async function genViral() {
   const topic    = document.getElementById('viral-topic').value.trim();
   const platform = document.getElementById('viral-platform').value;
@@ -1023,10 +1024,7 @@ async function genViral() {
     logActivity('🔥', `Generated: ${topic}`);
     Mem.addTopic(topic);
   } catch (err) {
-    const msg = err.message === 'NO_KEY'
-      ? '⚠️ Add your Anthropic API key to the API_KEY variable in app.html'
-      : `⚠️ Error: ${err.message}`;
-    toast(msg);
+    toast(friendlyError(err));
     console.error('[Xarvis] Viral gen error:', err);
   } finally {
     clearInterval(iv);
@@ -1035,7 +1033,7 @@ async function genViral() {
   }
 }
 
-/* ─── POST NEXT ── */
+/* ─── POST NEXT ─── */
 async function genPostNext() {
   if (!Mem.isSet()) { openModal('modal-profile'); return; }
   if (!S.isPro && S.msgCount >= FREE_LIM) { openModal('modal-upgrade'); return; }
@@ -1064,7 +1062,7 @@ async function genPostNext() {
     bumpCount(); bumpGen();
     logActivity('🎯', 'Post Next idea generated');
   } catch (err) {
-    toast(err.message === 'NO_KEY' ? '⚠️ Add your Anthropic API key to app.html' : `⚠️ Error: ${err.message}`);
+    toast(friendlyError(err));
     console.error('[Xarvis] Post Next error:', err);
   } finally {
     setBtn('pn-btn',       'pn-spin',       'pn-txt', false, '🎯 Tell me what to post');
@@ -1072,7 +1070,7 @@ async function genPostNext() {
   }
 }
 
-/* ─── CALENDAR ── */
+/* ─── CALENDAR ─── */
 async function genCalendar() {
   if (!Mem.isSet()) { openModal('modal-profile'); return; }
   if (!S.isPro && S.msgCount >= FREE_LIM) { openModal('modal-upgrade'); return; }
@@ -1122,7 +1120,7 @@ async function genCalendar() {
     bumpCount(); bumpGen();
     logActivity('📅', '7-day calendar generated');
   } catch (err) {
-    toast(err.message === 'NO_KEY' ? '⚠️ Add your Anthropic API key to app.html' : `⚠️ Error: ${err.message}`);
+    toast(friendlyError(err));
     console.error('[Xarvis] Calendar error:', err);
   } finally {
     showEl('cal-loading', false);
@@ -1130,7 +1128,7 @@ async function genCalendar() {
   }
 }
 
-/* ─── FEEDBACK ── */
+/* ─── FEEDBACK ANALYZER ─── */
 async function analyzeFeedback() {
   const content = (document.getElementById('fb-input')?.value || '').trim();
   if (!content) { document.getElementById('fb-input')?.focus(); return; }
@@ -1163,14 +1161,14 @@ async function analyzeFeedback() {
     bumpCount(); bumpGen();
     logActivity('📊', 'Content analyzed');
   } catch (err) {
-    toast(err.message === 'NO_KEY' ? '⚠️ Add your Anthropic API key to app.html' : `⚠️ Error: ${err.message}`);
+    toast(friendlyError(err));
     console.error('[Xarvis] Feedback error:', err);
   } finally {
     setBtn('fb-btn', 'fb-spin', 'fb-txt', false, '🔍 Analyze My Content');
   }
 }
 
-/* ─── COPY UTILS ── */
+/* ─── COPY UTILITIES ─── */
 function copyCard(id, btn) {
   const text = document.getElementById(id)?.textContent || '';
   navigator.clipboard.writeText(text).then(() => {
@@ -1195,7 +1193,7 @@ function copyAll() {
   }).catch(() => toast('Copy failed — please copy manually.'));
 }
 
-/* ─── PROFILE ── */
+/* ─── PROFILE ─── */
 function saveProfile() {
   const niche = (document.getElementById('mem-niche')?.value || '').trim();
   if (!niche) { shake('mem-niche'); return; }
@@ -1229,7 +1227,7 @@ function renderProfileChip() {
   setText('s-topics', String(Mem.topicCount()));
 }
 
-/* ─── DASHBOARD ── */
+/* ─── DASHBOARD ─── */
 function setGreeting() {
   const h = new Date().getHours();
   const g = h < 12 ? 'Good morning' : h < 17 ? 'Good afternoon' : 'Good evening';
@@ -1268,7 +1266,7 @@ function renderActivity() {
     </div>`).join('');
 }
 
-/* ─── PLAN / USAGE ── */
+/* ─── PLAN / USAGE ─── */
 function updateUsageUI() {
   const bar = document.getElementById('plan-bar');
   if (S.isPro) {
@@ -1303,7 +1301,7 @@ function saveStats() {
   localStorage.setItem('xarvis_stats', JSON.stringify({ msgCount: S.msgCount, generated: S.generated, sessions: S.sessions }));
 }
 
-/* ─── TTS / MIC ── */
+/* ─── TTS / MIC ─── */
 function toggleTTS() {
   S.tts = !S.tts;
   const btn = document.getElementById('tts-btn');
@@ -1339,11 +1337,11 @@ function toggleMic() {
   S.recog.start();
 }
 
-/* ─── MODAL ── */
+/* ─── MODALS ─── */
 function openModal(id)  { document.getElementById(id)?.classList.add('open'); }
 function closeModal(id) { document.getElementById(id)?.classList.remove('open'); }
 
-/* ─── UI HELPERS ── */
+/* ─── UI HELPERS ─── */
 function mkEl(tag, cls) { const e = document.createElement(tag); e.className = cls; return e; }
 function setText(id, val) { const e = document.getElementById(id); if (e) e.textContent = val; }
 
