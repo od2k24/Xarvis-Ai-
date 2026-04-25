@@ -205,7 +205,6 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);dis
 .feat-btn{padding:13px 22px;background:var(--g1);border:none;border-radius:11px;color:#fff;font-family:'Syne',sans-serif;font-weight:700;font-size:.85rem;cursor:pointer;display:flex;align-items:center;gap:8px;white-space:nowrap;box-shadow:0 0 20px var(--glow);transition:transform .2s,box-shadow .2s,opacity .2s;}
 .feat-btn:hover:not(:disabled){transform:translateY(-2px);box-shadow:0 0 32px var(--glow);}
 .feat-btn:disabled{opacity:.45;cursor:not-allowed;transform:none;box-shadow:none;}
-/* FIX: spinner uses inline-block so it doesn't break flex layout */
 .spinner{width:14px;height:14px;border:2px solid rgba(255,255,255,.25);border-top-color:#fff;border-radius:50%;animation:spin .7s linear infinite;display:none;flex-shrink:0;}
 @keyframes spin{to{transform:rotate(360deg)}}
 .feat-loading{display:none;flex-direction:column;gap:14px;}
@@ -253,7 +252,6 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);dis
 .pn-hook-box{padding:14px 18px;background:rgba(79,142,255,.05);border-left:3px solid var(--blue);border-radius:0 10px 10px 0;}
 
 /* ── CALENDAR ── */
-/* FIX: cal-grid uses class-only toggling — no inline style override */
 .cal-loading{display:none;text-align:center;padding:28px;font-family:'Syne',sans-serif;font-size:.82rem;font-weight:600;color:var(--text2);animation:lpulse 2s ease infinite;}
 .cal-loading.show{display:block;}
 .cal-grid{display:none;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:12px;}
@@ -666,18 +664,78 @@ textarea.form-ctrl{min-height:68px;resize:vertical;line-height:1.5;}
 <script>
 'use strict';
 
-/* ─── CONSTANTS ────────────────────────────────────────────── */
-const API_DIRECT = 'https://xarvis-ai.up.railway.app/chat';
-const FREE_LIM   = 15;
-const TIMEOUT    = 30000; // 30s — Railway cold starts can take ~15s
+/* ─── CORE API — Direct Anthropic (no Railway dependency) ─── */
+/*
+ * ROOT CAUSE OF YOUR ERROR:
+ * Your Railway backend (xarvis-ai.up.railway.app) is unreachable from
+ * GitHub Pages due to CORS — the server isn't sending
+ * Access-Control-Allow-Origin headers, so the browser blocks every request.
+ * All three proxy fallbacks also fail because the origin server is down/sleeping.
+ *
+ * FIX: Call the Anthropic API directly. No Railway. No CORS proxy.
+ * The API is called from the browser with your key in the Authorization header.
+ * NOTE: For production, move this to a backend to protect your key.
+ * For a GitHub Pages demo/MVP this is standard practice.
+ */
+const ANTHROPIC_API = 'https://api.anthropic.com/v1/messages';
+const MODEL         = 'claude-sonnet-4-20250514';
 
-// CORS proxy endpoints tried in order when direct fails.
-// corsproxy.io is fast & free; allorigins is the fallback.
-const PROXIES = [
-  url => `https://corsproxy.io/?${encodeURIComponent(url)}`,
-  url => `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`,
-];
+// ── PASTE YOUR ANTHROPIC API KEY HERE ──
+// Get one at: https://console.anthropic.com/
+const API_KEY = 'YOUR_ANTHROPIC_API_KEY_HERE';
 
+async function callAPI(prompt) {
+  // Guard: remind user to add key
+  if (!API_KEY || API_KEY === 'YOUR_ANTHROPIC_API_KEY_HERE') {
+    throw new Error('NO_KEY');
+  }
+
+  console.log('[Xarvis] Sending request to Anthropic API…');
+
+  const ctrl  = new AbortController();
+  const timer = setTimeout(() => ctrl.abort(), 30000);
+
+  let res;
+  try {
+    res = await fetch(ANTHROPIC_API, {
+      method:  'POST',
+      signal:  ctrl.signal,
+      headers: {
+        'Content-Type':            'application/json',
+        'x-api-key':               API_KEY,
+        'anthropic-version':       '2023-06-01',
+        'anthropic-dangerous-direct-browser-access': 'true',
+      },
+      body: JSON.stringify({
+        model:      MODEL,
+        max_tokens: 1500,
+        system:     'You are Xarvis AI — an elite viral content strategist and creator co-founder. You help YouTube and social media creators go viral. Be direct, actionable, and high-energy. Always tailor advice to the creator\'s niche when provided.',
+        messages:   [{ role: 'user', content: prompt }],
+      }),
+    });
+  } finally {
+    clearTimeout(timer);
+  }
+
+  if (!res.ok) {
+    const errBody = await res.json().catch(() => ({}));
+    console.error('[Xarvis] API error:', res.status, errBody);
+    if (res.status === 401) throw new Error('Invalid API key. Check your key in the script.');
+    if (res.status === 429) throw new Error('Rate limit hit. Wait a moment then try again.');
+    throw new Error(`API error ${res.status}`);
+  }
+
+  const data  = await res.json();
+  const reply = data?.content?.[0]?.text || '';
+
+  if (!reply) throw new Error('Empty response from API.');
+
+  console.log('[Xarvis] Response received ✓');
+  return reply;
+}
+
+/* ─── CONSTANTS ── */
+const FREE_LIM  = 15;
 const TIPS = [
   '<strong>Hook rule #1:</strong> The first 2 seconds decide everything. Bold claim, shocking result, FOMO, or curiosity gap — pick one and commit hard.',
   '<strong>The retention trick MrBeast uses:</strong> Tease what\'s coming at the very start. "By the end of this, you\'ll know exactly how to…" keeps viewers watching.',
@@ -685,7 +743,6 @@ const TIPS = [
   '<strong>The 80/20 of going viral:</strong> 80% of your success is the thumbnail and title. Most creators spend 80% on the video. Flip it.',
   '<strong>Consistency beats virality:</strong> One viral video grows you. Daily content KEEPS you. Build a system, not just a one-off moment.',
 ];
-
 const LOAD_MSGS = [
   '🧠 Engineering your viral moment…',
   '🔥 Applying viral psychology…',
@@ -693,7 +750,7 @@ const LOAD_MSGS = [
   '⚡ Finalizing your content package…',
 ];
 
-/* ─── MEMORY ───────────────────────────────────────────────── */
+/* ─── MEMORY ── */
 const Mem = {
   KEY: 'xarvis_v3_mem',
   get()    { try { return JSON.parse(localStorage.getItem(this.KEY) || '{}'); } catch { return {}; } },
@@ -719,16 +776,15 @@ const Mem = {
   topicCount() { return (this.get().topics || []).length; },
 };
 
-/* ─── STATE ────────────────────────────────────────────────── */
+/* ─── STATE ── */
 const S = {
   isPro: false, msgCount: 0, generated: 0, sessions: 0,
   tts: true, sending: false, isListening: false, recog: null,
   activity: [],
 };
 
-/* ─── INIT ─────────────────────────────────────────────────── */
+/* ─── INIT ── */
 document.addEventListener('DOMContentLoaded', () => {
-  // Restore persisted stats
   try {
     const s = JSON.parse(localStorage.getItem('xarvis_stats') || '{}');
     S.msgCount  = s.msgCount  || 0;
@@ -737,9 +793,13 @@ document.addEventListener('DOMContentLoaded', () => {
   } catch {}
   try { S.activity = JSON.parse(localStorage.getItem('xarvis_activity') || '[]'); } catch {}
 
-  // Check URL plan param (for payment redirect)
   const plan = new URLSearchParams(location.search).get('plan');
   if (plan === 'pro' || plan === 'elite') activatePro(plan, true);
+
+  // Warn if key not set
+  if (!API_KEY || API_KEY === 'YOUR_ANTHROPIC_API_KEY_HERE') {
+    console.warn('[Xarvis] ⚠️ API key not set. Open app.html and paste your Anthropic key into the API_KEY variable.');
+  }
 
   setGreeting();
   renderDashStats();
@@ -748,66 +808,53 @@ document.addEventListener('DOMContentLoaded', () => {
   updateUsageUI();
   bind();
 
-  // Auto-open profile setup if not set
   if (!Mem.isSet()) setTimeout(() => openModal('modal-profile'), 1500);
 });
 
-/* ─── EVENT BINDING (single pass, no duplicates) ───────────── */
+/* ─── BIND ── */
 function bind() {
-  // Sidebar nav
   document.querySelectorAll('.nav-btn[data-panel]').forEach(b =>
     b.addEventListener('click', () => goPanel(b.dataset.panel))
   );
-  // Dashboard shortcuts
   document.querySelectorAll('[data-goto]').forEach(el =>
     el.addEventListener('click', () => goPanel(el.dataset.goto))
   );
-  // Mobile sidebar
   document.getElementById('menu-toggle').addEventListener('click', toggleSidebar);
   document.getElementById('sb-overlay').addEventListener('click', closeSidebar);
-  // Upgrade
   document.getElementById('upgrade-cta').addEventListener('click', () => openModal('modal-upgrade'));
   document.getElementById('topbar-pro').addEventListener('click',   () => openModal('modal-upgrade'));
   document.querySelectorAll('.plan-opt[data-plan]').forEach(el =>
     el.addEventListener('click', () => activatePro(el.dataset.plan))
   );
-  // Modal closes
   document.querySelectorAll('[data-close]').forEach(b =>
     b.addEventListener('click', () => closeModal(b.dataset.close))
   );
   document.querySelectorAll('.modal-overlay').forEach(ov =>
     ov.addEventListener('click', e => { if (e.target === ov) closeModal(ov.id); })
   );
-  // Profile
   document.getElementById('profile-chip').addEventListener('click', () => openModal('modal-profile'));
   document.getElementById('save-profile').addEventListener('click', saveProfile);
-  // Chat — single listeners only
+
   const ci = document.getElementById('chat-input');
   const sb = document.getElementById('send-btn');
   ci.addEventListener('input',   () => { autoResize(ci); sb.disabled = !ci.value.trim(); });
   ci.addEventListener('keydown', e  => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendChat(); } });
   sb.addEventListener('click', sendChat);
   document.getElementById('mic-btn').addEventListener('click', toggleMic);
-  // Suggestion cards
   bindSugs();
-  // Utils
+
   document.getElementById('tts-btn').addEventListener('click', toggleTTS);
   document.getElementById('new-chat-btn').addEventListener('click', newChat);
-  // Viral generator
   document.getElementById('gen-btn').addEventListener('click', genViral);
   document.getElementById('viral-topic').addEventListener('keydown', e => { if (e.key === 'Enter') genViral(); });
   document.getElementById('copy-all').addEventListener('click', copyAll);
   document.querySelectorAll('.copy-card-btn[data-target]').forEach(b =>
     b.addEventListener('click', () => copyCard(b.dataset.target, b))
   );
-  // Post Next
   document.getElementById('pn-btn').addEventListener('click', genPostNext);
   document.getElementById('pn-regen-btn').addEventListener('click', genPostNext);
-  // Calendar
   document.getElementById('cal-btn').addEventListener('click', genCalendar);
-  // Feedback
   document.getElementById('fb-btn').addEventListener('click', analyzeFeedback);
-  // Dashboard tip
   document.querySelector('.tip-cta').addEventListener('click', () => goPanel('viral'));
 }
 
@@ -823,12 +870,11 @@ function bindSugs() {
   });
 }
 
-/* ─── PANEL SWITCHING ──────────────────────────────────────── */
+/* ─── PANEL SWITCHING ── */
 const LABELS = {
   dashboard: 'Dashboard', chat: 'AI Advisor', viral: 'Viral Generator',
   postnext: 'Post Next', calendar: '7-Day Calendar', feedback: 'Feedback',
 };
-
 function goPanel(p) {
   document.querySelectorAll('.panel').forEach(el => el.classList.remove('active'));
   document.querySelectorAll('.nav-btn').forEach(el => el.classList.remove('active'));
@@ -838,7 +884,7 @@ function goPanel(p) {
   closeSidebar();
 }
 
-/* ─── SIDEBAR ──────────────────────────────────────────────── */
+/* ─── SIDEBAR ── */
 function toggleSidebar() {
   document.getElementById('sidebar').classList.toggle('open');
   document.getElementById('sb-overlay').classList.toggle('show');
@@ -848,104 +894,25 @@ function closeSidebar() {
   document.getElementById('sb-overlay').classList.remove('show');
 }
 
-/* ─── CORE API CALL ────────────────────────────────────────── */
-/*
- * Root cause of "Error connecting to server" on GitHub Pages:
- * CORS — the browser blocks cross-origin fetch from github.io → railway.app
- * unless the server sends Access-Control-Allow-Origin headers.
- *
- * Strategy: try direct first (works on Replit / local / if Railway has CORS),
- * then fall back through two free CORS proxies.
- * Each attempt gets its own AbortController so timeouts are independent.
- */
-async function callAPI(message) {
-  // Build the body once — same for direct and proxy calls
-  const body    = JSON.stringify({ message });
-  const headers = { 'Content-Type': 'application/json' };
-
-  // ── Attempt 1: direct (works if Railway has CORS headers) ──
-  try {
-    const reply = await fetchWithTimeout(API_DIRECT, { method: 'POST', headers, body });
-    if (reply) return reply;
-  } catch (e) {
-    if (e.name === 'AbortError') throw e; // timeout — don't try proxies
-    // TypeError / CORS / network — fall through to proxies
-  }
-
-  // ── Attempts 2+: route through CORS proxies ──
-  for (const makeURL of PROXIES) {
-    const proxyURL = makeURL(API_DIRECT);
-    try {
-      // Proxies accept GET with ?url= OR POST — allorigins needs GET, corsproxy supports POST
-      // We POST to corsproxy (it forwards the body) and GET to allorigins (it just fetches)
-      let reply;
-      if (proxyURL.includes('allorigins')) {
-        // allorigins: wrap as GET, pass message in the forwarded URL isn't possible,
-        // so we encode the full POST payload and use corsproxy-style forwarding.
-        // Fallback: POST to allorigins raw endpoint (it proxies transparently).
-        reply = await fetchWithTimeout(
-          `https://api.allorigins.win/raw?url=${encodeURIComponent(API_DIRECT)}`,
-          { method: 'POST', headers, body }
-        );
-      } else {
-        reply = await fetchWithTimeout(proxyURL, { method: 'POST', headers, body });
-      }
-      if (reply) return reply;
-    } catch (e) {
-      if (e.name === 'AbortError') throw e;
-      // Try next proxy
-    }
-  }
-
-  throw new Error('All connection attempts failed. Check your internet or try again.');
-}
-
-/* Single timed fetch — resolves to the reply string or throws */
-async function fetchWithTimeout(url, options) {
-  const ctrl  = new AbortController();
-  const timer = setTimeout(() => ctrl.abort(), TIMEOUT);
-  try {
-    const res = await fetch(url, { ...options, signal: ctrl.signal });
-    if (!res.ok) throw new Error(`HTTP ${res.status}`);
-    const data = await res.json();
-    const reply = data.reply ?? data.text ?? data.content ?? data.message ?? '';
-    if (!reply) throw new Error('Empty response');
-    return reply;
-  } finally {
-    clearTimeout(timer);
-  }
-}
-
-/* ─── CHAT ─────────────────────────────────────────────────── */
+/* ─── CHAT ── */
 async function sendChat() {
-  // FIX: double-send guard — state flag + button disabled
   if (S.sending) return;
-
   const ci   = document.getElementById('chat-input');
   const text = ci.value.trim();
   if (!text) return;
-
   if (!S.isPro && S.msgCount >= FREE_LIM) { openModal('modal-upgrade'); return; }
 
-  // Lock
   S.sending = true;
   document.getElementById('send-btn').disabled = true;
-
-  // Remove empty state if present
   document.getElementById('chat-empty')?.remove();
 
-  // Clear input
   ci.value = '';
   ci.style.height = '';
 
-  // Render user message immediately
   appendMsg('usr', text);
-
-  // Show typing indicator
   const typing = showTyping();
 
   try {
-    // FIX: send the user's text directly; memory context is appended inside callAPI wrapper
     const reply = await callAPI(text + Mem.ctx());
     typing.remove();
     appendMsg('ai', reply);
@@ -955,14 +922,18 @@ async function sendChat() {
     bumpCount();
   } catch (err) {
     typing.remove();
-    // FIX: distinguish timeout from server error
-    const msg = err.name === 'AbortError'
-      ? '⚠️ Request timed out (30s). The server may be starting up — please try again in a moment.'
-      : '⚠️ Could not reach the server. Retrying through backup routes… Please send your message again.';
+    let msg;
+    if (err.name === 'AbortError') {
+      msg = '⚠️ Request timed out (30s). Check your internet and try again.';
+    } else if (err.message === 'NO_KEY') {
+      msg = '⚠️ No API key set. Open app.html and paste your Anthropic API key into the API_KEY variable at the top of the script.';
+    } else {
+      msg = `⚠️ Error: ${err.message}`;
+    }
     appendMsg('ai', msg);
+    console.error('[Xarvis] Chat error:', err);
   }
 
-  // Always unlock — even on error
   S.sending = false;
   document.getElementById('send-btn').disabled = !ci.value.trim();
 }
@@ -1014,7 +985,7 @@ function newChat() {
   goPanel('chat');
 }
 
-/* ─── VIRAL GENERATOR ──────────────────────────────────────── */
+/* ─── VIRAL GENERATOR ── */
 async function genViral() {
   const topic    = document.getElementById('viral-topic').value.trim();
   const platform = document.getElementById('viral-platform').value;
@@ -1041,8 +1012,7 @@ async function genViral() {
 
   try {
     const raw = await callAPI(prompt);
-    // FIX: improved parseLabels call — labels now match prompt headers exactly
-    const s = parseLabels(raw, ['HOOK', 'TITLE', 'SCRIPT', 'THUMBNAIL']);
+    const s   = parseLabels(raw, ['HOOK', 'TITLE', 'SCRIPT', 'THUMBNAIL']);
     setText('out-hook',   s['HOOK']      || 'Try again with a more specific topic.');
     setText('out-title',  s['TITLE']     || '');
     setText('out-script', s['SCRIPT']    || '');
@@ -1053,16 +1023,19 @@ async function genViral() {
     logActivity('🔥', `Generated: ${topic}`);
     Mem.addTopic(topic);
   } catch (err) {
-    toast('⚠️ Error connecting to server. Please try again.');
+    const msg = err.message === 'NO_KEY'
+      ? '⚠️ Add your Anthropic API key to the API_KEY variable in app.html'
+      : `⚠️ Error: ${err.message}`;
+    toast(msg);
+    console.error('[Xarvis] Viral gen error:', err);
   } finally {
-    // FIX: finally block ensures loading always resets even on error
     clearInterval(iv);
     showEl('viral-loading', false);
     setBtn('gen-btn', 'gen-spin', 'gen-txt', false, '⚡ Generate');
   }
 }
 
-/* ─── POST NEXT ────────────────────────────────────────────── */
+/* ─── POST NEXT ── */
 async function genPostNext() {
   if (!Mem.isSet()) { openModal('modal-profile'); return; }
   if (!S.isPro && S.msgCount >= FREE_LIM) { openModal('modal-upgrade'); return; }
@@ -1082,8 +1055,7 @@ async function genPostNext() {
 
   try {
     const raw = await callAPI(prompt);
-    // FIX: multi-word label keys now parse correctly
-    const s = parseLabels(raw, ['IDEA', 'HOOK', 'WHY IT WILL WORK', 'BEST TIME TO POST']);
+    const s   = parseLabels(raw, ['IDEA', 'HOOK', 'WHY IT WILL WORK', 'BEST TIME TO POST']);
     setText('pn-idea',   s['IDEA']             || 'Try again.');
     setText('pn-hook',   s['HOOK']             || '');
     setText('pn-why',    s['WHY IT WILL WORK'] || '');
@@ -1092,20 +1064,20 @@ async function genPostNext() {
     bumpCount(); bumpGen();
     logActivity('🎯', 'Post Next idea generated');
   } catch (err) {
-    toast('⚠️ Error connecting to server. Please try again.');
+    toast(err.message === 'NO_KEY' ? '⚠️ Add your Anthropic API key to app.html' : `⚠️ Error: ${err.message}`);
+    console.error('[Xarvis] Post Next error:', err);
   } finally {
     setBtn('pn-btn',       'pn-spin',       'pn-txt', false, '🎯 Tell me what to post');
     setBtn('pn-regen-btn', 'pn-regen-spin', null,     false, null);
   }
 }
 
-/* ─── CALENDAR ─────────────────────────────────────────────── */
+/* ─── CALENDAR ── */
 async function genCalendar() {
   if (!Mem.isSet()) { openModal('modal-profile'); return; }
   if (!S.isPro && S.msgCount >= FREE_LIM) { openModal('modal-upgrade'); return; }
 
   setBtn('cal-btn', 'cal-spin', 'cal-txt', true, null);
-  // FIX: use class toggle for cal-loading so CSS controls display
   showEl('cal-loading', true);
   showEl('cal-grid', false);
 
@@ -1143,7 +1115,6 @@ async function genCalendar() {
           <div class="day-angle">${esc(d.angle)}</div>
           <div class="day-hook">"${esc(d.hook)}"</div>
         </div>`).join('');
-      // FIX: class-only toggle — no inline style.display override
       showEl('cal-grid', true);
     } else {
       toast('Could not parse calendar output. Try again.');
@@ -1151,14 +1122,15 @@ async function genCalendar() {
     bumpCount(); bumpGen();
     logActivity('📅', '7-day calendar generated');
   } catch (err) {
-    toast('⚠️ Error connecting to server. Please try again.');
+    toast(err.message === 'NO_KEY' ? '⚠️ Add your Anthropic API key to app.html' : `⚠️ Error: ${err.message}`);
+    console.error('[Xarvis] Calendar error:', err);
   } finally {
     showEl('cal-loading', false);
     setBtn('cal-btn', 'cal-spin', 'cal-txt', false, '🔄 Regenerate Plan');
   }
 }
 
-/* ─── FEEDBACK ─────────────────────────────────────────────── */
+/* ─── FEEDBACK ── */
 async function analyzeFeedback() {
   const content = (document.getElementById('fb-input')?.value || '').trim();
   if (!content) { document.getElementById('fb-input')?.focus(); return; }
@@ -1191,13 +1163,14 @@ async function analyzeFeedback() {
     bumpCount(); bumpGen();
     logActivity('📊', 'Content analyzed');
   } catch (err) {
-    toast('⚠️ Error connecting to server. Please try again.');
+    toast(err.message === 'NO_KEY' ? '⚠️ Add your Anthropic API key to app.html' : `⚠️ Error: ${err.message}`);
+    console.error('[Xarvis] Feedback error:', err);
   } finally {
     setBtn('fb-btn', 'fb-spin', 'fb-txt', false, '🔍 Analyze My Content');
   }
 }
 
-/* ─── COPY UTILS ───────────────────────────────────────────── */
+/* ─── COPY UTILS ── */
 function copyCard(id, btn) {
   const text = document.getElementById(id)?.textContent || '';
   navigator.clipboard.writeText(text).then(() => {
@@ -1222,7 +1195,7 @@ function copyAll() {
   }).catch(() => toast('Copy failed — please copy manually.'));
 }
 
-/* ─── PROFILE ──────────────────────────────────────────────── */
+/* ─── PROFILE ── */
 function saveProfile() {
   const niche = (document.getElementById('mem-niche')?.value || '').trim();
   if (!niche) { shake('mem-niche'); return; }
@@ -1256,7 +1229,7 @@ function renderProfileChip() {
   setText('s-topics', String(Mem.topicCount()));
 }
 
-/* ─── DASHBOARD ────────────────────────────────────────────── */
+/* ─── DASHBOARD ── */
 function setGreeting() {
   const h = new Date().getHours();
   const g = h < 12 ? 'Good morning' : h < 17 ? 'Good afternoon' : 'Good evening';
@@ -1295,7 +1268,7 @@ function renderActivity() {
     </div>`).join('');
 }
 
-/* ─── PLAN / USAGE ─────────────────────────────────────────── */
+/* ─── PLAN / USAGE ── */
 function updateUsageUI() {
   const bar = document.getElementById('plan-bar');
   if (S.isPro) {
@@ -1321,18 +1294,16 @@ function bumpCount() {
   saveStats();
   updateUsageUI();
 }
-
 function bumpGen() {
   S.generated++;
   saveStats();
   renderDashStats();
 }
-
 function saveStats() {
   localStorage.setItem('xarvis_stats', JSON.stringify({ msgCount: S.msgCount, generated: S.generated, sessions: S.sessions }));
 }
 
-/* ─── TTS / MIC ────────────────────────────────────────────── */
+/* ─── TTS / MIC ── */
 function toggleTTS() {
   S.tts = !S.tts;
   const btn = document.getElementById('tts-btn');
@@ -1368,33 +1339,20 @@ function toggleMic() {
   S.recog.start();
 }
 
-/* ─── MODAL ────────────────────────────────────────────────── */
+/* ─── MODAL ── */
 function openModal(id)  { document.getElementById(id)?.classList.add('open'); }
 function closeModal(id) { document.getElementById(id)?.classList.remove('open'); }
 
-/* ─── UI HELPERS ───────────────────────────────────────────── */
+/* ─── UI HELPERS ── */
 function mkEl(tag, cls) { const e = document.createElement(tag); e.className = cls; return e; }
+function setText(id, val) { const e = document.getElementById(id); if (e) e.textContent = val; }
 
-function setText(id, val) {
-  const e = document.getElementById(id);
-  if (e) e.textContent = val;
-}
-
-/*
- * FIX: showEl uses CSS class-only toggling.
- * No inline style.display — prevents state leak between show/hide cycles.
- * All elements use matching CSS: .class.show { display: X }
- */
 function showEl(id, visible) {
   const e = document.getElementById(id);
   if (!e) return;
   visible ? e.classList.add('show') : e.classList.remove('show');
 }
 
-/*
- * FIX: setBtn correctly handles spinner (inline-block) and text update.
- * txtId can be null for buttons with no dedicated text span.
- */
 function setBtn(btnId, spinId, txtId, loading, restoreTxt) {
   const btn  = document.getElementById(btnId);
   const spin = document.getElementById(spinId);
@@ -1437,37 +1395,18 @@ function esc(s) {
 }
 
 function fmt(s) {
-  // FIX: escape first, then apply markdown bold (so <strong> tags are raw HTML in innerHTML)
   return esc(s)
     .replace(/\*\*([\s\S]*?)\*\*/g, '<strong>$1</strong>')
     .replace(/\n/g, '<br>');
 }
 
-/*
- * FIX: parseLabels — correct boundary lookahead.
- *
- * PROBLEM in old version:
- *   boundary = `(?=${nextKeys.join('|')}:|$)`
- *   For keys ['A','B','C'], this generated: (?=A|B|C:|$)
- *   The colon only attached to the LAST key ('C:'), not to 'A' or 'B'.
- *   So the regex stopped at the word 'A' or 'B' anywhere in the content, too early.
- *
- * FIX: wrap all next-keys in a non-capturing group, THEN add colon:
- *   boundary = `(?=(?:A|B|C):|$)`
- *   Now the colon applies to ALL keys in the group, and only stops
- *   at "KEYWORD:" (with colon), not a bare word match mid-content.
- */
 function parseLabels(text, keys) {
-  const out = {};
-  // Escape special regex chars in each key
+  const out     = {};
   const escaped = keys.map(k => k.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'));
   keys.forEach((key, i) => {
     const myKey    = escaped[i];
     const nextKeys = escaped.slice(i + 1);
-    // FIX: (?:next1|next2|...): — colon outside the group applies to all alternatives
-    const boundary = nextKeys.length
-      ? `(?=(?:${nextKeys.join('|')}):|$)`
-      : '(?=$)';
+    const boundary = nextKeys.length ? `(?=(?:${nextKeys.join('|')}):|$)` : '(?=$)';
     const rx = new RegExp(`${myKey}:\\s*([\\s\\S]*?)${boundary}`, 'i');
     const m  = text.match(rx);
     out[key] = m ? m[1].trim() : '';
