@@ -1,17 +1,17 @@
 {
-  "name": "xarvis-ai-api",
-  "version": "1.0.0",
-  "description": "Xarvis AI serverless backend (Vercel + Groq)",
-  "type": "module",
+  "name": "xarvis-ai",
+  "version": "3.0.0",
+  "description": "Xarvis AI — Creator OS powered by Groq",
+  "private": true,
+  "engines": {
+    "node": ">=18.x"
+  },
   "scripts": {
     "dev": "vercel dev",
-    "start": "node api/chat.js"
+    "deploy": "vercel --prod"
   },
-  "dependencies": {
-    "cors": "^2.8.5",
-    "dotenv": "^16.4.5"
-  },
-  "engines": {
-    "node": "18.x"
+  "dependencies": {},
+  "devDependencies": {
+    "vercel": "^37.0.0"
   }
 }
