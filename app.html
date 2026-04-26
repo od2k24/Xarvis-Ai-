@@ -1315,7 +1315,7 @@ function showToast(msg) {
   el.style.cssText = 'position:fixed;bottom:24px;right:24px;z-index:9999;padding:12px 20px;background:#1a2035;border:1px solid rgba(248,113,113,.3);border-radius:10px;color:#f87171;font-family:"DM Sans",sans-serif;font-size:.84rem;box-shadow:0 4px 24px rgba(0,0,0,.4);animation:msgIn .25s ease both;';
   el.textContent = msg;
   document.body.appendChild(el);
-  setTimeout(() => el.remove(), 4000);
+  setTimeout(() => el.remove(), 4000); fetch("/api/chat")
 }
 </script>
 </body>
