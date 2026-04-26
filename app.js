@@ -1,271 +1,337 @@
-/**
- * /api/chat.js — Xarvis AI Chat Endpoint
- * Vercel serverless function (no Express, no app.listen)
- * Handles: chat, viral generation, postnext, calendar, feedback
- */
+// Xarvis AI V3 — app.js
+// Phase 1: Chat system with streaming + goal memory
 
-const GROQ_API_URL = "https://api.groq.com/openai/v1/chat/completions";
-const MODEL = "llama-3.3-70b-versatile";
+import { CONFIG } from './config.js';
 
-// ─── SYSTEM PROMPTS ───────────────────────────────────────────────────────────
+// ── State ───────────────────────────────────────────────
+let userGoal   = '';
+let messages   = []; // { role: 'user'|'assistant', content: string }
+let isStreaming = false;
 
-const SYSTEM_CHAT = `You are Xarvis AI — an elite AI strategist and co-founder for content creators.
+// ── DOM Refs ─────────────────────────────────────────────
+const chatInner    = document.getElementById('chat-inner');
+const emptyState   = document.getElementById('empty-state');
+const chatInput    = document.getElementById('chat-input');
+const sendBtn      = document.getElementById('send-btn');
+const chatContainer= document.getElementById('chat-container');
+const goalBadgeText= document.getElementById('goal-badge-text');
+const statusDot    = document.getElementById('status-dot');
+const statusText   = document.getElementById('status-text');
+const modalOverlay = document.getElementById('modal-overlay');
+const modalGoalInput = document.getElementById('modal-goal-input');
 
-Your identity:
-- Razor-sharp, direct, and tactically brilliant
-- You think like a viral growth hacker with a data-driven creative mind
-- You give ACTIONABLE, numbered, specific advice — never vague platitudes
-- You use bold (**term**) for key concepts and structure with numbered steps
-- You know what makes content go viral on YouTube, TikTok, and Instagram
-- You speak like a mentor who has coached 7-figure creators
+// ── Starter Prompts ──────────────────────────────────────
+const STARTERS = [
+  'Build me a 30-day action plan for my goal',
+  'What should I do today to move forward?',
+  'Give me 10 YouTube video ideas for my niche',
+  'How do I monetize faster this month?',
+  'What are the biggest mistakes to avoid?',
+];
 
-Your rules:
-1. Always lead with the most important insight or action
-2. Never be generic — be specific to the creator's niche and context
-3. Use examples, numbers, and frameworks when possible
-4. End responses with a clear next step or challenge for the creator
-5. Keep responses focused — quality over quantity`;
+// ── Init ─────────────────────────────────────────────────
+function init() {
+  userGoal = localStorage.getItem(CONFIG.GOAL_STORAGE_KEY) || '';
 
-const SYSTEM_VIRAL = `You are Xarvis AI — a viral content engineering expert.
-
-Generate a complete viral content package. You MUST use EXACTLY this format with these labels:
-
-HOOK: [A single punchy, scroll-stopping opening line — max 2 sentences. Use pattern interrupts, bold claims, or shocking stats.]
-
-SCRIPT: [Full spoken script for the video. Start with the hook. Include: attention-grabbing opening (5-10 sec), value delivery (main content), and a strong CTA at the end. Format with clear sections. Make it feel natural and high-energy.]
-
-TITLE: [3 title options, numbered. Each must use psychological triggers: curiosity gap, numbers, controversy, or FOMO. Optimized for the specific platform.]
-
-THUMBNAIL: [Detailed thumbnail concept: what text appears, facial expression if person is shown, background/colors, layout. Be specific so a designer can execute it immediately.]
-
-XARVIS_END`;
-
-const SYSTEM_POSTNEXT = `You are Xarvis AI — an expert at identifying the highest-potential content opportunity for a creator RIGHT NOW.
-
-Analyze the creator's profile and output EXACTLY this format:
-
-IDEA: [One specific, actionable content idea. Be specific — not "talk about fitness" but "do a 60-second video on the single exercise that burns the most calories per minute, with a shocking stat in the hook"]
-
-HOOK: [The exact opening line they should say or show. Make it irresistible.]
-
-WHY IT WILL WORK: [3 specific reasons this will perform well — algorithm timing, audience psychology, trend alignment. Use data-thinking.]
-
-BEST TIME TO POST: [Specific day and time recommendation with a brief reason why]
-
-END_SENTINEL`;
-
-const SYSTEM_CALENDAR = `You are Xarvis AI — a strategic content calendar architect.
-
-Create a 7-day content calendar. Output EXACTLY 7 lines, one per day, in this pipe-separated format:
-
-DAY 1 | [Specific Topic] | [Unique Angle/Hook Strategy] | [Opening hook line]
-DAY 2 | [Specific Topic] | [Unique Angle/Hook Strategy] | [Opening hook line]
-DAY 3 | [Specific Topic] | [Unique Angle/Hook Strategy] | [Opening hook line]
-DAY 4 | [Specific Topic] | [Unique Angle/Hook Strategy] | [Opening hook line]
-DAY 5 | [Specific Topic] | [Unique Angle/Hook Strategy] | [Opening hook line]
-DAY 6 | [Specific Topic] | [Unique Angle/Hook Strategy] | [Opening hook line]
-DAY 7 | [Specific Topic] | [Unique Angle/Hook Strategy] | [Opening hook line]
-
-Rules:
-- Every topic must be distinct and strategically sequenced
-- Mix content types: educational, entertainment, personal story, controversial, how-to
-- Each hook line must be usable as the literal first words of the video
-- Make it specific to the creator's niche — never generic`;
-
-const SYSTEM_FEEDBACK = `You are Xarvis AI — a brutal, honest content performance analyst.
-
-Analyze the content idea and output EXACTLY this format:
-
-STRENGTHS: [2-3 specific things that work well. Be precise — cite psychological or algorithmic reasons.]
-
-WEAKNESSES: [2-3 specific problems. Be direct — vague content kills views. Identify the exact failure points.]
-
-IMPROVEMENTS: [3 specific, actionable fixes. Each improvement should be implementable immediately. Show the before/after when possible.]
-
-VIRAL SCORE: [X]/10
-
-VERDICT: [1-2 sentences. Be honest. Tell them exactly where this content sits and what it would take to make it a top performer.]
-
-END_SENTINEL`;
-
-// ─── GROQ API CALL ────────────────────────────────────────────────────────────
-
-async function callGroq(systemPrompt, messages, temperature = 0.75, maxTokens = 1200) {
-  const apiKey = process.env.GROQ_API_KEY;
-
-  if (!apiKey) {
-    throw new Error("GROQ_API_KEY environment variable is not set");
+  // Redirect to index if no goal set
+  if (!userGoal) {
+    window.location.href = 'index.html';
+    return;
   }
 
-  const body = {
-    model: MODEL,
-    messages: [
-      { role: "system", content: systemPrompt },
-      ...messages,
-    ],
-    temperature,
-    max_tokens: maxTokens,
-  };
+  // Load saved chat history
+  try {
+    const saved = localStorage.getItem(CONFIG.HISTORY_STORAGE_KEY);
+    messages = saved ? JSON.parse(saved) : [];
+  } catch {
+    messages = [];
+  }
 
-  const response = await fetch(GROQ_API_URL, {
-    method: "POST",
-    headers: {
-      Authorization: `Bearer ${apiKey}`,
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify(body),
+  renderGoalBadge();
+  renderStarters();
+  renderAllMessages();
+  setupListeners();
+  adjustTextareaHeight();
+}
+
+// ── Goal Badge ───────────────────────────────────────────
+function renderGoalBadge() {
+  goalBadgeText.textContent = userGoal;
+}
+
+// ── Starters ─────────────────────────────────────────────
+function renderStarters() {
+  const container = document.getElementById('starters');
+  container.innerHTML = '';
+  STARTERS.forEach(text => {
+    const btn = document.createElement('button');
+    btn.className = 'starter-btn';
+    btn.textContent = text;
+    btn.addEventListener('click', () => {
+      chatInput.value = text;
+      adjustTextareaHeight();
+      sendBtn.disabled = false;
+      sendMessage();
+    });
+    container.appendChild(btn);
+  });
+}
+
+// ── Render All Messages ──────────────────────────────────
+function renderAllMessages() {
+  // Remove existing message elements (keep empty state)
+  chatInner.querySelectorAll('.message').forEach(el => el.remove());
+
+  if (messages.length === 0) {
+    emptyState.style.display = 'flex';
+    return;
+  }
+
+  emptyState.style.display = 'none';
+
+  messages.forEach(msg => {
+    appendMessageEl(msg.role, msg.content);
   });
 
-  const data = await response.json();
-
-  if (!response.ok) {
-    const errMsg = data?.error?.message || `Groq API error (${response.status})`;
-    throw new Error(errMsg);
-  }
-
-  const content = data?.choices?.[0]?.message?.content;
-  if (!content) {
-    throw new Error("Empty response from Groq API");
-  }
-
-  return content;
+  scrollToBottom();
 }
 
-// ─── HANDLERS ─────────────────────────────────────────────────────────────────
+// ── Create Message Element ───────────────────────────────
+function appendMessageEl(role, content = '') {
+  emptyState.style.display = 'none';
 
-async function handleChat(body) {
-  const { message, context = "", history = [] } = body;
+  const msgEl = document.createElement('div');
+  msgEl.className = `message ${role}`;
 
-  if (!message || typeof message !== "string" || !message.trim()) {
-    return { status: 400, data: { error: "message field is required and must be a non-empty string" } };
-  }
+  const avatarEl = document.createElement('div');
+  avatarEl.className = 'msg-avatar';
+  avatarEl.textContent = role === 'user' ? 'U' : 'X';
 
-  const systemPrompt = SYSTEM_CHAT + (context ? `\n\n${context}` : "");
+  const bodyEl = document.createElement('div');
+  bodyEl.className = 'msg-body';
 
-  // Sanitize and validate history
-  const safeHistory = Array.isArray(history)
-    ? history
-        .filter((m) => m && typeof m.role === "string" && typeof m.content === "string")
-        .slice(-12) // last 12 turns max
-        .map((m) => ({
-          role: m.role === "assistant" || m.role === "user" ? m.role : "user",
-          content: m.content.slice(0, 2000), // cap individual message length
-        }))
-    : [];
+  const roleEl = document.createElement('div');
+  roleEl.className = 'msg-role';
+  roleEl.textContent = role === 'user' ? 'You' : 'Xarvis';
 
-  const messages = [...safeHistory, { role: "user", content: message.slice(0, 2000) }];
+  const contentEl = document.createElement('div');
+  contentEl.className = 'msg-content';
+  contentEl.textContent = content;
 
-  const reply = await callGroq(systemPrompt, messages, 0.75, 1024);
-  return { status: 200, data: { reply, ok: true } };
+  bodyEl.appendChild(roleEl);
+  bodyEl.appendChild(contentEl);
+  msgEl.appendChild(avatarEl);
+  msgEl.appendChild(bodyEl);
+  chatInner.appendChild(msgEl);
+
+  return { msgEl, contentEl };
 }
 
-async function handleGenerate(body) {
-  const { type, topic, platform, content, context = "", memory = {} } = body;
-
-  const VALID_TYPES = ["viral", "postnext", "calendar", "feedback"];
-  if (!VALID_TYPES.includes(type)) {
-    return { status: 400, data: { error: `type must be one of: ${VALID_TYPES.join(", ")}` } };
-  }
-
-  let systemPrompt, userMessage, temperature, maxTokens;
-
-  switch (type) {
-    case "viral": {
-      if (!topic || !topic.trim()) {
-        return { status: 400, data: { error: "topic is required for viral generation" } };
-      }
-      systemPrompt = SYSTEM_VIRAL;
-      userMessage = `Create a complete viral content package for a ${platform || "YouTube Shorts"} video about: "${topic.trim()}"
-${context}`;
-      temperature = 0.8;
-      maxTokens = 1400;
-      break;
-    }
-
-    case "postnext": {
-      systemPrompt = SYSTEM_POSTNEXT;
-      userMessage = `Based on this creator profile, what is the single highest-potential content idea for today?
-${context || `Niche: ${memory.niche || "general content"}\nPlatform: ${memory.platform || "YouTube Shorts"}`}`;
-      temperature = 0.8;
-      maxTokens = 900;
-      break;
-    }
-
-    case "calendar": {
-      systemPrompt = SYSTEM_CALENDAR;
-      userMessage = `Build a 7-day content calendar for this creator:
-${context || `Niche: ${memory.niche || "general content"}\nPlatform: ${memory.platform || "YouTube Shorts"}\nTone: ${memory.tone || "motivational"}`}`;
-      temperature = 0.75;
-      maxTokens = 1200;
-      break;
-    }
-
-    case "feedback": {
-      if (!content || !content.trim()) {
-        return { status: 400, data: { error: "content is required for feedback analysis" } };
-      }
-      systemPrompt = SYSTEM_FEEDBACK;
-      userMessage = `Analyze this content idea and give me a complete performance breakdown:
-
-"${content.trim()}"
-${context}`;
-      temperature = 0.65;
-      maxTokens = 1000;
-      break;
-    }
-  }
-
-  const text = await callGroq(systemPrompt, [{ role: "user", content: userMessage }], temperature, maxTokens);
-  return { status: 200, data: { text, ok: true } };
+// ── Scroll to Bottom ─────────────────────────────────────
+function scrollToBottom() {
+  requestAnimationFrame(() => {
+    chatContainer.scrollTop = chatContainer.scrollHeight;
+  });
 }
 
-// ─── VERCEL SERVERLESS HANDLER ────────────────────────────────────────────────
+// ── Set Status ───────────────────────────────────────────
+function setStatus(text, thinking = false) {
+  statusText.textContent = text;
+  statusDot.className = `status-dot${thinking ? ' thinking' : ''}`;
+}
 
-export default async function handler(req, res) {
-  // CORS headers
-  res.setHeader("Access-Control-Allow-Origin", "*");
-  res.setHeader("Access-Control-Allow-Methods", "POST, OPTIONS");
-  res.setHeader("Access-Control-Allow-Headers", "Content-Type");
+// ── Send Message ─────────────────────────────────────────
+async function sendMessage() {
+  const content = chatInput.value.trim();
+  if (!content || isStreaming) return;
 
-  // Preflight
-  if (req.method === "OPTIONS") {
-    return res.status(200).end();
-  }
+  isStreaming = true;
+  chatInput.value = '';
+  adjustTextareaHeight();
+  sendBtn.disabled = true;
+  setStatus('Thinking...', true);
 
-  // Only POST allowed
-  if (req.method !== "POST") {
-    return res.status(405).json({ error: "Method not allowed. Use POST." });
-  }
+  // Add user message
+  messages.push({ role: 'user', content });
+  persistHistory();
+  appendMessageEl('user', content);
+  scrollToBottom();
 
-  const body = req.body;
+  // Prepare AI message element
+  const { contentEl } = appendMessageEl('assistant', '');
+  // Add blinking cursor
+  const cursor = document.createElement('span');
+  cursor.className = 'typing-cursor';
+  contentEl.appendChild(cursor);
+  scrollToBottom();
 
-  if (!body || typeof body !== "object") {
-    return res.status(400).json({ error: "Invalid JSON body" });
-  }
+  let fullResponse = '';
 
   try {
-    // Route by presence of 'type' field vs 'message' field
-    let result;
+    // Build message array for API (limit history length)
+    const historyForAPI = messages
+      .slice(-CONFIG.MAX_HISTORY_MESSAGES)
+      .map(m => ({ role: m.role, content: m.content }));
 
-    if (body.type) {
-      result = await handleGenerate(body);
-    } else if (body.message !== undefined) {
-      result = await handleChat(body);
-    } else {
-      return res.status(400).json({ error: "Body must contain either 'message' (for chat) or 'type' (for generation)" });
+    const response = await fetch(`${CONFIG.API_BASE_URL}/chat`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        messages: historyForAPI,
+        goal: userGoal,
+      }),
+    });
+
+    if (!response.ok) {
+      const err = await response.json().catch(() => ({ error: 'Unknown error' }));
+      throw new Error(err.error || `HTTP ${response.status}`);
     }
 
-    return res.status(result.status).json(result.data);
+    // Stream SSE response
+    const reader = response.body.getReader();
+    const decoder = new TextDecoder();
+    let buffer = '';
+
+    setStatus('Streaming...', true);
+
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+
+      buffer += decoder.decode(value, { stream: true });
+      const lines = buffer.split('\n');
+      buffer = lines.pop() ?? '';
+
+      for (const line of lines) {
+        if (!line.startsWith('data: ')) continue;
+        const data = line.slice(6).trim();
+        if (data === '[DONE]') continue;
+
+        try {
+          const parsed = JSON.parse(data);
+          const delta = parsed.choices?.[0]?.delta?.content;
+          if (delta) {
+            fullResponse += delta;
+            // Update text without cursor, then re-add cursor
+            contentEl.textContent = fullResponse;
+            contentEl.appendChild(cursor);
+            scrollToBottom();
+          }
+        } catch {
+          // malformed chunk — skip
+        }
+      }
+    }
 
   } catch (err) {
-    console.error("[Xarvis API Error]", err.message);
+    fullResponse = `Error: ${err.message}. Check your API key and try again.`;
+    contentEl.textContent = fullResponse;
+  } finally {
+    // Remove cursor
+    cursor.remove();
+    contentEl.textContent = fullResponse;
 
-    // Never leak stack traces or API keys to client
-    const isGroqError = err.message?.toLowerCase().includes("groq");
-    const clientMessage = isGroqError
-      ? "AI service temporarily unavailable. Please try again."
-      : "An unexpected error occurred. Please try again.";
+    // Save assistant message
+    if (fullResponse) {
+      messages.push({ role: 'assistant', content: fullResponse });
+      persistHistory();
+    }
 
-    return res.status(500).json({ error: clientMessage, ok: false });
+    isStreaming = false;
+    sendBtn.disabled = chatInput.value.trim() === '';
+    setStatus('Ready', false);
+    scrollToBottom();
   }
 }
+
+// ── Persist History ──────────────────────────────────────
+function persistHistory() {
+  try {
+    // Keep only last N messages to avoid localStorage bloat
+    const trimmed = messages.slice(-CONFIG.MAX_HISTORY_MESSAGES);
+    localStorage.setItem(CONFIG.HISTORY_STORAGE_KEY, JSON.stringify(trimmed));
+  } catch {
+    // Storage full — clear old history
+    localStorage.removeItem(CONFIG.HISTORY_STORAGE_KEY);
+  }
+}
+
+// ── Textarea Auto-resize ─────────────────────────────────
+function adjustTextareaHeight() {
+  chatInput.style.height = 'auto';
+  chatInput.style.height = Math.min(chatInput.scrollHeight, 200) + 'px';
+}
+
+// ── Modal ─────────────────────────────────────────────────
+function openGoalModal() {
+  modalGoalInput.value = userGoal;
+  modalOverlay.classList.remove('hidden');
+  modalGoalInput.focus();
+}
+
+function closeGoalModal() {
+  modalOverlay.classList.add('hidden');
+}
+
+function saveGoal() {
+  const newGoal = modalGoalInput.value.trim();
+  if (!newGoal) return;
+
+  const goalChanged = newGoal !== userGoal;
+  userGoal = newGoal;
+  localStorage.setItem(CONFIG.GOAL_STORAGE_KEY, userGoal);
+
+  // If goal changed, clear chat history for fresh context
+  if (goalChanged) {
+    messages = [];
+    localStorage.removeItem(CONFIG.HISTORY_STORAGE_KEY);
+    renderAllMessages();
+  }
+
+  renderGoalBadge();
+  closeGoalModal();
+}
+
+// ── Setup Listeners ──────────────────────────────────────
+function setupListeners() {
+  // Send on button click
+  sendBtn.addEventListener('click', sendMessage);
+
+  // Enable/disable send button
+  chatInput.addEventListener('input', () => {
+    sendBtn.disabled = chatInput.value.trim() === '' || isStreaming;
+    adjustTextareaHeight();
+  });
+
+  // Send on Enter, new line on Shift+Enter
+  chatInput.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      if (!sendBtn.disabled) sendMessage();
+    }
+  });
+
+  // Clear conversation
+  document.getElementById('clear-btn').addEventListener('click', () => {
+    if (messages.length === 0) return;
+    if (!confirm('Clear conversation? Your goal will be kept.')) return;
+    messages = [];
+    localStorage.removeItem(CONFIG.HISTORY_STORAGE_KEY);
+    renderAllMessages();
+  });
+
+  // Goal modal
+  document.getElementById('goal-btn').addEventListener('click', openGoalModal);
+  document.getElementById('modal-cancel').addEventListener('click', closeGoalModal);
+  document.getElementById('modal-save').addEventListener('click', saveGoal);
+  modalGoalInput.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') saveGoal();
+    if (e.key === 'Escape') closeGoalModal();
+  });
+  modalOverlay.addEventListener('click', (e) => {
+    if (e.target === modalOverlay) closeGoalModal();
+  });
+}
+
+// ── Run ───────────────────────────────────────────────────
+init();
