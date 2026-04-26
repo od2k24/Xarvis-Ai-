@@ -5,7 +5,7 @@
   "private": true,
   "scripts": {
     "dev": "vercel dev",
-    "build": "echo 'No build step required for Phase 1'",
+    "build": "echo \"No build step required for Phase 1\"",
     "deploy": "vercel --prod"
   },
   "engines": {
