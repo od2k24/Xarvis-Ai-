@@ -346,7 +346,7 @@
 
 <!-- ════════════════════════ SIDEBAR ════════════════════════ -->
 <aside class="sidebar" id="sidebar">
-  <a href="/" class="sidebar-logo">
+  <a href="index.html" class="sidebar-logo">
     <div class="logo-mark">X</div>
     <span class="logo-text">Xarvis AI</span>
     <span class="logo-version">v3</span>
@@ -662,12 +662,16 @@
 'use strict';
 
 // ═══════════════════════════════════════════════════════════════
-// ✅ FIXED: All API calls now use relative path /api/chat
-//    No hardcoded backend URL needed — works on Vercel automatically
+//  XARVIS AI — Frontend Config
+//  ⚠️  UPDATE API_BASE_URL after Vercel deployment
+//  Replace "YOUR-PROJECT" with your actual Vercel project name
 // ═══════════════════════════════════════════════════════════════
-
 const CONFIG = {
+  // 👇 CHANGE THIS to your Vercel project URL after deployment
+  API_BASE_URL: 'https://xarvis-ai-backend.vercel.app/api',
+
   FREE_LIMIT: 15,
+
   LOADING_MSGS: [
     '🧠 Engineering your viral moment…',
     '🔥 Applying viral psychology…',
@@ -683,30 +687,100 @@ const CONFIG = {
   ],
 };
 
-// ─── API LAYER ────────────────────────────────────────────────
-// Single function. Relative path. No backend URL needed.
-// Works in dev (vercel dev) and production automatically.
-
+// ─── API LAYER — streaming SSE with fallback to JSON ─────────
 async function apiPost(payload) {
-  const res = await fetch('/api/chat', {
-    method: 'POST',
+  const url = `${CONFIG.API_BASE_URL}/chat`;
+
+  const res = await fetch(url, {
+    method:  'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(payload),
+    body:    JSON.stringify(payload),
   });
 
-  let data;
-  try {
-    data = await res.json();
-  } catch {
-    throw new Error(`Server returned invalid response (${res.status})`);
+  if (!res.ok) {
+    let errMsg = `Server error (${res.status})`;
+    try { const d = await res.json(); errMsg = d.error || errMsg; } catch {}
+    throw new Error(errMsg);
   }
+
+  const contentType = res.headers.get('content-type') || '';
+
+  // ── Streaming SSE response ────────────────────────────────
+  if (contentType.includes('text/event-stream')) {
+    const reader  = res.body.getReader();
+    const decoder = new TextDecoder();
+    let   fullText = '';
+
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      const chunk = decoder.decode(value, { stream: true });
+      for (const line of chunk.split('\n')) {
+        const t = line.trim();
+        if (!t.startsWith('data: ')) continue;
+        try {
+          const json = JSON.parse(t.slice(6));
+          if (json.done) return json.text || fullText;
+          if (json.text) fullText = json.text;
+        } catch {}
+      }
+    }
+    return fullText;
+  }
+
+  // ── JSON fallback ─────────────────────────────────────────
+  const data = await res.json();
+  return data.reply ?? data.text ?? '';
+}
+
+// ─── STREAMING CHAT (token-by-token display) ──────────────────
+async function apiStream(payload, onToken) {
+  const url = `${CONFIG.API_BASE_URL}/chat`;
+
+  const res = await fetch(url, {
+    method:  'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body:    JSON.stringify(payload),
+  });
 
   if (!res.ok) {
-    throw new Error(data?.error || `Server error (${res.status})`);
+    let errMsg = `Server error (${res.status})`;
+    try { const d = await res.json(); errMsg = d.error || errMsg; } catch {}
+    throw new Error(errMsg);
   }
 
-  // Unified field access: chat returns {reply}, generate returns {text}
-  return data.reply ?? data.text ?? '';
+  const contentType = res.headers.get('content-type') || '';
+
+  if (contentType.includes('text/event-stream')) {
+    const reader  = res.body.getReader();
+    const decoder = new TextDecoder();
+    let   fullText = '';
+
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      const chunk = decoder.decode(value, { stream: true });
+      for (const line of chunk.split('\n')) {
+        const t = line.trim();
+        if (!t.startsWith('data: ')) continue;
+        try {
+          const json = JSON.parse(t.slice(6));
+          if (json.done) return json.text || fullText;
+          if (json.delta) {
+            fullText += json.delta;
+            onToken(json.delta, fullText);
+          }
+        } catch {}
+      }
+    }
+    return fullText;
+  }
+
+  // JSON fallback — deliver in one shot
+  const data = await res.json();
+  const text = data.reply ?? data.text ?? '';
+  onToken(text, text);
+  return text;
 }
 
 // ─── MEMORY MODULE ────────────────────────────────────────────
@@ -858,35 +932,65 @@ async function sendChatMessage(text) {
 
   pushMsg('user', text);
   setSendDisabled(true);
+
+  // Show typing indicator
   const typing = showTyping();
 
-  try {
-    const reply = await apiPost({
-      message: text,
-      context: Memory.context(),
-      history: state.messages.slice(-10).map(m => ({
-        role: m.role === 'bot' ? 'assistant' : m.role,
-        content: m.content,
-      })),
-    });
+  // Create bot bubble for streaming
+  const botRow = createEmptyBotRow();
 
-    typing.remove();
-    pushMsg('bot', reply);
-    if (state.ttsEnabled) speak(reply);
+  try {
+    let firstToken = true;
+    const fullText = await apiStream(
+      {
+        message: text,
+        context: Memory.context(),
+        history: state.messages.slice(-10).map(m => ({
+          role:    m.role === 'bot' ? 'assistant' : m.role,
+          content: m.content,
+        })),
+      },
+      (delta, accumulated) => {
+        if (firstToken) {
+          typing.remove();
+          firstToken = false;
+        }
+        const bub = botRow.querySelector('.msg-bubble');
+        if (bub) bub.innerHTML = fmt(accumulated);
+        scrollBottom();
+      }
+    );
+
+    if (firstToken) typing.remove(); // in case no tokens came
+
+    state.messages.push({ role: 'bot', content: fullText });
+    if (state.ttsEnabled) speak(fullText);
     logActivity('💬', text.slice(0, 42));
     Memory.addTopic(text.slice(0, 50));
     bumpCount();
+
   } catch (err) {
     typing.remove();
-    pushMsg('bot', `⚠️ ${err.message || 'Something went wrong. Please try again.'}`);
+    botRow.remove();
+    pushMsg('bot', `⚠️ ${err.message || 'Something went wrong. Check your internet connection or try again.'}`);
   }
 
   setSendDisabled(false);
   state.isSending = false;
 }
 
+function createEmptyBotRow() {
+  const area = document.getElementById('chat-area');
+  const row  = document.createElement('div');
+  row.className = 'message-row';
+  row.innerHTML = `<div class="msg-av bot">X</div><div class="msg-bubble bot"></div>`;
+  area?.appendChild(row);
+  scrollBottom();
+  return row;
+}
+
 function pushMsg(role, text) {
-  state.messages.push({ role, content: text });
+  if (role !== 'user') state.messages.push({ role, content: text }); // bot already pushed in stream
   const area = document.getElementById('chat-area');
   if (!area) return;
   const row = document.createElement('div');
@@ -987,9 +1091,9 @@ function parseViral(text) {
     return m ? m[1].trim() : '';
   };
   return {
-    hook:   ex('HOOK', 'SCRIPT'),
-    script: ex('SCRIPT', 'TITLE'),
-    title:  ex('TITLE', 'THUMBNAIL'),
+    hook:   ex('HOOK',      'SCRIPT'),
+    script: ex('SCRIPT',    'TITLE'),
+    title:  ex('TITLE',     'THUMBNAIL'),
     thumb:  ex('THUMBNAIL', 'XARVIS_END'),
   };
 }
@@ -1028,8 +1132,8 @@ function parsePostNext(text) {
     return m ? m[1].trim() : '';
   };
   return {
-    idea:   ex('IDEA', 'HOOK'),
-    hook:   ex('HOOK', 'WHY IT WILL WORK'),
+    idea:   ex('IDEA',   'HOOK'),
+    hook:   ex('HOOK',   'WHY IT WILL WORK'),
     why:    ex('WHY IT WILL WORK', 'BEST TIME TO POST'),
     timing: ex('BEST TIME TO POST', 'END_SENTINEL'),
   };
@@ -1114,11 +1218,11 @@ function parseFB(text) {
   };
   const sc = text.match(/VIRAL SCORE:\s*(\d+)\s*\/\s*10/i);
   return {
-    strengths:    ex('STRENGTHS', 'WEAKNESSES'),
-    weaknesses:   ex('WEAKNESSES', 'IMPROVEMENTS'),
+    strengths:    ex('STRENGTHS',    'WEAKNESSES'),
+    weaknesses:   ex('WEAKNESSES',   'IMPROVEMENTS'),
     improvements: ex('IMPROVEMENTS', 'VIRAL SCORE'),
     score:        sc ? sc[1] : '?',
-    verdict:      ex('VERDICT', 'END_SENTINEL'),
+    verdict:      ex('VERDICT',      'END_SENTINEL'),
   };
 }
 
@@ -1315,7 +1419,7 @@ function showToast(msg) {
   el.style.cssText = 'position:fixed;bottom:24px;right:24px;z-index:9999;padding:12px 20px;background:#1a2035;border:1px solid rgba(248,113,113,.3);border-radius:10px;color:#f87171;font-family:"DM Sans",sans-serif;font-size:.84rem;box-shadow:0 4px 24px rgba(0,0,0,.4);animation:msgIn .25s ease both;';
   el.textContent = msg;
   document.body.appendChild(el);
-  setTimeout(() => el.remove(), 4000); fetch("/api/chat")
+  setTimeout(() => el.remove(), 4500);
 }
 </script>
 </body>
