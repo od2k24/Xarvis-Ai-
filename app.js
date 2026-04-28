@@ -1,26 +1,26 @@
 // Xarvis AI V3 — app.js
-// Phase 1: Chat system with streaming + goal memory
+// Fixed: replaced SSE streaming with plain JSON fetch (matches Railway backend)
 
 import { CONFIG } from './config.js';
 
-// ── State ───────────────────────────────────────────────
-let userGoal   = '';
-let messages   = []; // { role: 'user'|'assistant', content: string }
-let isStreaming = false;
+// ── State ────────────────────────────────────────────────────────────────────
+let userGoal    = '';
+let messages    = []; // { role: 'user'|'assistant', content: string }
+let isStreaming  = false;
 
-// ── DOM Refs ─────────────────────────────────────────────
-const chatInner    = document.getElementById('chat-inner');
-const emptyState   = document.getElementById('empty-state');
-const chatInput    = document.getElementById('chat-input');
-const sendBtn      = document.getElementById('send-btn');
-const chatContainer= document.getElementById('chat-container');
-const goalBadgeText= document.getElementById('goal-badge-text');
-const statusDot    = document.getElementById('status-dot');
-const statusText   = document.getElementById('status-text');
-const modalOverlay = document.getElementById('modal-overlay');
+// ── DOM Refs ─────────────────────────────────────────────────────────────────
+const chatInner      = document.getElementById('chat-inner');
+const emptyState     = document.getElementById('empty-state');
+const chatInput      = document.getElementById('chat-input');
+const sendBtn        = document.getElementById('send-btn');
+const chatContainer  = document.getElementById('chat-container');
+const goalBadgeText  = document.getElementById('goal-badge-text');
+const statusDot      = document.getElementById('status-dot');
+const statusText     = document.getElementById('status-text');
+const modalOverlay   = document.getElementById('modal-overlay');
 const modalGoalInput = document.getElementById('modal-goal-input');
 
-// ── Starter Prompts ──────────────────────────────────────
+// ── Starter Prompts ───────────────────────────────────────────────────────────
 const STARTERS = [
   'Build me a 30-day action plan for my goal',
   'What should I do today to move forward?',
@@ -29,17 +29,15 @@ const STARTERS = [
   'What are the biggest mistakes to avoid?',
 ];
 
-// ── Init ─────────────────────────────────────────────────
+// ── Init ──────────────────────────────────────────────────────────────────────
 function init() {
   userGoal = localStorage.getItem(CONFIG.GOAL_STORAGE_KEY) || '';
 
-  // Redirect to index if no goal set
   if (!userGoal) {
     window.location.href = 'index.html';
     return;
   }
 
-  // Load saved chat history
   try {
     const saved = localStorage.getItem(CONFIG.HISTORY_STORAGE_KEY);
     messages = saved ? JSON.parse(saved) : [];
@@ -54,18 +52,19 @@ function init() {
   adjustTextareaHeight();
 }
 
-// ── Goal Badge ───────────────────────────────────────────
+// ── Goal Badge ────────────────────────────────────────────────────────────────
 function renderGoalBadge() {
-  goalBadgeText.textContent = userGoal;
+  if (goalBadgeText) goalBadgeText.textContent = userGoal;
 }
 
-// ── Starters ─────────────────────────────────────────────
+// ── Starters ──────────────────────────────────────────────────────────────────
 function renderStarters() {
   const container = document.getElementById('starters');
+  if (!container) return;
   container.innerHTML = '';
   STARTERS.forEach(text => {
     const btn = document.createElement('button');
-    btn.className = 'starter-btn';
+    btn.className   = 'starter-btn';
     btn.textContent = text;
     btn.addEventListener('click', () => {
       chatInput.value = text;
@@ -77,9 +76,8 @@ function renderStarters() {
   });
 }
 
-// ── Render All Messages ──────────────────────────────────
+// ── Render All Messages ───────────────────────────────────────────────────────
 function renderAllMessages() {
-  // Remove existing message elements (keep empty state)
   chatInner.querySelectorAll('.message').forEach(el => el.remove());
 
   if (messages.length === 0) {
@@ -88,34 +86,30 @@ function renderAllMessages() {
   }
 
   emptyState.style.display = 'none';
-
-  messages.forEach(msg => {
-    appendMessageEl(msg.role, msg.content);
-  });
-
+  messages.forEach(msg => appendMessageEl(msg.role, msg.content));
   scrollToBottom();
 }
 
-// ── Create Message Element ───────────────────────────────
+// ── Create Message Element ────────────────────────────────────────────────────
 function appendMessageEl(role, content = '') {
   emptyState.style.display = 'none';
 
-  const msgEl = document.createElement('div');
+  const msgEl     = document.createElement('div');
   msgEl.className = `message ${role}`;
 
-  const avatarEl = document.createElement('div');
-  avatarEl.className = 'msg-avatar';
+  const avatarEl      = document.createElement('div');
+  avatarEl.className  = 'msg-avatar';
   avatarEl.textContent = role === 'user' ? 'U' : 'X';
 
-  const bodyEl = document.createElement('div');
+  const bodyEl    = document.createElement('div');
   bodyEl.className = 'msg-body';
 
-  const roleEl = document.createElement('div');
-  roleEl.className = 'msg-role';
+  const roleEl      = document.createElement('div');
+  roleEl.className  = 'msg-role';
   roleEl.textContent = role === 'user' ? 'You' : 'Xarvis';
 
-  const contentEl = document.createElement('div');
-  contentEl.className = 'msg-content';
+  const contentEl      = document.createElement('div');
+  contentEl.className  = 'msg-content';
   contentEl.textContent = content;
 
   bodyEl.appendChild(roleEl);
@@ -127,20 +121,56 @@ function appendMessageEl(role, content = '') {
   return { msgEl, contentEl };
 }
 
-// ── Scroll to Bottom ─────────────────────────────────────
+// ── Scroll to Bottom ──────────────────────────────────────────────────────────
 function scrollToBottom() {
   requestAnimationFrame(() => {
     chatContainer.scrollTop = chatContainer.scrollHeight;
   });
 }
 
-// ── Set Status ───────────────────────────────────────────
+// ── Set Status ────────────────────────────────────────────────────────────────
 function setStatus(text, thinking = false) {
-  statusText.textContent = text;
-  statusDot.className = `status-dot${thinking ? ' thinking' : ''}`;
+  if (statusText) statusText.textContent = text;
+  if (statusDot)  statusDot.className = `status-dot${thinking ? ' thinking' : ''}`;
 }
 
-// ── Send Message ─────────────────────────────────────────
+// ── FIX: Plain JSON fetch — replaces broken SSE streaming ────────────────────
+async function callAPI(messages_payload) {
+  const response = await fetch(`${CONFIG.API_BASE_URL}/chat`, {
+    method:  'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body:    JSON.stringify({
+      messages: messages_payload,
+      goal:     userGoal,
+    }),
+  });
+
+  if (!response.ok) {
+    let errMsg = `HTTP ${response.status}`;
+    try {
+      const errData = await response.json();
+      errMsg = errData.error || errData.message || errMsg;
+    } catch {
+      // response wasn't JSON — use status code message
+    }
+    throw new Error(errMsg);
+  }
+
+  // FIX: Railway returns plain JSON, not an SSE stream
+  // Accepts any of these shapes: { reply }, { text }, { content }, or { choices[0].message.content }
+  const data = await response.json();
+  const reply =
+    data.reply   ??
+    data.text    ??
+    data.content ??
+    data.choices?.[0]?.message?.content ??
+    '';
+
+  if (!reply) throw new Error('Empty response from server');
+  return reply;
+}
+
+// ── Send Message ──────────────────────────────────────────────────────────────
 async function sendMessage() {
   const content = chatInput.value.trim();
   if (!content || isStreaming) return;
@@ -151,15 +181,14 @@ async function sendMessage() {
   sendBtn.disabled = true;
   setStatus('Thinking...', true);
 
-  // Add user message
+  // Add user message to UI + history
   messages.push({ role: 'user', content });
   persistHistory();
   appendMessageEl('user', content);
   scrollToBottom();
 
-  // Prepare AI message element
+  // Show typing indicator
   const { contentEl } = appendMessageEl('assistant', '');
-  // Add blinking cursor
   const cursor = document.createElement('span');
   cursor.className = 'typing-cursor';
   contentEl.appendChild(cursor);
@@ -168,120 +197,72 @@ async function sendMessage() {
   let fullResponse = '';
 
   try {
-    // Build message array for API (limit history length)
     const historyForAPI = messages
       .slice(-CONFIG.MAX_HISTORY_MESSAGES)
       .map(m => ({ role: m.role, content: m.content }));
 
-    const response = await fetch(`${CONFIG.API_BASE_URL}/chat`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        messages: historyForAPI,
-        goal: userGoal,
-      }),
-    });
+    setStatus('Waiting for Xarvis...', true);
 
-    if (!response.ok) {
-      const err = await response.json().catch(() => ({ error: 'Unknown error' }));
-      throw new Error(err.error || `HTTP ${response.status}`);
-    }
+    // FIX: single await — no streaming reader needed
+    fullResponse = await callAPI(historyForAPI);
 
-    // Stream SSE response
-    const reader = response.body.getReader();
-    const decoder = new TextDecoder();
-    let buffer = '';
-
-    setStatus('Streaming...', true);
-
-    while (true) {
-      const { done, value } = await reader.read();
-      if (done) break;
-
-      buffer += decoder.decode(value, { stream: true });
-      const lines = buffer.split('\n');
-      buffer = lines.pop() ?? '';
-
-      for (const line of lines) {
-        if (!line.startsWith('data: ')) continue;
-        const data = line.slice(6).trim();
-        if (data === '[DONE]') continue;
-
-        try {
-          const parsed = JSON.parse(data);
-          const delta = parsed.choices?.[0]?.delta?.content;
-          if (delta) {
-            fullResponse += delta;
-            // Update text without cursor, then re-add cursor
-            contentEl.textContent = fullResponse;
-            contentEl.appendChild(cursor);
-            scrollToBottom();
-          }
-        } catch {
-          // malformed chunk — skip
-        }
-      }
-    }
+    contentEl.textContent = fullResponse;
 
   } catch (err) {
-    fullResponse = `Error: ${err.message}. Check your API key and try again.`;
+    fullResponse = `⚠️ ${err.message}. Check your Railway deployment and try again.`;
     contentEl.textContent = fullResponse;
+    console.error('[Xarvis] API error:', err);
   } finally {
-    // Remove cursor
     cursor.remove();
     contentEl.textContent = fullResponse;
 
-    // Save assistant message
-    if (fullResponse) {
+    if (fullResponse && !fullResponse.startsWith('⚠️')) {
       messages.push({ role: 'assistant', content: fullResponse });
       persistHistory();
     }
 
-    isStreaming = false;
+    isStreaming      = false;
     sendBtn.disabled = chatInput.value.trim() === '';
     setStatus('Ready', false);
     scrollToBottom();
   }
 }
 
-// ── Persist History ──────────────────────────────────────
+// ── Persist History ───────────────────────────────────────────────────────────
 function persistHistory() {
   try {
-    // Keep only last N messages to avoid localStorage bloat
     const trimmed = messages.slice(-CONFIG.MAX_HISTORY_MESSAGES);
     localStorage.setItem(CONFIG.HISTORY_STORAGE_KEY, JSON.stringify(trimmed));
   } catch {
-    // Storage full — clear old history
     localStorage.removeItem(CONFIG.HISTORY_STORAGE_KEY);
   }
 }
 
-// ── Textarea Auto-resize ─────────────────────────────────
+// ── Textarea Auto-resize ──────────────────────────────────────────────────────
 function adjustTextareaHeight() {
   chatInput.style.height = 'auto';
   chatInput.style.height = Math.min(chatInput.scrollHeight, 200) + 'px';
 }
 
-// ── Modal ─────────────────────────────────────────────────
+// ── Modal ─────────────────────────────────────────────────────────────────────
 function openGoalModal() {
-  modalGoalInput.value = userGoal;
-  modalOverlay.classList.remove('hidden');
-  modalGoalInput.focus();
+  if (modalGoalInput) modalGoalInput.value = userGoal;
+  modalOverlay?.classList.remove('hidden');
+  modalGoalInput?.focus();
 }
 
 function closeGoalModal() {
-  modalOverlay.classList.add('hidden');
+  modalOverlay?.classList.add('hidden');
 }
 
 function saveGoal() {
-  const newGoal = modalGoalInput.value.trim();
+  const newGoal = modalGoalInput?.value.trim();
   if (!newGoal) return;
 
   const goalChanged = newGoal !== userGoal;
   userGoal = newGoal;
   localStorage.setItem(CONFIG.GOAL_STORAGE_KEY, userGoal);
 
-  // If goal changed, clear chat history for fresh context
   if (goalChanged) {
     messages = [];
     localStorage.removeItem(CONFIG.HISTORY_STORAGE_KEY);
@@ -292,27 +273,23 @@ function saveGoal() {
   closeGoalModal();
 }
 
-// ── Setup Listeners ──────────────────────────────────────
+// ── Setup Listeners ───────────────────────────────────────────────────────────
 function setupListeners() {
-  // Send on button click
-  sendBtn.addEventListener('click', sendMessage);
+  sendBtn?.addEventListener('click', sendMessage);
 
-  // Enable/disable send button
-  chatInput.addEventListener('input', () => {
+  chatInput?.addEventListener('input', () => {
     sendBtn.disabled = chatInput.value.trim() === '' || isStreaming;
     adjustTextareaHeight();
   });
 
-  // Send on Enter, new line on Shift+Enter
-  chatInput.addEventListener('keydown', (e) => {
+  chatInput?.addEventListener('keydown', (e) => {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
       if (!sendBtn.disabled) sendMessage();
     }
   });
 
-  // Clear conversation
-  document.getElementById('clear-btn').addEventListener('click', () => {
+  document.getElementById('clear-btn')?.addEventListener('click', () => {
     if (messages.length === 0) return;
     if (!confirm('Clear conversation? Your goal will be kept.')) return;
     messages = [];
@@ -320,18 +297,19 @@ function setupListeners() {
     renderAllMessages();
   });
 
-  // Goal modal
-  document.getElementById('goal-btn').addEventListener('click', openGoalModal);
-  document.getElementById('modal-cancel').addEventListener('click', closeGoalModal);
-  document.getElementById('modal-save').addEventListener('click', saveGoal);
-  modalGoalInput.addEventListener('keydown', (e) => {
-    if (e.key === 'Enter') saveGoal();
+  document.getElementById('goal-btn')?.addEventListener('click', openGoalModal);
+  document.getElementById('modal-cancel')?.addEventListener('click', closeGoalModal);
+  document.getElementById('modal-save')?.addEventListener('click', saveGoal);
+
+  modalGoalInput?.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter')  saveGoal();
     if (e.key === 'Escape') closeGoalModal();
   });
-  modalOverlay.addEventListener('click', (e) => {
+
+  modalOverlay?.addEventListener('click', (e) => {
     if (e.target === modalOverlay) closeGoalModal();
   });
 }
 
-// ── Run ───────────────────────────────────────────────────
+// ── Run ───────────────────────────────────────────────────────────────────────
 init();
