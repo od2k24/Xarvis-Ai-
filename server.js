@@ -1,19 +1,42 @@
+require("dotenv").config();
+const express = require("express");
+const cors = require("cors");
+const path = require("path");
+
+const app = express();
+const PORT = process.env.PORT || 3001;
+
+// Middleware
+app.use(cors({ origin: "*" }));
+app.use(express.json());
+
+// Serve frontend
+app.use(express.static(path.join(__dirname, "public")));
+
+// Groq config
+const GROQ_API_URL = "https://api.groq.com/openai/v1/chat/completions";
+const MODEL = "llama-3.3-70b-versatile";
+
+// System prompt
+function buildSystemPrompt(goal) {
+  return `You are Xarvis — an elite AI co-founder.
+
+- Give actionable steps
+- Be concise
+- Focus on making money and growth
+${goal ? `User goal: ${goal}` : ""}`;
+}
+
+// ✅ CHAT ROUTE
 app.post("/api/chat", async (req, res) => {
   try {
     const apiKey = process.env.GROQ_API_KEY;
 
     if (!apiKey) {
-      console.log("❌ NO API KEY FOUND");
-      return res.status(500).json({ error: "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" });
+      return res.status(500).json({ error: "Missing GROQ_API_KEY" });
     }
 
     const { messages, goal } = req.body;
-
-    if (!Array.isArray(messages) || messages.length === 0) {
-      return res.status(400).json({ error: "messages array required" });
-    }
-
-    const systemPrompt = buildSystemPrompt(goal);
 
     const response = await fetch(GROQ_API_URL, {
       method: "POST",
@@ -24,28 +47,42 @@ app.post("/api/chat", async (req, res) => {
       body: JSON.stringify({
         model: MODEL,
         messages: [
-          { role: "system", content: systemPrompt },
+          { role: "system", content: buildSystemPrompt(goal) },
           ...messages,
         ],
-        temperature: 0.7,
-        max_tokens: 1024,
       }),
     });
 
     const data = await response.json();
 
     if (!response.ok) {
-      console.log("❌ GROQ ERROR:", data);
       return res.status(500).json({ error: data });
     }
 
-    // ✅ Send clean response back
     res.json({
       reply: data.choices?.[0]?.message?.content || "No response",
     });
 
   } catch (err) {
-    console.error("🔥 SERVER CRASH:", err);
+    console.error(err);
     res.status(500).json({ error: "Server crashed" });
   }
+});
+
+// ✅ HEALTH CHECK
+app.get("/api/health", (req, res) => {
+  res.json({
+    status: "running",
+    groqKeyLoaded: !!process.env.GROQ_API_KEY,
+  });
+});
+
+// Fallback
+app.get("*", (req, res) => {
+  res.sendFile(path.join(__dirname, "public", "index.html"));
+});
+
+// Start server
+app.listen(PORT, () => {
+  console.log(`🚀 Xarvis running on port ${PORT}`);
 });
