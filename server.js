@@ -4,7 +4,7 @@ app.post("/api/chat", async (req, res) => {
 
     if (!apiKey) {
       console.log("❌ NO API KEY FOUND");
-      return res.status(500).json({ error: "Missing GROQ_API_KEY" });
+      return res.status(500).json({ error: "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" });
     }
 
     const { messages, goal } = req.body;
