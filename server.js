@@ -5,21 +5,23 @@ const path = require("path");
 const app = express();
 const PORT = process.env.PORT || 3001;
 
-// Middleware
 app.use(cors({ origin: "*" }));
 app.use(express.json());
 
-// Serve frontend
-app.use(express.static(path.join(__dirname, "public")));
+// ✅ HEALTH CHECK FIRST
+app.get("/api/health", (req, res) => {
+  res.json({
+    status: "running",
+    groqKeyLoaded: !!process.env.GROQ_API_KEY,
+  });
+});
 
-// Groq config
+// CONFIG
 const GROQ_API_URL = "https://api.groq.com/openai/v1/chat/completions";
 const MODEL = "llama-3.3-70b-versatile";
 
-// System prompt
 function buildSystemPrompt(goal) {
   return `You are Xarvis — an elite AI co-founder.
-
 - Give actionable steps
 - Be concise
 - Focus on making money and growth
@@ -55,6 +57,7 @@ app.post("/api/chat", async (req, res) => {
     const data = await response.json();
 
     if (!response.ok) {
+      console.error("Groq error:", data);
       return res.status(500).json({ error: data });
     }
 
@@ -63,25 +66,19 @@ app.post("/api/chat", async (req, res) => {
     });
 
   } catch (err) {
-    console.error(err);
+    console.error("SERVER ERROR:", err);
     res.status(500).json({ error: "Server crashed" });
   }
 });
 
-// ✅ HEALTH CHECK
-app.get("/api/health", (req, res) => {
-  res.json({
-    status: "running",
-    groqKeyLoaded: !!process.env.GROQ_API_KEY,
-  });
-});
+// ✅ STATIC AFTER API
+app.use(express.static(path.join(__dirname, "public")));
 
-// Fallback
+// ✅ FALLBACK LAST
 app.get("*", (req, res) => {
   res.sendFile(path.join(__dirname, "public", "index.html"));
 });
 
-// Start server
 app.listen(PORT, () => {
   console.log(`🚀 Xarvis running on port ${PORT}`);
 });
