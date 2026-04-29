@@ -5,10 +5,10 @@ const isProduction =
   window.location.hostname !== "127.0.0.1";
 
 export const CONFIG = {
-  // ── FIX: removed /api suffix — Railway routes are /chat and /generate, not /api/chat ──
+  // ✅ FIX: include /api because your backend routes use /api/*
   API_BASE_URL: isProduction
-    ? "https://xarvis-ai.up.railway.app"
-    : "http://localhost:3001",
+    ? "https://xarvis-ai.up.railway.app/api"
+    : "http://localhost:3001/api",
 
   APP_NAME:             "Xarvis AI",
   VERSION:              "3.0.0-phase1",
