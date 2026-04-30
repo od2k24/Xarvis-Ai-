@@ -2,13 +2,17 @@ const express = require("express");
 const cors = require("cors");
 const path = require("path");
 
+// ✅ FIX: ensure fetch works on all Node versions
+const fetch = (...args) =>
+  import("node-fetch").then(({ default: fetch }) => fetch(...args));
+
 const app = express();
 const PORT = process.env.PORT || 3001;
 
 app.use(cors({ origin: "*" }));
 app.use(express.json());
 
-// ✅ HEALTH CHECK FIRST
+// ✅ HEALTH CHECK
 app.get("/api/health", (req, res) => {
   res.json({
     status: "running",
@@ -28,16 +32,27 @@ function buildSystemPrompt(goal) {
 ${goal ? `User goal: ${goal}` : ""}`;
 }
 
-// ✅ CHAT ROUTE
+// ✅ CHAT ROUTE (FULLY FIXED)
 app.post("/api/chat", async (req, res) => {
   try {
-    const apiKey = process.env.GROQ_API_KEY;
+    console.log("📩 Incoming body:", req.body);
 
+    const apiKey = process.env.GROQ_API_KEY;
     if (!apiKey) {
+      console.error("❌ Missing GROQ_API_KEY");
       return res.status(500).json({ error: "Missing GROQ_API_KEY" });
     }
 
-    const { messages, goal } = req.body;
+    // ✅ FIX: safe destructuring
+    const { messages = [], goal } = req.body;
+
+    if (!Array.isArray(messages)) {
+      return res.status(400).json({ error: "Messages must be an array" });
+    }
+
+    // ✅ OPTIONAL: timeout protection
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 15000);
 
     const response = await fetch(GROQ_API_URL, {
       method: "POST",
@@ -52,33 +67,50 @@ app.post("/api/chat", async (req, res) => {
           ...messages,
         ],
       }),
+      signal: controller.signal,
     });
+
+    clearTimeout(timeout);
 
     const data = await response.json();
 
+    console.log("🤖 Groq response:", data);
+
     if (!response.ok) {
-      console.error("Groq error:", data);
-      return res.status(500).json({ error: data });
+      console.error("❌ Groq error:", data);
+      return res.status(500).json({
+        error: data?.error?.message || "Groq API failed",
+      });
     }
 
-    res.json({
-      reply: data.choices?.[0]?.message?.content || "No response",
-    });
+    const reply =
+      data?.choices?.[0]?.message?.content || "No response from model";
+
+    res.json({ reply });
 
   } catch (err) {
-    console.error("SERVER ERROR:", err);
-    res.status(500).json({ error: "Server crashed" });
+    console.error("🔥 SERVER ERROR:", err);
+
+    // ✅ Better error messages
+    if (err.name === "AbortError") {
+      return res.status(500).json({ error: "Request timeout" });
+    }
+
+    res.status(500).json({
+      error: err.message || "Server crashed",
+    });
   }
 });
 
-// ✅ STATIC AFTER API
+// ✅ STATIC FILES
 app.use(express.static(path.join(__dirname, "public")));
 
-// ✅ FALLBACK LAST
+// ✅ FALLBACK
 app.get("*", (req, res) => {
   res.sendFile(path.join(__dirname, "public", "index.html"));
 });
 
+// START
 app.listen(PORT, () => {
   console.log(`🚀 Xarvis running on port ${PORT}`);
 });
