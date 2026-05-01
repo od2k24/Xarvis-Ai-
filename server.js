@@ -5,50 +5,64 @@ const path = require("path");
 const app = express();
 const PORT = process.env.PORT || 3001;
 
+// ─────────────────────────────────────────
+// MIDDLEWARE
+// ─────────────────────────────────────────
 app.use(cors({ origin: "*" }));
 app.use(express.json());
 
-// ─── CONFIG ─────────────────────────────────────────────
+// ─────────────────────────────────────────
+// GROQ CONFIG
+// ─────────────────────────────────────────
 const GROQ_API_URL = "https://api.groq.com/openai/v1/chat/completions";
 const MODEL = "llama-3.3-70b-versatile";
 
-// ─── HEALTH CHECK ───────────────────────────────────────
+// ─────────────────────────────────────────
+// HEALTH CHECK (IMPORTANT FOR DEPLOY DEBUG)
+// ─────────────────────────────────────────
 app.get("/api/health", (req, res) => {
   res.json({
-    status: "running",
+    status: "ok",
+    env: process.env.NODE_ENV || "development",
     groqKeyLoaded: !!process.env.GROQ_API_KEY,
-    nodeVersion: process.version,
+    uptime: process.uptime(),
   });
 });
 
-// ─── GROQ CALLER ────────────────────────────────────────
+// ─────────────────────────────────────────
+// GROQ FUNCTION
+// ─────────────────────────────────────────
 async function callGroq(messages) {
   const apiKey = process.env.GROQ_API_KEY;
 
-  if (!apiKey) throw new Error("GROQ_API_KEY not set");
-  if (typeof fetch === "undefined") throw new Error("Node 18+ required");
+  if (!apiKey) throw new Error("Missing GROQ_API_KEY");
 
   const res = await fetch(GROQ_API_URL, {
     method: "POST",
     headers: {
-      Authorization: `Bearer ${apiKey}`,
       "Content-Type": "application/json",
+      Authorization: `Bearer ${apiKey}`,
     },
     body: JSON.stringify({
       model: MODEL,
       messages,
-      temperature: 0.8,
+      temperature: 0.7,
       max_tokens: 1024,
     }),
   });
 
   const data = await res.json();
-  if (!res.ok) throw new Error(data?.error?.message || "Groq error");
+
+  if (!res.ok) {
+    throw new Error(data?.error?.message || "Groq API error");
+  }
 
   return data?.choices?.[0]?.message?.content;
 }
 
-// ─── CHAT ROUTE ─────────────────────────────────────────
+// ─────────────────────────────────────────
+// CHAT ROUTE (MAIN)
+// ─────────────────────────────────────────
 app.post("/api/chat", async (req, res) => {
   try {
     const { message, history = [], context = "" } = req.body;
@@ -57,14 +71,18 @@ app.post("/api/chat", async (req, res) => {
       return res.status(400).json({ error: "message is required" });
     }
 
-    const system = [
-      "You are Xarvis — an elite AI co-founder for creators.",
-      "Be concise, actionable, and focused on growth.",
-      context,
-    ].join("\n");
+    const systemPrompt = `
+You are Xarvis — an elite AI co-founder for creators.
+
+Rules:
+- Be short and actionable
+- Focus on growth, monetization, virality
+- No fluff
+${context}
+`;
 
     const messages = [
-      { role: "system", content: system },
+      { role: "system", content: systemPrompt },
       ...history.slice(-10),
       { role: "user", content: message },
     ];
@@ -74,11 +92,16 @@ app.post("/api/chat", async (req, res) => {
     return res.json({ reply });
   } catch (err) {
     console.error("CHAT ERROR:", err.message);
-    return res.status(500).json({ error: err.message });
+    return res.status(500).json({
+      error: "Server error",
+      details: err.message,
+    });
   }
 });
 
-// ─── GENERATE ROUTE ─────────────────────────────────────
+// ─────────────────────────────────────────
+// GENERATE ROUTE
+// ─────────────────────────────────────────
 app.post("/api/generate", async (req, res) => {
   try {
     const { type, topic, platform, content, context = "", memory = {} } = req.body;
@@ -86,43 +109,42 @@ app.post("/api/generate", async (req, res) => {
     let system = "";
     let user = "";
 
-    switch (type) {
-      case "viral":
-        system = `You are Xarvis viral strategist. Output strictly:
+    if (type === "viral") {
+      system = `Return EXACT format:
 HOOK:
 SCRIPT:
 TITLE:
 THUMBNAIL:`;
-        user = `Create viral ${platform} content for: ${topic}`;
-        break;
+      user = `Create viral ${platform} content for: ${topic}`;
+    }
 
-      case "postnext":
-        system = `You are Xarvis. Suggest ONE viral idea:
+    else if (type === "postnext") {
+      system = `Return:
 IDEA:
 HOOK:
 WHY:
 BEST TIME:`;
-        user = `What should I post next? Niche: ${memory.niche || "general"}`;
-        break;
+      user = `Best next post for niche: ${memory.niche || "general"}`;
+    }
 
-      case "calendar":
-        system = `Create 7-day content plan. Format:
+    else if (type === "calendar") {
+      system = `Return 7 lines:
 DAY | TOPIC | ANGLE | HOOK`;
-        user = `Make 7-day calendar for ${memory.platform || "YouTube"}`;
-        break;
+      user = `7-day plan for ${memory.platform || "YouTube"}`;
+    }
 
-      case "feedback":
-        system = `You are a strict content critic:
+    else if (type === "feedback") {
+      system = `Return:
 STRENGTHS:
 WEAKNESSES:
 IMPROVEMENTS:
 SCORE:
 VERDICT:`;
-        user = `Analyze: ${content}`;
-        break;
+      user = `Analyze: ${content}`;
+    }
 
-      default:
-        return res.status(400).json({ error: "Invalid type" });
+    else {
+      return res.status(400).json({ error: "Invalid type" });
     }
 
     const reply = await callGroq([
@@ -133,18 +155,26 @@ VERDICT:`;
     return res.json({ reply });
   } catch (err) {
     console.error("GENERATE ERROR:", err.message);
-    return res.status(500).json({ error: err.message });
+    return res.status(500).json({
+      error: "Server error",
+      details: err.message,
+    });
   }
 });
 
-// ─── STATIC FRONTEND ────────────────────────────────────
+// ─────────────────────────────────────────
+// STATIC FRONTEND (IMPORTANT FOR GITHUB/Railway)
+// ─────────────────────────────────────────
 app.use(express.static(path.join(__dirname, "public")));
 
+// SPA fallback
 app.get("*", (req, res) => {
   res.sendFile(path.join(__dirname, "public", "index.html"));
 });
 
-// ─── START SERVER ───────────────────────────────────────
+// ─────────────────────────────────────────
+// START SERVER (CLEAN)
+// ─────────────────────────────────────────
 app.listen(PORT, () => {
-  console.log(`🚀 Xarvis running on port ${PORT}`);
+  console.log(`🚀 Server running on port ${PORT}`);
 });
