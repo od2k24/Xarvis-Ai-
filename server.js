@@ -1,180 +1,206 @@
-const express = require("express");
 const cors = require("cors");
 const path = require("path");
+
+// ✅ FIX: ensure fetch works on all Node versions
+const fetch = (...args) =>
+  import("node-fetch").then(({ default: fetch }) => fetch(...args));
 
 const app = express();
 const PORT = process.env.PORT || 3001;
 
-// ─────────────────────────────────────────
-// MIDDLEWARE
-// ─────────────────────────────────────────
 app.use(cors({ origin: "*" }));
 app.use(express.json());
 
-// ─────────────────────────────────────────
-// GROQ CONFIG
-// ─────────────────────────────────────────
+// ✅ HEALTH CHECK
+// ─── Health Check ────────────────────────────────────────────────────────────
+app.get("/api/health", (req, res) => {
+  res.json({
+    status: "running",
+    groqKeyLoaded: !!process.env.GROQ_API_KEY,
+    nodeVersion: process.version,
+    nativeFetch: typeof fetch !== "undefined",
+  });
+});
+
+// CONFIG
+// ─── Config ──────────────────────────────────────────────────────────────────
 const GROQ_API_URL = "https://api.groq.com/openai/v1/chat/completions";
 const MODEL = "llama-3.3-70b-versatile";
 
-// ─────────────────────────────────────────
-// HEALTH CHECK (IMPORTANT FOR DEPLOY DEBUG)
-// ─────────────────────────────────────────
-app.get("/api/health", (req, res) => {
-  res.json({
-    status: "ok",
-    env: process.env.NODE_ENV || "development",
-    groqKeyLoaded: !!process.env.GROQ_API_KEY,
-    uptime: process.uptime(),
-  });
-});
-
-// ─────────────────────────────────────────
-// GROQ FUNCTION
-// ─────────────────────────────────────────
-async function callGroq(messages) {
-  const apiKey = process.env.GROQ_API_KEY;
-
-  if (!apiKey) throw new Error("Missing GROQ_API_KEY");
-
-  const res = await fetch(GROQ_API_URL, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${apiKey}`,
-    },
-    body: JSON.stringify({
-      model: MODEL,
-      messages,
-      temperature: 0.7,
-      max_tokens: 1024,
-    }),
-  });
-
-  const data = await res.json();
-
-  if (!res.ok) {
-    throw new Error(data?.error?.message || "Groq API error");
-  }
-
-  return data?.choices?.[0]?.message?.content;
+function buildSystemPrompt(goal) {
+  return `You are Xarvis — an elite AI co-founder.
+- Give actionable steps
+- Be concise
+- Focus on making money and growth
+${goal ? `User goal: ${goal}` : ""}`;
+  return [
+    "You are Xarvis — an elite AI co-founder.",
+    "- Give actionable steps",
+    "- Be concise",
+    "- Focus on making money and growth",
+    goal ? `User goal: ${goal}` : "",
+  ]
+    .filter(Boolean)
+    .join("\n");
 }
 
-// ─────────────────────────────────────────
-// CHAT ROUTE (MAIN)
-// ─────────────────────────────────────────
+// ✅ CHAT ROUTE (FULLY FIXED)
+// ─── Chat Route ──────────────────────────────────────────────────────────────
 app.post("/api/chat", async (req, res) => {
   try {
-    const { message, history = [], context = "" } = req.body;
-
-    if (!message) {
-      return res.status(400).json({ error: "message is required" });
-    }
-
-    const systemPrompt = `
-You are Xarvis — an elite AI co-founder for creators.
-
-Rules:
-- Be short and actionable
-- Focus on growth, monetization, virality
-- No fluff
-${context}
-`;
-
-    const messages = [
-      { role: "system", content: systemPrompt },
-      ...history.slice(-10),
-      { role: "user", content: message },
-    ];
-
-    const reply = await callGroq(messages);
-
-    return res.json({ reply });
-  } catch (err) {
-    console.error("CHAT ERROR:", err.message);
+    console.log("📩 Incoming body:", req.body);
+  // Step 1: Validate API key exists
+  const apiKey = process.env.GROQ_API_KEY;
+  if (!apiKey) {
+    console.error("❌ GROQ_API_KEY is not set in environment");
     return res.status(500).json({
-      error: "Server error",
-      details: err.message,
+      error: "Server misconfiguration: missing API key",
     });
   }
-});
 
-// ─────────────────────────────────────────
-// GENERATE ROUTE
-// ─────────────────────────────────────────
-app.post("/api/generate", async (req, res) => {
+    const apiKey = process.env.GROQ_API_KEY;
+    if (!apiKey) {
+      console.error("❌ Missing GROQ_API_KEY");
+      return res.status(500).json({ error: "Missing GROQ_API_KEY" });
+    }
+  // Step 2: Validate request body
+  const { messages, goal } = req.body ?? {};
+
+    // ✅ FIX: safe destructuring
+    const { messages = [], goal } = req.body;
+  if (!messages) {
+    return res.status(400).json({ error: "Request body must include messages" });
+  }
+
+    if (!Array.isArray(messages)) {
+      return res.status(400).json({ error: "Messages must be an array" });
+    }
+  if (!Array.isArray(messages)) {
+    return res.status(400).json({ error: "messages must be an array" });
+  }
+
+  if (messages.length === 0) {
+    return res.status(400).json({ error: "messages array cannot be empty" });
+  }
+
+  // Step 3: Validate native fetch is available (Node 18+ on Railway)
+  if (typeof fetch === "undefined") {
+    console.error("❌ Native fetch not available — Railway must be using Node < 18");
+    return res.status(500).json({
+      error: "Server error: fetch not available. Contact admin to upgrade Node.",
+    });
+  }
+
+  // Step 4: Call Groq with timeout
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => {
+    controller.abort();
+    console.warn("⏱️ Groq request timed out after 20s");
+  }, 20000);
+
+    // ✅ OPTIONAL: timeout protection
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 15000);
+  let groqResponse;
   try {
-    const { type, topic, platform, content, context = "", memory = {} } = req.body;
+    console.log(`📩 /api/chat — goal: "${goal}" — messages: ${messages.length}`);
 
-    let system = "";
-    let user = "";
+    const response = await fetch(GROQ_API_URL, {
+    groqResponse = await fetch(GROQ_API_URL, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${apiKey}`,
+@@ -66,51 +91,66 @@ app.post("/api/chat", async (req, res) => {
+          { role: "system", content: buildSystemPrompt(goal) },
+          ...messages,
+        ],
+        temperature: 0.7,
+        max_tokens: 1024,
+      }),
+      signal: controller.signal,
+    });
+  } catch (fetchErr) {
+    clearTimeout(timeoutId);
 
-    if (type === "viral") {
-      system = `Return EXACT format:
-HOOK:
-SCRIPT:
-TITLE:
-THUMBNAIL:`;
-      user = `Create viral ${platform} content for: ${topic}`;
+    clearTimeout(timeout);
+
+    const data = await response.json();
+
+    console.log("🤖 Groq response:", data);
+
+    if (!response.ok) {
+      console.error("❌ Groq error:", data);
+      return res.status(500).json({
+        error: data?.error?.message || "Groq API failed",
+      });
+    if (fetchErr.name === "AbortError") {
+      console.error("❌ Groq request aborted (timeout)");
+      return res.status(504).json({ error: "Groq API timed out. Try again." });
     }
 
-    else if (type === "postnext") {
-      system = `Return:
-IDEA:
-HOOK:
-WHY:
-BEST TIME:`;
-      user = `Best next post for niche: ${memory.niche || "general"}`;
-    }
+    const reply =
+      data?.choices?.[0]?.message?.content || "No response from model";
 
-    else if (type === "calendar") {
-      system = `Return 7 lines:
-DAY | TOPIC | ANGLE | HOOK`;
-      user = `7-day plan for ${memory.platform || "YouTube"}`;
-    }
-
-    else if (type === "feedback") {
-      system = `Return:
-STRENGTHS:
-WEAKNESSES:
-IMPROVEMENTS:
-SCORE:
-VERDICT:`;
-      user = `Analyze: ${content}`;
-    }
-
-    else {
-      return res.status(400).json({ error: "Invalid type" });
-    }
-
-    const reply = await callGroq([
-      { role: "system", content: system + "\n" + context },
-      { role: "user", content: user },
-    ]);
-
-    return res.json({ reply });
-  } catch (err) {
-    console.error("GENERATE ERROR:", err.message);
-    return res.status(500).json({
-      error: "Server error",
-      details: err.message,
+    res.json({ reply });
+    console.error("❌ Network error reaching Groq:", fetchErr.message);
+    return res.status(502).json({
+      error: `Cannot reach Groq API: ${fetchErr.message}`,
     });
   }
+
+  } catch (err) {
+    console.error("🔥 SERVER ERROR:", err);
+  clearTimeout(timeoutId);
+
+    // ✅ Better error messages
+    if (err.name === "AbortError") {
+      return res.status(500).json({ error: "Request timeout" });
+    }
+  // Step 5: Parse Groq response body
+  let data;
+  try {
+    data = await groqResponse.json();
+  } catch (parseErr) {
+    console.error("❌ Groq returned non-JSON body:", parseErr.message);
+    return res.status(502).json({
+      error: "Groq returned an unreadable response",
+    });
+  }
+
+    res.status(500).json({
+      error: err.message || "Server crashed",
+  // Step 6: Check Groq HTTP status
+  if (!groqResponse.ok) {
+    const groqError = data?.error?.message ?? "Unknown Groq error";
+    console.error(`❌ Groq HTTP ${groqResponse.status}:`, groqError);
+    return res.status(502).json({
+      error: `Groq API error (${groqResponse.status}): ${groqError}`,
+    });
+  }
+
+  // Step 7: Extract reply
+  const reply = data?.choices?.[0]?.message?.content;
+  if (!reply) {
+    console.error("❌ Groq responded OK but returned no content:", data);
+    return res.status(502).json({ error: "Groq returned an empty response" });
+  }
+
+  console.log(`✅ Reply generated (${reply.length} chars)`);
+  return res.json({ reply });
 });
 
-// ─────────────────────────────────────────
-// STATIC FRONTEND (IMPORTANT FOR GITHUB/Railway)
-// ─────────────────────────────────────────
+// ✅ STATIC FILES
+// ─── Static Files ─────────────────────────────────────────────────────────────
 app.use(express.static(path.join(__dirname, "public")));
 
-// SPA fallback
+// ✅ FALLBACK
 app.get("*", (req, res) => {
   res.sendFile(path.join(__dirname, "public", "index.html"));
 });
 
-// ─────────────────────────────────────────
-// START SERVER (CLEAN)
-// ─────────────────────────────────────────
+// START
+// ─── Start ────────────────────────────────────────────────────────────────────
 app.listen(PORT, () => {
-  console.log(`🚀 Server running on port ${PORT}`);
+  console.log(`🚀 Xarvis running on port ${PORT}`);
+  console.log(`🚀 Xarvis running on port ${PORT} | Node ${process.version}`);
 });
