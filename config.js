@@ -5,14 +5,13 @@ const isProduction =
   window.location.hostname !== "127.0.0.1";
 
 export const CONFIG = {
-  // ✅ FIX: include /api because your backend routes use /api/*
   API_BASE_URL: isProduction
     ? "https://xarvis-ai.up.railway.app/api"
     : "http://localhost:3001/api",
 
-  APP_NAME:             "Xarvis AI",
-  VERSION:              "3.0.0-phase1",
-  GOAL_STORAGE_KEY:     "xarvis_user_goal",
-  HISTORY_STORAGE_KEY:  "xarvis_chat_history",
+  APP_NAME: "Xarvis AI",
+  VERSION: "3.0.0-phase1",
+  GOAL_STORAGE_KEY: "xarvis_user_goal",
+  HISTORY_STORAGE_KEY: "xarvis_chat_history",
   MAX_HISTORY_MESSAGES: 20,
 };
