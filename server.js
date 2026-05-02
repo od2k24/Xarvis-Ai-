@@ -1,140 +1,70 @@
-const express = require("express");
-const cors = require("cors");
-const path = require("path");
+'use strict';
 
-// ✅ Fetch fix (works on all Node versions)
-const fetch = (...args) =>
-  import("node-fetch").then(({ default: fetch }) => fetch(...args));
+const express    = require('express');
+const cors       = require('cors');
+const helmet     = require('helmet');
+const rateLimit  = require('express-rate-limit');
+const Groq       = require('groq-sdk');
 
-const app = express();
-const PORT = process.env.PORT || 3001;
+const chatRoute     = require('./routes/chat');
+const generateRoute = require('./routes/generate');
+const memoryRoute   = require('./routes/memory');
+const agentRoute    = require('./routes/agent');
 
-// ─────────────────────────────────────────────
-// Middleware
-// ─────────────────────────────────────────────
-app.use(cors({ origin: "*" }));
-app.use(express.json());
+const app  = express();
+const groq = new Groq({ apiKey: process.env.GROQ_API_KEY });
 
-// ─────────────────────────────────────────────
-// Config
-// ─────────────────────────────────────────────
-const GROQ_API_URL = "https://api.groq.com/openai/v1/chat/completions";
-const MODEL = "llama-3.3-70b-versatile";
+/* ── make groq available to routes ── */
+app.set('groq', groq);
 
-// ─────────────────────────────────────────────
-// Helpers
-// ─────────────────────────────────────────────
-function buildSystemPrompt(goal) {
-  return [
-    "You are Xarvis — an elite AI co-founder.",
-    "- Give actionable steps",
-    "- Be concise",
-    "- Focus on making money and growth",
-    goal ? `User goal: ${goal}` : "",
-  ]
-    .filter(Boolean)
-    .join("\n");
-}
+/* ── security + parsing ── */
+app.use(helmet({ contentSecurityPolicy: false }));
+app.use(cors({
+  origin: process.env.ALLOWED_ORIGINS
+    ? process.env.ALLOWED_ORIGINS.split(',')
+    : ['http://localhost:3000', 'https://od2k24.github.io'],
+  methods: ['GET', 'POST', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
+}));
+app.use(express.json({ limit: '50kb' }));
 
-// ─────────────────────────────────────────────
-// Health Check
-// ─────────────────────────────────────────────
-app.get("/api/health", (req, res) => {
+/* ── rate limiting ── */
+const limiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: process.env.NODE_ENV === 'production' ? 60 : 1000,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: 'Too many requests — slow down!' },
+});
+app.use('/api/', limiter);
+
+/* ── health ── */
+app.get('/api/health', (req, res) => {
   res.json({
-    status: "running",
-    nodeVersion: process.version,
+    status:        'running',
+    nodeVersion:   process.version,
     groqKeyLoaded: !!process.env.GROQ_API_KEY,
-    nativeFetch: typeof fetch !== "undefined",
+    nativeFetch:   true,
+    version:       '4.0.0',
+    agents:        ['strategist', 'researcher', 'creator', 'executor'],
+    features:      ['streaming', 'memory', 'multi-agent', 'content-generation'],
   });
 });
 
-// ─────────────────────────────────────────────
-// Chat Route (FIXED + CLEAN)
-// ─────────────────────────────────────────────
-app.post("/api/chat", async (req, res) => {
-  const apiKey = process.env.GROQ_API_KEY;
+/* ── routes ── */
+app.use('/api', chatRoute);
+app.use('/api', generateRoute);
+app.use('/api', memoryRoute);
+app.use('/api', agentRoute);
 
-  if (!apiKey) {
-    return res
-      .status(500)
-      .json({ error: "Missing GROQ_API_KEY in environment" });
-  }
+/* ── 404 catch-all ── */
+app.use((req, res) => res.status(404).json({ error: `Route not found: ${req.method} ${req.path}` }));
 
-  const { messages = [], goal } = req.body || {};
-
-  if (!Array.isArray(messages) || messages.length === 0) {
-    return res.status(400).json({
-      error: "messages must be a non-empty array",
-    });
-  }
-
-  const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), 20000);
-
-  try {
-    const response = await fetch(GROQ_API_URL, {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${apiKey}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        model: MODEL,
-        messages: [
-          { role: "system", content: buildSystemPrompt(goal) },
-          ...messages,
-        ],
-        temperature: 0.7,
-        max_tokens: 1024,
-      }),
-      signal: controller.signal,
-    });
-
-    clearTimeout(timeout);
-
-    const data = await response.json();
-
-    if (!response.ok) {
-      return res.status(502).json({
-        error: data?.error?.message || "Groq API error",
-      });
-    }
-
-    const reply = data?.choices?.[0]?.message?.content;
-
-    if (!reply) {
-      return res
-        .status(502)
-        .json({ error: "Empty response from Groq" });
-    }
-
-    return res.json({ reply });
-  } catch (err) {
-    clearTimeout(timeout);
-
-    if (err.name === "AbortError") {
-      return res.status(504).json({ error: "Request timed out" });
-    }
-
-    return res.status(500).json({
-      error: "Server error: " + err.message,
-    });
-  }
+/* ── global error handler ── */
+app.use((err, req, res, next) => {
+  console.error('[ERROR]', err.message);
+  res.status(500).json({ error: 'Internal server error', detail: err.message });
 });
 
-// ─────────────────────────────────────────────
-// Static Frontend (GitHub / Railway safe)
-// ─────────────────────────────────────────────
-app.use(express.static(path.join(__dirname, "public")));
-
-app.get("*", (req, res) => {
-  res.sendFile(path.join(__dirname, "public", "index.html"));
-});
-
-// ─────────────────────────────────────────────
-// Start Server
-// ─────────────────────────────────────────────
-app.listen(PORT, () => {
-  console.log(`🚀 Xarvis running on port ${PORT}`);
-  console.log(`Node: ${process.version}`);
-});
+const PORT = process.env.PORT || 3001;
+app.listen(PORT, () => console.log(`✅ Xarvis v4 running on :${PORT}`));
