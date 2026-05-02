@@ -1,113 +1,65 @@
-'use strict';
+const express = require("express");
+const router = express.Router();
 
-const express = require('express');
-const router  = express.Router();
-const { routeToAgent, buildSystemPrompt, AGENTS } = require('../agents/agents');
+const GROQ_API_URL = "https://api.groq.com/openai/v1/chat/completions";
+const MODEL = "llama3-8b-8192"; // Fast, capable Groq model
 
-/**
- * POST /api/chat
- * Standard chat (non-streaming, backward compatible)
- */
-router.post('/chat', async (req, res) => {
-  const groq = req.app.get('groq');
-  const { message, context, history = [], agent: explicitAgent } = req.body;
-
-  if (!message?.trim()) {
-    return res.status(400).json({ error: 'message is required' });
-  }
-
-  const agentKey   = routeToAgent(message, explicitAgent);
-  const agent      = AGENTS[agentKey];
-  const systemPrompt = buildSystemPrompt(agentKey, context);
-
-  // Build message history
-  const messages = [
-    { role: 'system', content: systemPrompt },
-    ...history.slice(-12).map(m => ({
-      role:    m.role === 'bot' ? 'assistant' : 'user',
-      content: String(m.content).slice(0, 2000),
-    })),
-    { role: 'user', content: message },
-  ];
-
+// POST /api/chat
+router.post("/", async (req, res, next) => {
   try {
-    const completion = await groq.chat.completions.create({
-      model:       'llama-3.3-70b-versatile',
-      messages,
-      temperature: 0.78,
-      max_tokens:  1024,
+    const { messages, systemPrompt } = req.body;
+
+    if (!messages || !Array.isArray(messages) || messages.length === 0) {
+      return res.status(400).json({ error: "messages array is required" });
+    }
+
+    if (!process.env.GROQ_API_KEY) {
+      return res.status(500).json({ error: "GROQ_API_KEY is not configured" });
+    }
+
+    const payload = {
+      model: MODEL,
+      messages: [
+        {
+          role: "system",
+          content: systemPrompt || "You are Xarvis AI, a helpful and intelligent assistant.",
+        },
+        ...messages,
+      ],
+      temperature: 0.7,
+      max_tokens: 1024,
+    };
+
+    console.log(`[CHAT] Sending ${messages.length} message(s) to Groq...`);
+
+    const groqRes = await fetch(GROQ_API_URL, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${process.env.GROQ_API_KEY}`,
+      },
+      body: JSON.stringify(payload),
     });
 
-    const reply = completion.choices[0]?.message?.content || 'No response generated.';
+    if (!groqRes.ok) {
+      const errBody = await groqRes.json().catch(() => ({}));
+      const msg = errBody?.error?.message || `Groq error: ${groqRes.status}`;
+      console.error(`[CHAT ERROR] ${msg}`);
+      return res.status(groqRes.status).json({ error: msg });
+    }
+
+    const data = await groqRes.json();
+    const reply = data.choices?.[0]?.message?.content || "";
+
+    console.log(`[CHAT] Reply received (${reply.length} chars)`);
 
     res.json({
       reply,
-      agent:   agentKey,
-      agentName: `${agent.emoji} ${agent.name}`,
-      tokens:  completion.usage?.total_tokens,
+      model: data.model,
+      usage: data.usage,
     });
   } catch (err) {
-    console.error('[CHAT ERROR]', err.message);
-    res.status(500).json({ error: 'AI request failed', detail: err.message });
-  }
-});
-
-/**
- * POST /api/chat/stream
- * Streaming chat — sends chunks as SSE
- */
-router.post('/chat/stream', async (req, res) => {
-  const groq = req.app.get('groq');
-  const { message, context, history = [], agent: explicitAgent } = req.body;
-
-  if (!message?.trim()) {
-    return res.status(400).json({ error: 'message is required' });
-  }
-
-  const agentKey     = routeToAgent(message, explicitAgent);
-  const agent        = AGENTS[agentKey];
-  const systemPrompt = buildSystemPrompt(agentKey, context);
-
-  const messages = [
-    { role: 'system', content: systemPrompt },
-    ...history.slice(-12).map(m => ({
-      role:    m.role === 'bot' ? 'assistant' : 'user',
-      content: String(m.content).slice(0, 2000),
-    })),
-    { role: 'user', content: message },
-  ];
-
-  // Set up SSE headers
-  res.setHeader('Content-Type',  'text/event-stream');
-  res.setHeader('Cache-Control', 'no-cache');
-  res.setHeader('Connection',    'keep-alive');
-  res.setHeader('X-Accel-Buffering', 'no'); // Railway/nginx fix
-
-  // Send agent info first
-  res.write(`data: ${JSON.stringify({ type: 'agent', agent: agentKey, agentName: `${agent.emoji} ${agent.name}` })}\n\n`);
-
-  try {
-    const stream = await groq.chat.completions.create({
-      model:       'llama-3.3-70b-versatile',
-      messages,
-      temperature: 0.78,
-      max_tokens:  1024,
-      stream:      true,
-    });
-
-    for await (const chunk of stream) {
-      const delta = chunk.choices[0]?.delta?.content;
-      if (delta) {
-        res.write(`data: ${JSON.stringify({ type: 'delta', content: delta })}\n\n`);
-      }
-    }
-
-    res.write(`data: ${JSON.stringify({ type: 'done' })}\n\n`);
-    res.end();
-  } catch (err) {
-    console.error('[STREAM ERROR]', err.message);
-    res.write(`data: ${JSON.stringify({ type: 'error', message: err.message })}\n\n`);
-    res.end();
+    next(err);
   }
 });
 
