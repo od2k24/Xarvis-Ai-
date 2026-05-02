@@ -2,10 +2,6 @@ const express = require("express");
 const cors = require("cors");
 const path = require("path");
 
-// ✅ Universal fetch (Node <18 safe)
-const fetch = (...args) =>
-  import("node-fetch").then(({ default: fetch }) => fetch(...args));
-
 const app = express();
 const PORT = process.env.PORT || 3001;
 
@@ -18,8 +14,31 @@ app.use(express.json());
 // ─────────────────────────────────────────────
 // Config
 // ─────────────────────────────────────────────
-const GROQ_API_URL = "https://api.groq.com/openai/v1/chat/completions";
+const GROQ_API_URL =
+  "https://api.groq.com/openai/v1/chat/completions";
+
 const MODEL = "llama-3.3-70b-versatile";
+
+// ─────────────────────────────────────────────
+// Root Route (FIXED - prevents Not Found confusion)
+// ─────────────────────────────────────────────
+app.get("/", (req, res) => {
+  res.json({
+    status: "Xarvis backend running 🚀",
+    endpoints: ["/api/health", "/api/chat"],
+  });
+});
+
+// ─────────────────────────────────────────────
+// Health Check
+// ─────────────────────────────────────────────
+app.get("/api/health", (req, res) => {
+  res.json({
+    status: "running",
+    nodeVersion: process.version,
+    groqKeyLoaded: !!process.env.GROQ_API_KEY,
+  });
+});
 
 // ─────────────────────────────────────────────
 // Helpers
@@ -27,9 +46,9 @@ const MODEL = "llama-3.3-70b-versatile";
 function buildSystemPrompt(goal) {
   return [
     "You are Xarvis — an elite AI co-founder.",
-    "- Give actionable steps",
-    "- Be concise",
-    "- Focus on making money and growth",
+    "Give actionable steps.",
+    "Be concise and high-impact.",
+    "Focus on business, growth, and execution.",
     goal ? `User goal: ${goal}` : null,
   ]
     .filter(Boolean)
@@ -45,91 +64,54 @@ function isValidMessages(messages) {
 }
 
 // ─────────────────────────────────────────────
-// Health Check
-// ─────────────────────────────────────────────
-app.get("/api/health", (req, res) => {
-  res.json({
-    status: "running",
-    nodeVersion: process.version,
-    groqKeyLoaded: !!process.env.GROQ_API_KEY,
-  });
-});
-
-// ─────────────────────────────────────────────
-// Chat Route
+// Chat Route (MAIN AI ENGINE)
 // ─────────────────────────────────────────────
 app.post("/api/chat", async (req, res) => {
   try {
-    const { messages, goal } = req.body ?? {};
+    const { messages, goal } = req.body || {};
     const apiKey = process.env.GROQ_API_KEY;
 
-    // ✅ Validate API key
+    // ❌ Missing API key
     if (!apiKey) {
       return res.status(500).json({
-        error: "Server misconfiguration: missing GROQ_API_KEY",
+        error: "Missing GROQ_API_KEY in environment variables",
       });
     }
 
-    // ✅ Validate input
+    // ❌ Invalid messages
     if (!isValidMessages(messages)) {
       return res.status(400).json({
-        error: "messages must be a non-empty array of { role, content }",
+        error: "Invalid messages format",
       });
     }
 
-    console.log(`📩 Chat request (${messages.length} messages)`);
-
-    // ✅ Timeout protection
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), 20000);
 
-    let response;
-
-    try {
-      response = await fetch(GROQ_API_URL, {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${apiKey}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          model: MODEL,
-          messages: [
-            { role: "system", content: buildSystemPrompt(goal) },
-            ...messages,
-          ],
-          temperature: 0.7,
-          max_tokens: 1024,
-        }),
-        signal: controller.signal,
-      });
-    } catch (err) {
-      clearTimeout(timeout);
-
-      if (err.name === "AbortError") {
-        return res.status(504).json({ error: "Request timed out" });
-      }
-
-      return res.status(502).json({
-        error: `Network error: ${err.message}`,
-      });
-    }
+    const response = await fetch(GROQ_API_URL, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${apiKey}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        model: MODEL,
+        messages: [
+          { role: "system", content: buildSystemPrompt(goal) },
+          ...messages,
+        ],
+        temperature: 0.7,
+        max_tokens: 1024,
+      }),
+      signal: controller.signal,
+    });
 
     clearTimeout(timeout);
 
-    // ✅ Parse response safely
-    let data;
-    try {
-      data = await response.json();
-    } catch {
-      return res.status(502).json({
-        error: "Invalid response from Groq API",
-      });
-    }
+    const data = await response.json();
 
-    // ✅ Handle API error
     if (!response.ok) {
-      return res.status(502).json({
+      return res.status(500).json({
         error: data?.error?.message || "Groq API error",
       });
     }
@@ -137,29 +119,29 @@ app.post("/api/chat", async (req, res) => {
     const reply = data?.choices?.[0]?.message?.content;
 
     if (!reply) {
-      return res.status(502).json({
+      return res.status(500).json({
         error: "Empty response from model",
       });
     }
 
-    console.log(`✅ Reply generated (${reply.length} chars)`);
-
     return res.json({
       success: true,
       reply,
-      usage: data.usage,
     });
-
   } catch (err) {
-    console.error("🔥 Server error:", err);
+    console.error("Server error:", err);
+
     return res.status(500).json({
-      error: "Internal server error",
+      error:
+        err.name === "AbortError"
+          ? "Request timed out"
+          : "Internal server error",
     });
   }
 });
 
 // ─────────────────────────────────────────────
-// Static Files
+// Static frontend (optional)
 // ─────────────────────────────────────────────
 app.use(express.static(path.join(__dirname, "public")));
 
@@ -168,7 +150,7 @@ app.get("*", (req, res) => {
 });
 
 // ─────────────────────────────────────────────
-// Start Server
+// Start server
 // ─────────────────────────────────────────────
 app.listen(PORT, () => {
   console.log(`🚀 Xarvis running on port ${PORT}`);
