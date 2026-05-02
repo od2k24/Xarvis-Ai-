@@ -8,7 +8,7 @@
   <style>
     /* ── TOKENS ─────────────────────────────── */
     :root {
-      --bg:        #04060f;
+      --bg:        #04060f; 
       --bg2:       #070b18;
       --surface:   #0c1120;
       --surface2:  #111826;
@@ -843,18 +843,27 @@ const CONFIG = {
    endpoint = "/chat" | "/generate" | "/health"
    ═══════════════════════════════════════════ */
 async function callBackend(endpoint, payload) {
-  const res = await fetch(`${BACKEND_URL}${endpoint}`, {
+  const url = `${BACKEND_URL}/api${endpoint}`;
+
+  console.log("API CALL:", url);
+
+  const res = await fetch(url, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(payload),
+    body: payload ? JSON.stringify(payload) : undefined,
   });
+
   if (!res.ok) {
     const errText = await res.text().catch(() => '');
     throw new Error(`Server error (${res.status})${errText ? ': ' + errText : ''}`);
   }
+
   const data = await res.json();
   return data.reply ?? data.text ?? data.content ?? '';
 }
+
+  if (!res.ok) {
+    const errText = await res.text().catch
 
 /* ═══════════════════════════════════════════
    MEMORY
