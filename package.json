@@ -1,7 +1,7 @@
 {
   "name": "xarvis-ai-server",
   "version": "1.0.0",
-  "description": "Xarvis AI Backend API",
+  "description": "Xarvis AI backend — production-ready Node.js/Express server",
   "main": "index.js",
   "scripts": {
     "start": "node index.js",
