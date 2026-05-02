@@ -1,149 +1,137 @@
-# Xarvis AI V3 — Phase 1
+# Xarvis AI — Clean Rebuild
 
-**AI Co-Founder for Creators and Solo Founders.**
-
-> Phase 1: Streaming chat system with goal memory. Deployed on Vercel.
+Production-ready AI SaaS with Express backend + vanilla JS frontend.
 
 ---
 
-## 🗂️ File Structure
+## File Structure
 
 ```
 xarvis-ai/
-├── index.html          ← Landing page (goal input)
-├── app.html            ← Main chat interface
-├── style.css           ← Shared stylesheet
-├── app.js              ← Frontend logic (ES module)
-├── config.js           ← API URL + settings
-├── api/
-│   └── chat.js         ← Vercel Edge Function (Groq streaming)
-├── package.json
-├── vercel.json         ← Vercel routing config
-├── nixpacks.toml       ← Railway compatibility (optional)
-└── .env.example        ← Environment variable template
+├── server/
+│   ├── index.js              ← Express entry point
+│   ├── package.json
+│   ├── .env.example          ← Copy to .env
+│   └── routes/
+│       ├── health.js         ← GET  /api/health
+│       ├── chat.js           ← POST /api/chat
+│       └── generate.js       ← POST /api/generate
+│
+└── frontend/
+    └── index.html            ← Single-file UI (no framework)
 ```
 
 ---
 
-## ⚡ Quick Deploy (Vercel)
+## Setup Instructions
 
-### Step 1 — Get a Groq API Key
-1. Go to [https://console.groq.com](https://console.groq.com)
-2. Sign up / sign in
-3. Navigate to **API Keys** → **Create API Key**
-4. Copy the key (starts with `gsk_...`)
-
-### Step 2 — Push to GitHub
-```bash
-git init
-git add .
-git commit -m "feat: Xarvis AI V3 Phase 1"
-git remote add origin https://github.com/YOUR_USERNAME/xarvis-ai.git
-git push -u origin main
-```
-
-### Step 3 — Deploy on Vercel
-1. Go to [https://vercel.com/new](https://vercel.com/new)
-2. Import your GitHub repo
-3. **Framework Preset**: `Other`
-4. **Root Directory**: `/` (default)
-5. Click **Deploy**
-
-### Step 4 — Set Environment Variables
-In Vercel dashboard → Your Project → **Settings** → **Environment Variables**:
-
-| Key | Value |
-|-----|-------|
-| `GROQ_API_KEY` | `gsk_your_key_here` |
-
-Apply to: **Production**, **Preview**, **Development**
-
-Then go to **Deployments** → **Redeploy** (latest deployment).
-
-### Step 5 — Verify Deployment
-Test the streaming endpoint:
-```bash
-curl -X POST https://xarvis-ai.vercel.app/api/chat \
-  -H "Content-Type: application/json" \
-  -d '{"messages":[{"role":"user","content":"Hello"}],"goal":"Make £5K/month from YouTube"}'
-```
-
-You should see streamed SSE data in the terminal.
-
----
-
-## 🛠️ Local Development
+### 1. Install backend dependencies
 
 ```bash
-# Install Vercel CLI
+cd server
 npm install
-
-# Copy env file
-cp .env.example .env.local
-# Then add your GROQ_API_KEY to .env.local
-
-# Start local dev server
-npm run dev
 ```
 
-Open: [http://localhost:3000](http://localhost:3000)
+### 2. Configure environment variables
+
+```bash
+cp .env.example .env
+# Then edit .env and paste your Groq API key:
+# GROQ_API_KEY=gsk_...
+```
+
+Get a free Groq API key at: https://console.groq.com
+
+### 3. Start the server
+
+```bash
+# Development (auto-restart on save)
+npm run dev
+
+# Production
+npm start
+```
+
+Server runs on: http://localhost:3001
+
+### 4. Test the health check
+
+```bash
+curl http://localhost:3001/api/health
+# → {"status":"running"}
+```
+
+### 5. Open the frontend
+
+Open `frontend/index.html` in your browser.
+Update `BACKEND_URL` in the `<script>` tag if your server runs on a different URL.
 
 ---
 
-## 🌐 Live URLs (after deployment)
+## API Reference
 
-| Page | URL |
-|------|-----|
-| Landing | `https://xarvis-ai.vercel.app/` |
-| App | `https://xarvis-ai.vercel.app/app.html` |
-| API | `https://xarvis-ai.vercel.app/api/chat` |
+### GET /api/health
+Returns server status.
+```json
+{ "status": "running" }
+```
+
+### POST /api/chat
+Multi-turn conversation endpoint.
+```json
+// Request
+{
+  "messages": [
+    { "role": "user", "content": "Hello!" }
+  ],
+  "systemPrompt": "Optional system prompt"
+}
+
+// Response
+{
+  "reply": "Hi! How can I help you today?",
+  "model": "llama3-8b-8192",
+  "usage": { "prompt_tokens": 20, "completion_tokens": 10, "total_tokens": 30 }
+}
+```
+
+### POST /api/generate
+Single-shot content generation.
+```json
+// Request
+{
+  "prompt": "Write a hook for a YouTube video about discipline",
+  "temperature": 0.8,
+  "maxTokens": 1024
+}
+
+// Response
+{
+  "output": "Most people quit when it gets hard...",
+  "model": "llama3-8b-8192",
+  "usage": { ... }
+}
+```
 
 ---
 
-## 🏗️ Architecture
+## Deploying to Production
 
-### Phase 1 (Implemented)
-- ✅ Streaming chat via Groq API (llama-3.3-70b-versatile)
-- ✅ Goal memory via localStorage
-- ✅ Clean ChatGPT-style UI
-- ✅ Vercel Edge Function for minimal latency
-- ✅ Auto-resizing textarea
-- ✅ Chat history persistence
+### Backend → Railway / Render / Fly.io
+1. Push `server/` to GitHub
+2. Connect to Railway/Render
+3. Set `GROQ_API_KEY` as an environment variable
+4. Copy the deployed URL
 
-### Phase 2 (Designed, not implemented)
-- ⬜ JWT authentication
-- ⬜ Dashboard with goal tracking
-- ⬜ Planning agent
-
-### Phase 3 (Designed, not implemented)
-- ⬜ Multi-agent system
-- ⬜ PostgreSQL/MongoDB memory
-- ⬜ Stripe monetization
-- ⬜ Usage tracking
+### Frontend → Netlify / Vercel / GitHub Pages
+1. Update `BACKEND_URL` in `frontend/index.html` to your deployed backend URL
+2. Deploy the `frontend/` folder
 
 ---
 
-## 🔑 Environment Variables
+## Critical Rules (Never Break)
 
-| Variable | Required | Description |
-|----------|----------|-------------|
-| `GROQ_API_KEY` | ✅ Yes | Your Groq API key |
-| `DATABASE_URL` | ❌ Phase 2+ | PostgreSQL connection string |
-| `STRIPE_SECRET_KEY` | ❌ Phase 3 | Stripe secret key |
-
----
-
-## 🧪 Troubleshooting
-
-**Streaming not working:**
-- Check `GROQ_API_KEY` is set in Vercel env vars
-- Ensure you redeployed after adding the env var
-- Check browser console for CORS errors
-
-**Blank page on app.html:**
-- Open browser console — likely a JS module import error
-- Ensure `config.js` exists and exports `CONFIG`
-
-**API returns 500:**
-- `GROQ_API_KEY` is missing or invalid
-- Check Vercel function logs: Project → Functions → chat → Logs
+- All API calls go through `apiRequest(path, payload)` — never raw `fetch`
+- Routes always include the `/api` prefix — never `/chat` directly
+- `BACKEND_URL` is defined in exactly one place
+- No duplicate scripts or route definitions
