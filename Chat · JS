@@ -1,0 +1,66 @@
+const express = require("express");
+const router = express.Router();
+
+const GROQ_API_URL = "https://api.groq.com/openai/v1/chat/completions";
+const MODEL = "llama3-8b-8192"; // Fast, capable Groq model
+
+// POST /api/chat
+router.post("/", async (req, res, next) => {
+  try {
+    const { messages, systemPrompt } = req.body;
+
+    if (!messages || !Array.isArray(messages) || messages.length === 0) {
+      return res.status(400).json({ error: "messages array is required" });
+    }
+
+    if (!process.env.GROQ_API_KEY) {
+      return res.status(500).json({ error: "GROQ_API_KEY is not configured" });
+    }
+
+    const payload = {
+      model: MODEL,
+      messages: [
+        {
+          role: "system",
+          content: systemPrompt || "You are Xarvis AI, a helpful and intelligent assistant.",
+        },
+        ...messages,
+      ],
+      temperature: 0.7,
+      max_tokens: 1024,
+    };
+
+    console.log(`[CHAT] Sending ${messages.length} message(s) to Groq...`);
+
+    const groqRes = await fetch(GROQ_API_URL, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${process.env.GROQ_API_KEY}`,
+      },
+      body: JSON.stringify(payload),
+    });
+
+    if (!groqRes.ok) {
+      const errBody = await groqRes.json().catch(() => ({}));
+      const msg = errBody?.error?.message || `Groq error: ${groqRes.status}`;
+      console.error(`[CHAT ERROR] ${msg}`);
+      return res.status(groqRes.status).json({ error: msg });
+    }
+
+    const data = await groqRes.json();
+    const reply = data.choices?.[0]?.message?.content || "";
+
+    console.log(`[CHAT] Reply received (${reply.length} chars)`);
+
+    res.json({
+      reply,
+      model: data.model,
+      usage: data.usage,
+    });
+  } catch (err) {
+    next(err);
+  }
+});
+
+module.exports = router;
