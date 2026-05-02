@@ -1,196 +1,63 @@
-'use strict';
+const express = require("express");
+const router = express.Router();
 
-const express = require('express');
-const router  = express.Router();
+const GROQ_API_URL = "https://api.groq.com/openai/v1/chat/completions";
+const MODEL = "llama3-8b-8192";
 
-/* ─── Prompt templates ─── */
-const PROMPTS = {
-
-  viral: ({ topic, platform, context }) => `
-You are Xarvis Creator AI — a viral content engineer.
-Platform: ${platform}
-Creator context: ${context || 'General creator'}
-
-Generate a complete viral content package for: "${topic}"
-
-Respond in EXACTLY this format (keep labels verbatim):
-
-HOOK: [One punchy, scroll-stopping opening line. Max 15 words. Use curiosity gap, FOMO, or bold claim.]
-
-SCRIPT:
-[Full script optimized for ${platform}. Include pacing notes in [brackets]. Hook → value/story → CTA. 150-250 words.]
-
-TITLE:
-Option 1: [High CTR title]
-Option 2: [Curiosity-driven title]
-Option 3: [Bold/controversial title]
-
-THUMBNAIL: [Describe the visual: subject, expression, text overlay (5 words max), color scheme, composition. Be specific.]
-
-XARVIS_END`,
-
-  postnext: ({ context, memory }) => `
-You are Xarvis Strategist AI analyzing what a creator should post TODAY for maximum growth.
-
-Creator profile: ${context || 'General creator'}
-Niche: ${memory?.niche || 'content creator'}
-Platform: ${memory?.platform || 'TikTok'}
-Goals: ${memory?.goals || 'grow audience'}
-Past topics: ${(memory?.topics || []).slice(0, 5).join(', ') || 'none yet'}
-
-Pick ONE specific content idea that is most likely to get views, followers, and engagement right now.
-
-Respond in EXACTLY this format:
-
-IDEA: [The specific content concept — what the video is actually about, in 2-3 sentences]
-
-HOOK: [The exact first line the creator should say or show. 10-15 words max.]
-
-WHY IT WILL WORK: [3 specific reasons — psychology, timing, platform algorithm. Be data-driven.]
-
-BEST TIME TO POST: [Specific day + time range + why for ${memory?.platform || 'TikTok'}]
-
-END_SENTINEL`,
-
-  calendar: ({ context, memory }) => `
-You are Xarvis Strategist AI building a 7-day content calendar.
-
-Creator profile: ${context || 'General creator'}
-Niche: ${memory?.niche || 'content creation'}
-Platform: ${memory?.platform || 'TikTok'}
-Tone: ${memory?.tone || 'motivational'}
-Goals: ${memory?.goals || 'grow audience'}
-
-Create exactly 7 content days. Use PIPE-SEPARATED format, one line per day:
-
-DAY 1 | [Topic] | [Unique angle/hook strategy] | [Opening hook line — the exact first words]
-DAY 2 | [Topic] | [Unique angle/hook strategy] | [Opening hook line]
-DAY 3 | [Topic] | [Unique angle/hook strategy] | [Opening hook line]
-DAY 4 | [Topic] | [Unique angle/hook strategy] | [Opening hook line]
-DAY 5 | [Topic] | [Unique angle/hook strategy] | [Opening hook line]
-DAY 6 | [Topic] | [Unique angle/hook strategy] | [Opening hook line]
-DAY 7 | [Topic] | [Unique angle/hook strategy] | [Opening hook line]
-
-Rules:
-- Each day must be a DIFFERENT content type (tutorial, story, challenge, listicle, reaction, behind scenes, educational)
-- Hooks must be specific and punchy — not generic
-- Topics must build audience in ${memory?.niche || 'the niche'}`,
-
-  feedback: ({ content, context, memory }) => `
-You are Xarvis Feedback Analyzer — brutally honest content strategist.
-
-Creator context: ${context || 'General creator'}
-Niche: ${memory?.niche || 'content creation'}
-Platform: ${memory?.platform || 'TikTok'}
-
-Content idea to analyze:
-"${content}"
-
-Give direct, actionable feedback. No sugarcoating.
-
-Respond in EXACTLY this format:
-
-STRENGTHS:
-[What's genuinely working — be specific. 2-4 bullet points using • ]
-
-WEAKNESSES:
-[What will kill performance — be blunt. 2-4 bullet points using • ]
-
-IMPROVEMENTS:
-[Exact rewrites or fixes — show don't tell. Give the improved hook/title/angle. 3-5 bullet points using • ]
-
-VIRAL SCORE: [X] / 10
-
-VERDICT: [One paragraph — would you post this? Why or why not? What's the #1 thing to fix before posting?]
-
-END_SENTINEL`,
-};
-
-/**
- * POST /api/generate
- */
-router.post('/generate', async (req, res) => {
-  const groq = req.app.get('groq');
-  const { type, topic, platform, content, context, memory } = req.body;
-
-  if (!type) return res.status(400).json({ error: 'type is required' });
-
-  const promptFn = PROMPTS[type];
-  if (!promptFn) return res.status(400).json({ error: `Unknown type: ${type}. Use: viral | postnext | calendar | feedback` });
-
-  const prompt = promptFn({ topic, platform, content, context, memory });
-
-  const MODEL_BY_TYPE = {
-    viral:    'llama-3.3-70b-versatile',
-    postnext: 'llama-3.3-70b-versatile',
-    calendar: 'llama-3.3-70b-versatile',
-    feedback: 'llama-3.3-70b-versatile',
-  };
-
-  const TOKENS_BY_TYPE = {
-    viral:    1200,
-    postnext: 700,
-    calendar: 900,
-    feedback: 900,
-  };
-
+// POST /api/generate
+router.post("/", async (req, res, next) => {
   try {
-    const completion = await groq.chat.completions.create({
-      model:       MODEL_BY_TYPE[type],
-      messages: [{ role: 'user', content: prompt }],
-      temperature: type === 'calendar' ? 0.85 : 0.80,
-      max_tokens:  TOKENS_BY_TYPE[type],
-    });
+    const { prompt, systemPrompt, temperature = 0.8, maxTokens = 1024 } = req.body;
 
-    const reply = completion.choices[0]?.message?.content || '';
-    res.json({ reply, tokens: completion.usage?.total_tokens });
-  } catch (err) {
-    console.error(`[GENERATE/${type} ERROR]`, err.message);
-    res.status(500).json({ error: 'Generation failed', detail: err.message });
-  }
-});
-
-/**
- * POST /api/generate/stream
- * Streaming version for real-time generation feel
- */
-router.post('/generate/stream', async (req, res) => {
-  const groq = req.app.get('groq');
-  const { type, topic, platform, content, context, memory } = req.body;
-
-  if (!type) return res.status(400).json({ error: 'type is required' });
-
-  const promptFn = PROMPTS[type];
-  if (!promptFn) return res.status(400).json({ error: `Unknown type: ${type}` });
-
-  const prompt = promptFn({ topic, platform, content, context, memory });
-
-  res.setHeader('Content-Type',      'text/event-stream');
-  res.setHeader('Cache-Control',     'no-cache');
-  res.setHeader('Connection',        'keep-alive');
-  res.setHeader('X-Accel-Buffering', 'no');
-
-  try {
-    const stream = await groq.chat.completions.create({
-      model:       'llama-3.3-70b-versatile',
-      messages: [{ role: 'user', content: prompt }],
-      temperature: 0.82,
-      max_tokens:  1400,
-      stream:      true,
-    });
-
-    for await (const chunk of stream) {
-      const delta = chunk.choices[0]?.delta?.content;
-      if (delta) {
-        res.write(`data: ${JSON.stringify({ type: 'delta', content: delta })}\n\n`);
-      }
+    if (!prompt || typeof prompt !== "string") {
+      return res.status(400).json({ error: "prompt (string) is required" });
     }
 
-    res.write(`data: ${JSON.stringify({ type: 'done' })}\n\n`);
-    res.end();
+    if (!process.env.GROQ_API_KEY) {
+      return res.status(500).json({ error: "GROQ_API_KEY is not configured" });
+    }
+
+    console.log(`[GENERATE] Prompt: "${prompt.slice(0, 80)}..."`);
+
+    const groqRes = await fetch(GROQ_API_URL, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${process.env.GROQ_API_KEY}`,
+      },
+      body: JSON.stringify({
+        model: MODEL,
+        messages: [
+          {
+            role: "system",
+            content: systemPrompt || "You are Xarvis AI, a creative and precise content generator.",
+          },
+          { role: "user", content: prompt },
+        ],
+        temperature,
+        max_tokens: maxTokens,
+      }),
+    });
+
+    if (!groqRes.ok) {
+      const errBody = await groqRes.json().catch(() => ({}));
+      const msg = errBody?.error?.message || `Groq error: ${groqRes.status}`;
+      console.error(`[GENERATE ERROR] ${msg}`);
+      return res.status(groqRes.status).json({ error: msg });
+    }
+
+    const data = await groqRes.json();
+    const output = data.choices?.[0]?.message?.content || "";
+
+    console.log(`[GENERATE] Output: ${output.length} chars`);
+
+    res.json({
+      output,
+      model: data.model,
+      usage: data.usage,
+    });
   } catch (err) {
-    res.write(`data: ${JSON.stringify({ type: 'error', message: err.message })}\n\n`);
-    res.end();
+    next(err);
   }
 });
 
