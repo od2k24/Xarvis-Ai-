@@ -2,27 +2,41 @@ const express = require("express");
 const router = express.Router();
 
 const GROQ_API_URL = "https://api.groq.com/openai/v1/chat/completions";
-const MODEL = "llama3-8b-8192"; // Fast, capable Groq model
+const MODEL = "llama3-8b-8192";
+
+// Helper: validate messages
+const isValidMessages = (messages) =>
+  Array.isArray(messages) &&
+  messages.length > 0 &&
+  messages.every(m => m.role && m.content);
 
 // POST /api/chat
 router.post("/", async (req, res, next) => {
   try {
     const { messages, systemPrompt } = req.body;
 
-    if (!messages || !Array.isArray(messages) || messages.length === 0) {
-      return res.status(400).json({ error: "messages array is required" });
+    // ✅ Validation
+    if (!isValidMessages(messages)) {
+      return res.status(400).json({
+        error: "messages must be a non-empty array of { role, content }",
+      });
     }
 
     if (!process.env.GROQ_API_KEY) {
-      return res.status(500).json({ error: "GROQ_API_KEY is not configured" });
+      return res.status(500).json({
+        error: "Server misconfiguration: missing GROQ_API_KEY",
+      });
     }
 
+    // ✅ Build payload
     const payload = {
       model: MODEL,
       messages: [
         {
           role: "system",
-          content: systemPrompt || "You are Xarvis AI, a helpful and intelligent assistant.",
+          content:
+            systemPrompt ||
+            "You are Xarvis AI, an elite AI co-founder. Be precise, strategic, and helpful.",
         },
         ...messages,
       ],
@@ -30,9 +44,10 @@ router.post("/", async (req, res, next) => {
       max_tokens: 1024,
     };
 
-    console.log(`[CHAT] Sending ${messages.length} message(s) to Groq...`);
+    console.log(`[CHAT] → ${messages.length} messages`);
 
-    const groqRes = await fetch(GROQ_API_URL, {
+    // ✅ API call
+    const response = await fetch(GROQ_API_URL, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -41,25 +56,37 @@ router.post("/", async (req, res, next) => {
       body: JSON.stringify(payload),
     });
 
-    if (!groqRes.ok) {
-      const errBody = await groqRes.json().catch(() => ({}));
-      const msg = errBody?.error?.message || `Groq error: ${groqRes.status}`;
-      console.error(`[CHAT ERROR] ${msg}`);
-      return res.status(groqRes.status).json({ error: msg });
+    // ✅ Handle API errors
+    if (!response.ok) {
+      let errorMessage = `Groq API error (${response.status})`;
+
+      try {
+        const err = await response.json();
+        errorMessage = err?.error?.message || errorMessage;
+      } catch {}
+
+      console.error("[CHAT ERROR]", errorMessage);
+
+      return res.status(response.status).json({ error: errorMessage });
     }
 
-    const data = await groqRes.json();
-    const reply = data.choices?.[0]?.message?.content || "";
+    // ✅ Parse response
+    const data = await response.json();
+    const reply = data?.choices?.[0]?.message?.content ?? "";
 
-    console.log(`[CHAT] Reply received (${reply.length} chars)`);
+    console.log(`[CHAT] ← Reply (${reply.length} chars)`);
 
-    res.json({
+    // ✅ Send clean response
+    return res.json({
+      success: true,
       reply,
       model: data.model,
       usage: data.usage,
     });
-  } catch (err) {
-    next(err);
+
+  } catch (error) {
+    console.error("[SERVER ERROR]", error);
+    next(error);
   }
 });
 
