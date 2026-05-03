@@ -5,63 +5,30 @@ const path = require("path");
 const app = express();
 const PORT = process.env.PORT || 3001;
 
-// ─────────────────────────────────────────────
 // ─────────────────────────────
 // Middleware
-// ─────────────────────────────────────────────
 // ─────────────────────────────
 app.use(cors());
-app.use(express.json());
+app.use(express.json({ limit: "1mb" }));
 
-// ─────────────────────────────────────────────
 // ─────────────────────────────
 // Config
-// ─────────────────────────────────────────────
 // ─────────────────────────────
 const GROQ_API_URL =
   "https://api.groq.com/openai/v1/chat/completions";
 
 const MODEL = "llama-3.3-70b-versatile";
 
-// ─────────────────────────────────────────────
-// Root Route (FIXED - prevents Not Found confusion)
-// ─────────────────────────────────────────────
 // ─────────────────────────────
-// ROOT (no frontend, no crash)
-// ─────────────────────────────
-app.get("/", (req, res) => {
-  res.json({
-    status: "Xarvis backend running 🚀",
-    status: "Xarvis API is running 🚀",
-    endpoints: ["/api/health", "/api/chat"],
-  });
-});
-
-// ─────────────────────────────────────────────
-// Health Check
-// ─────────────────────────────────────────────
-// ─────────────────────────────
-// HEALTH CHECK
-// ─────────────────────────────
-app.get("/api/health", (req, res) => {
-  res.json({
-    status: "running",
-@@ -40,21 +39,23 @@ app.get("/api/health", (req, res) => {
-  });
-});
-
-// ─────────────────────────────────────────────
 // Helpers
-// ─────────────────────────────────────────────
 // ─────────────────────────────
-// SYSTEM PROMPT
-// ─────────────────────────────
+function now() {
+  return new Date().toISOString();
+}
+
 function buildSystemPrompt(goal) {
   return [
     "You are Xarvis — an elite AI co-founder.",
-    "Give actionable steps.",
-    "Be concise and high-impact.",
-    "Focus on business, growth, and execution.",
     "You help users build businesses, make money, and grow fast.",
     "Be direct, practical, and actionable.",
     goal ? `User goal: ${goal}` : null,
@@ -70,52 +37,77 @@ function buildSystemPrompt(goal) {
     .join("\n");
 }
 
-// ─────────────────────────────
-// VALIDATION
-// ─────────────────────────────
 function isValidMessages(messages) {
   return (
     Array.isArray(messages) &&
-@@ -63,9 +64,9 @@ function isValidMessages(messages) {
+    messages.length > 0 &&
+    messages.every((m) => m.role && m.content)
   );
 }
 
-// ─────────────────────────────────────────────
-// Chat Route (MAIN AI ENGINE)
-// ─────────────────────────────────────────────
 // ─────────────────────────────
-// CHAT ROUTE (MAIN AI)
+// ROOT
+// ─────────────────────────────
+app.get("/", (req, res) => {
+  res.json({
+    status: "Xarvis backend running 🚀",
+    timestamp: now(),
+    endpoints: ["/api/health", "/api/chat"],
+  });
+});
+
+// ─────────────────────────────
+// HEALTH
+// ─────────────────────────────
+app.get("/api/health", (req, res) => {
+  res.json({
+    status: "running",
+    timestamp: now(),
+    nodeVersion: process.version,
+    groqKeyLoaded: !!process.env.GROQ_API_KEY,
+  });
+});
+
+// ─────────────────────────────
+// CHAT (MAIN AI ENGINE)
 // ─────────────────────────────
 app.post("/api/chat", async (req, res) => {
   try {
     const { messages, goal } = req.body || {};
-@@ -74,20 +75,20 @@ app.post("/api/chat", async (req, res) => {
-    // ❌ Missing API key
+    const apiKey = process.env.GROQ_API_KEY;
+
     if (!apiKey) {
       return res.status(500).json({
-        error: "Missing GROQ_API_KEY in environment variables",
+        success: false,
         error: "Missing GROQ_API_KEY",
+        timestamp: now(),
       });
     }
 
-    // ❌ Invalid messages
-    // ❌ Invalid input
     if (!isValidMessages(messages)) {
       return res.status(400).json({
+        success: false,
         error: "Invalid messages format",
+        timestamp: now(),
       });
     }
 
+    // timeout protection
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), 20000);
 
-    // ─────────────────────────────
-    // Call Groq API
-    // ─────────────────────────────
     const response = await fetch(GROQ_API_URL, {
       method: "POST",
       headers: {
-@@ -103,11 +104,8 @@ app.post("/api/chat", async (req, res) => {
+        Authorization: `Bearer ${apiKey}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        model: MODEL,
+        messages: [
+          { role: "system", content: buildSystemPrompt(goal) },
+          ...messages,
+        ],
         temperature: 0.7,
         max_tokens: 1024,
       }),
@@ -127,38 +119,58 @@ app.post("/api/chat", async (req, res) => {
     const data = await response.json();
 
     if (!response.ok) {
-@@ -129,29 +127,17 @@ app.post("/api/chat", async (req, res) => {
+      return res.status(500).json({
+        success: false,
+        error: data?.error?.message || "Groq API error",
+        timestamp: now(),
+      });
+    }
+
+    const reply = data?.choices?.[0]?.message?.content;
+
+    if (!reply) {
+      return res.status(500).json({
+        success: false,
+        error: "Empty response from model",
+        timestamp: now(),
+      });
+    }
+
+    return res.json({
+      success: true,
       reply,
+      timestamp: now(),
     });
+
   } catch (err) {
-    console.error("Server error:", err);
     console.error("🔥 Server error:", err);
 
     return res.status(500).json({
+      success: false,
       error:
         err.name === "AbortError"
           ? "Request timed out"
           : "Internal server error",
-      error: "Internal server error",
+      timestamp: now(),
     });
   }
 });
 
-// ─────────────────────────────────────────────
-// Static frontend (optional)
-// ─────────────────────────────────────────────
+// ─────────────────────────────
+// OPTIONAL STATIC FRONTEND
+// (safe version — no wildcard crash)
+// ─────────────────────────────
 app.use(express.static(path.join(__dirname, "public")));
 
-app.get("*", (req, res) => {
-  res.sendFile(path.join(__dirname, "public", "index.html"));
+app.get("/app", (req, res) => {
+  const filePath = path.join(__dirname, "public", "index.html");
+  res.sendFile(filePath);
 });
 
-// ─────────────────────────────────────────────
-// Start server
-// ─────────────────────────────────────────────
 // ─────────────────────────────
 // START SERVER
 // ─────────────────────────────
 app.listen(PORT, () => {
   console.log(`🚀 Xarvis running on port ${PORT}`);
   console.log(`🧠 Node: ${process.version}`);
+});
