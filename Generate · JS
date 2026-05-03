@@ -1,63 +1,181 @@
 const express = require("express");
-const router = express.Router();
+const router  = express.Router();
 
 const GROQ_API_URL = "https://api.groq.com/openai/v1/chat/completions";
-const MODEL = "llama3-8b-8192";
+const MODEL        = "llama-3.3-70b-versatile";
 
-// POST /api/generate
-router.post("/", async (req, res, next) => {
+// ─── Groq helper ──────────────────────────────────────────────────────────────
+async function groq(systemPrompt, userPrompt) {
+  const apiKey = process.env.GROQ_API_KEY;
+  if (!apiKey) throw new Error("Missing GROQ_API_KEY");
+
+  const res = await fetch(GROQ_API_URL, {
+    method:  "POST",
+    headers: {
+      Authorization:  `Bearer ${apiKey}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      model:       MODEL,
+      temperature: 0.8,
+      max_tokens:  1500,
+      messages: [
+        { role: "system", content: systemPrompt },
+        { role: "user",   content: userPrompt   },
+      ],
+    }),
+  });
+
+  if (!res.ok) {
+    const e = await res.json().catch(() => ({}));
+    throw new Error(e?.error?.message || `Groq error ${res.status}`);
+  }
+
+  const data = await res.json();
+  const reply = data?.choices?.[0]?.message?.content;
+  if (!reply) throw new Error("Empty response from model");
+  return reply;
+}
+
+// ─── Prompt builders ──────────────────────────────────────────────────────────
+
+function viralPrompt(topic, platform, context) {
+  return {
+    system: `You are Xarvis, an elite viral content strategist who has helped creators generate millions of views.
+You know exactly what hooks stop scrolls, what scripts retain viewers, and what thumbnails get clicked.${context || ""}`,
+    user: `Create a COMPLETE viral content package for this topic on ${platform}: "${topic}"
+
+Respond in EXACTLY this format with these labels:
+
+HOOK:
+[Write ONE scroll-stopping opening line — bold claim, shocking stat, or curiosity gap. Max 2 sentences.]
+
+SCRIPT:
+[Write a complete, punchy script for the video. Include the hook integrated naturally, 3-5 body points, and a strong CTA at the end. Format with clear sections.]
+
+TITLE:
+[Write 3 title options separated by newlines. Make them click-worthy with numbers, power words, or emotional triggers.]
+
+THUMBNAIL:
+[Describe the perfect thumbnail: background, text overlay, facial expression/pose, colors, props. Be specific and visual.]`,
+  };
+}
+
+function postNextPrompt(context, memory) {
+  const niche    = memory?.niche    || "content creation";
+  const platform = memory?.platform || "YouTube Shorts";
+  const tone     = memory?.tone     || "motivational";
+  return {
+    system: `You are Xarvis, a data-driven content strategist. You analyze trends, audience psychology, and platform algorithms to pick the single highest-ROI content idea for a creator right now.${context || ""}`,
+    user: `My niche: ${niche} | Platform: ${platform} | Tone: ${tone}
+
+Pick my ONE best post idea for today. Use current trends and psychology.
+
+Respond in EXACTLY this format:
+
+IDEA:
+[The specific video/post idea — be concrete, not generic.]
+
+HOOK:
+[The exact opening line for this piece of content.]
+
+WHY IT WILL WORK:
+[3 bullet points explaining the algorithm, psychology, and timing reasons this will perform well.]
+
+BEST TIME TO POST:
+[Specific day, time window, and why for ${platform}.]`,
+  };
+}
+
+function calendarPrompt(context, memory) {
+  const niche    = memory?.niche    || "content creation";
+  const platform = memory?.platform || "YouTube";
+  const tone     = memory?.tone     || "motivational";
+  return {
+    system: `You are Xarvis, a content calendar expert. You build 7-day content plans that balance education, entertainment, and virality.${context || ""}`,
+    user: `Build a 7-day content calendar for: Niche: ${niche} | Platform: ${platform} | Tone: ${tone}
+
+Output EXACTLY 7 lines in this pipe-separated format (no extra text, no numbers before DAY):
+
+DAY 1 | [Topic title] | [Unique angle/hook strategy] | [Opening hook line]
+DAY 2 | [Topic title] | [Unique angle/hook strategy] | [Opening hook line]
+DAY 3 | [Topic title] | [Unique angle/hook strategy] | [Opening hook line]
+DAY 4 | [Topic title] | [Unique angle/hook strategy] | [Opening hook line]
+DAY 5 | [Topic title] | [Unique angle/hook strategy] | [Opening hook line]
+DAY 6 | [Topic title] | [Unique angle/hook strategy] | [Opening hook line]
+DAY 7 | [Topic title] | [Unique angle/hook strategy] | [Opening hook line]`,
+  };
+}
+
+function feedbackPrompt(content, context, memory) {
+  const niche = memory?.niche || "general";
+  return {
+    system: `You are Xarvis, a brutal-but-fair content coach. You score content ideas honestly and give specific, actionable feedback that actually improves results. Niche context: ${niche}.${context || ""}`,
+    user: `Analyze this content idea and score it:
+
+"${content}"
+
+Respond in EXACTLY this format:
+
+STRENGTHS:
+[2-3 specific strengths. What is working and why.]
+
+WEAKNESSES:
+[2-3 specific weaknesses. What will kill performance and why.]
+
+IMPROVEMENTS:
+[3 concrete, specific fixes the creator should make right now.]
+
+VIRAL SCORE: [NUMBER]/10
+
+VERDICT:
+[2-3 sentence honest verdict on this idea's potential and the #1 thing to change.]`,
+  };
+}
+
+// ─── POST /api/generate ───────────────────────────────────────────────────────
+router.post("/", async (req, res) => {
+  const { type, topic, platform, content, context, memory } = req.body || {};
+
+  if (!type) {
+    return res.status(400).json({ error: "type is required (viral|postnext|calendar|feedback)" });
+  }
+
   try {
-    const { prompt, systemPrompt, temperature = 0.8, maxTokens = 1024 } = req.body;
+    let reply;
 
-    if (!prompt || typeof prompt !== "string") {
-      return res.status(400).json({ error: "prompt (string) is required" });
+    switch (type) {
+      case "viral": {
+        if (!topic) return res.status(400).json({ error: "topic is required for viral" });
+        const p = viralPrompt(topic, platform || "YouTube Shorts", context);
+        reply   = await groq(p.system, p.user);
+        break;
+      }
+      case "postnext": {
+        const p = postNextPrompt(context, memory);
+        reply   = await groq(p.system, p.user);
+        break;
+      }
+      case "calendar": {
+        const p = calendarPrompt(context, memory);
+        reply   = await groq(p.system, p.user);
+        break;
+      }
+      case "feedback": {
+        if (!content) return res.status(400).json({ error: "content is required for feedback" });
+        const p = feedbackPrompt(content, context, memory);
+        reply   = await groq(p.system, p.user);
+        break;
+      }
+      default:
+        return res.status(400).json({ error: `Unknown type: ${type}` });
     }
 
-    if (!process.env.GROQ_API_KEY) {
-      return res.status(500).json({ error: "GROQ_API_KEY is not configured" });
-    }
+    return res.json({ success: true, reply });
 
-    console.log(`[GENERATE] Prompt: "${prompt.slice(0, 80)}..."`);
-
-    const groqRes = await fetch(GROQ_API_URL, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${process.env.GROQ_API_KEY}`,
-      },
-      body: JSON.stringify({
-        model: MODEL,
-        messages: [
-          {
-            role: "system",
-            content: systemPrompt || "You are Xarvis AI, a creative and precise content generator.",
-          },
-          { role: "user", content: prompt },
-        ],
-        temperature,
-        max_tokens: maxTokens,
-      }),
-    });
-
-    if (!groqRes.ok) {
-      const errBody = await groqRes.json().catch(() => ({}));
-      const msg = errBody?.error?.message || `Groq error: ${groqRes.status}`;
-      console.error(`[GENERATE ERROR] ${msg}`);
-      return res.status(groqRes.status).json({ error: msg });
-    }
-
-    const data = await groqRes.json();
-    const output = data.choices?.[0]?.message?.content || "";
-
-    console.log(`[GENERATE] Output: ${output.length} chars`);
-
-    res.json({
-      output,
-      model: data.model,
-      usage: data.usage,
-    });
   } catch (err) {
-    next(err);
+    console.error(`[generate/${type}] error:`, err.message);
+    return res.status(500).json({ error: err.message || "Internal server error" });
   }
 });
 
