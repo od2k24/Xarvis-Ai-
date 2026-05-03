@@ -1,92 +1,104 @@
 const express = require("express");
-const router = express.Router();
+const router  = express.Router();
 
 const GROQ_API_URL = "https://api.groq.com/openai/v1/chat/completions";
-const MODEL = "llama3-8b-8192";
+const MODEL        = "llama-3.3-70b-versatile";
 
-// Helper: validate messages
-const isValidMessages = (messages) =>
-  Array.isArray(messages) &&
-  messages.length > 0 &&
-  messages.every(m => m.role && m.content);
+function buildSystemPrompt(context) {
+  return [
+    "You are Xarvis — an elite AI co-founder and creator strategist.",
+    "You help creators build businesses, go viral, and make money online.",
+    "Be direct, practical, sharp, and always give actionable steps.",
+    "Format your responses with bold headers using **text** when helpful.",
+    context || null,
+  ]
+    .filter(Boolean)
+    .join("\n");
+}
 
-// POST /api/chat
-router.post("/", async (req, res, next) => {
+// ─── POST /api/chat/stream ────────────────────────────────────────────────────
+// Streams SSE events: { type:'delta', content } | { type:'done' } | { type:'error', message }
+router.post("/stream", async (req, res) => {
+  const { message, context, history = [] } = req.body || {};
+  const apiKey = process.env.GROQ_API_KEY;
+
+  // ── Validate ────────────────────────────────────────────────────────────────
+  if (!apiKey) {
+    return res.status(500).json({ error: "Missing GROQ_API_KEY on server." });
+  }
+  if (!message || typeof message !== "string" || !message.trim()) {
+    return res.status(400).json({ error: "message is required." });
+  }
+
+  // ── SSE headers ─────────────────────────────────────────────────────────────
+  res.setHeader("Content-Type",  "text/event-stream");
+  res.setHeader("Cache-Control", "no-cache");
+  res.setHeader("Connection",    "keep-alive");
+  res.flushHeaders();
+
+  const send = (obj) => res.write(`data: ${JSON.stringify(obj)}\n\n`);
+
+  // ── Build messages ───────────────────────────────────────────────────────────
+  const messages = [
+    { role: "system", content: buildSystemPrompt(context) },
+    ...history.slice(-12),
+    { role: "user",   content: message },
+  ];
+
   try {
-    const { messages, systemPrompt } = req.body;
-
-    // ✅ Validation
-    if (!isValidMessages(messages)) {
-      return res.status(400).json({
-        error: "messages must be a non-empty array of { role, content }",
-      });
-    }
-
-    if (!process.env.GROQ_API_KEY) {
-      return res.status(500).json({
-        error: "Server misconfiguration: missing GROQ_API_KEY",
-      });
-    }
-
-    // ✅ Build payload
-    const payload = {
-      model: MODEL,
-      messages: [
-        {
-          role: "system",
-          content:
-            systemPrompt ||
-            "You are Xarvis AI, an elite AI co-founder. Be precise, strategic, and helpful.",
-        },
-        ...messages,
-      ],
-      temperature: 0.7,
-      max_tokens: 1024,
-    };
-
-    console.log(`[CHAT] → ${messages.length} messages`);
-
-    // ✅ API call
-    const response = await fetch(GROQ_API_URL, {
-      method: "POST",
+    const groqRes = await fetch(GROQ_API_URL, {
+      method:  "POST",
       headers: {
+        Authorization:  `Bearer ${apiKey}`,
         "Content-Type": "application/json",
-        Authorization: `Bearer ${process.env.GROQ_API_KEY}`,
       },
-      body: JSON.stringify(payload),
+      body: JSON.stringify({
+        model:       MODEL,
+        messages,
+        temperature: 0.75,
+        max_tokens:  1024,
+        stream:      true,
+      }),
     });
 
-    // ✅ Handle API errors
-    if (!response.ok) {
-      let errorMessage = `Groq API error (${response.status})`;
-
-      try {
-        const err = await response.json();
-        errorMessage = err?.error?.message || errorMessage;
-      } catch {}
-
-      console.error("[CHAT ERROR]", errorMessage);
-
-      return res.status(response.status).json({ error: errorMessage });
+    if (!groqRes.ok) {
+      const err = await groqRes.json().catch(() => ({}));
+      send({ type: "error", message: err?.error?.message || `Groq error ${groqRes.status}` });
+      return res.end();
     }
 
-    // ✅ Parse response
-    const data = await response.json();
-    const reply = data?.choices?.[0]?.message?.content ?? "";
+    // ── Stream chunks ────────────────────────────────────────────────────────
+    const reader  = groqRes.body.getReader();
+    const decoder = new TextDecoder();
+    let   buffer  = "";
 
-    console.log(`[CHAT] ← Reply (${reply.length} chars)`);
+    while (true) {
+      const { value, done } = await reader.read();
+      if (done) break;
 
-    // ✅ Send clean response
-    return res.json({
-      success: true,
-      reply,
-      model: data.model,
-      usage: data.usage,
-    });
+      buffer += decoder.decode(value, { stream: true });
+      const lines = buffer.split("\n");
+      buffer = lines.pop(); // keep incomplete line
 
-  } catch (error) {
-    console.error("[SERVER ERROR]", error);
-    next(error);
+      for (const line of lines) {
+        if (!line.startsWith("data: ")) continue;
+        const raw = line.slice(6).trim();
+        if (raw === "[DONE]") { send({ type: "done" }); return res.end(); }
+        try {
+          const parsed = JSON.parse(raw);
+          const chunk  = parsed?.choices?.[0]?.delta?.content;
+          if (chunk) send({ type: "delta", content: chunk });
+        } catch {}
+      }
+    }
+
+    send({ type: "done" });
+    res.end();
+
+  } catch (err) {
+    console.error("[chat/stream] error:", err.message);
+    send({ type: "error", message: "Internal server error — please try again." });
+    res.end();
   }
 });
 
