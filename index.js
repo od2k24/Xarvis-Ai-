@@ -4,18 +4,18 @@ const helmet = require("helmet");
 const rateLimit = require("express-rate-limit");
 
 // ─────────────────────────────
-// App Init
+// INIT
 // ─────────────────────────────
 const app = express();
 const PORT = process.env.PORT || 3001;
 
 // ─────────────────────────────
-// Middleware
+// MIDDLEWARE
 // ─────────────────────────────
 app.use(helmet());
 
 app.use(cors({
-  origin: "*", // change later for production frontend
+  origin: "*", // lock this later when frontend exists
 }));
 
 app.use(express.json({ limit: "1mb" }));
@@ -28,7 +28,7 @@ app.use(
 );
 
 // ─────────────────────────────
-// Config
+// CONFIG
 // ─────────────────────────────
 const GROQ_API_URL =
   "https://api.groq.com/openai/v1/chat/completions";
@@ -36,72 +36,79 @@ const GROQ_API_URL =
 const MODEL = "llama-3.3-70b-versatile";
 
 // ─────────────────────────────
-// Utils
+// UTILITIES
 // ─────────────────────────────
 const now = () => new Date().toISOString();
 
 function buildSystemPrompt(goal) {
   return [
     "You are Xarvis — an elite AI co-founder.",
-    "You help users build businesses, make money, and grow fast.",
-    "Be direct, practical, and actionable.",
+    "You help users build businesses, make money, and execute fast.",
+    "Be direct, structured, and actionable.",
     goal ? `User goal: ${goal}` : null,
-  ]
-    .filter(Boolean)
-    .join("\n");
+  ].filter(Boolean).join("\n");
 }
 
 function isValidMessages(messages) {
   return (
     Array.isArray(messages) &&
     messages.length > 0 &&
-    messages.every((m) => m.role && m.content)
+    messages.every(m => m.role && m.content)
   );
 }
 
 // ─────────────────────────────
-// Routes
+// ROUTES
 // ─────────────────────────────
 
-// Root
+// ROOT
 app.get("/", (req, res) => {
   res.json({
-    status: "Xarvis API running 🚀",
+    name: "Xarvis API",
+    status: "running 🚀",
     timestamp: now(),
-    endpoints: ["/api/health", "/api/chat"],
+    endpoints: [
+      "/api/health",
+      "/api/chat"
+    ],
   });
 });
 
-// Health
+// HEALTH CHECK
 app.get("/api/health", (req, res) => {
   res.json({
-    status: "running",
+    status: "ok",
     timestamp: now(),
-    nodeVersion: process.version,
+    node: process.version,
     groqKeyLoaded: !!process.env.GROQ_API_KEY,
   });
 });
 
-// Chat
+// CHAT ENDPOINT (MAIN AI)
 app.post("/api/chat", async (req, res) => {
   try {
     const { messages, goal } = req.body || {};
     const apiKey = process.env.GROQ_API_KEY;
 
+    // check API key
     if (!apiKey) {
       return res.status(500).json({
         success: false,
         error: "Missing GROQ_API_KEY",
+        timestamp: now(),
       });
     }
 
+    // validate input
     if (!isValidMessages(messages)) {
       return res.status(400).json({
         success: false,
         error: "Invalid messages format",
+        timestamp: now(),
       });
     }
 
+    // call Groq
     const response = await fetch(GROQ_API_URL, {
       method: "POST",
       headers: {
@@ -125,6 +132,7 @@ app.post("/api/chat", async (req, res) => {
       return res.status(500).json({
         success: false,
         error: data?.error?.message || "Groq API error",
+        timestamp: now(),
       });
     }
 
@@ -133,7 +141,8 @@ app.post("/api/chat", async (req, res) => {
     if (!reply) {
       return res.status(500).json({
         success: false,
-        error: "Empty response from model",
+        error: "Empty model response",
+        timestamp: now(),
       });
     }
 
@@ -142,8 +151,9 @@ app.post("/api/chat", async (req, res) => {
       reply,
       timestamp: now(),
     });
+
   } catch (err) {
-    console.error("🔥 Server error:", err);
+    console.error("🔥 Server Error:", err);
 
     return res.status(500).json({
       success: false,
@@ -153,9 +163,7 @@ app.post("/api/chat", async (req, res) => {
   }
 });
 
-// ─────────────────────────────
-// 404 Handler
-// ─────────────────────────────
+// 404 HANDLER
 app.use((req, res) => {
   res.status(404).json({
     success: false,
@@ -166,7 +174,7 @@ app.use((req, res) => {
 });
 
 // ─────────────────────────────
-// Start Server
+// START SERVER
 // ─────────────────────────────
 app.listen(PORT, () => {
   console.log(`🚀 Xarvis running on port ${PORT}`);
