@@ -1,63 +1,95 @@
-// lib/groq.js — Single AI function. Never duplicate this logic elsewhere.
+const express = require("express");
+const router  = express.Router();
 
 const GROQ_API_URL = "https://api.groq.com/openai/v1/chat/completions";
 const MODEL        = "llama-3.3-70b-versatile";
-const TIMEOUT_MS   = 25_000;
 
-const DEFAULT_SYSTEM = `You are Xarvis — an elite AI co-founder built for creators and entrepreneurs.
-Your job: help users build wealth, grow online, and execute big ideas fast.
-Style rules:
-- Be direct, sharp, and actionable
-- Format responses clearly: lead with the insight, follow with the step
-- Skip filler phrases ("certainly!", "great question!")
-- Always end with one concrete next action the user can take today`;
-
-/**
- * Core AI chat function. ALL routes must call this — never fetch Groq directly.
- * @param {Array}  messages      - Array of {role, content} objects
- * @param {string} systemPrompt  - Optional system override
- * @returns {Promise<string>}    - AI reply text
- */
-async function groqChat(messages, systemPrompt = DEFAULT_SYSTEM) {
+// ─── POST /api/agent/plan ─────────────────────────────────────────────────────
+router.post("/plan", async (req, res) => {
+  const { goal, context, memory } = req.body || {};
   const apiKey = process.env.GROQ_API_KEY;
-  if (!apiKey) throw new Error("GROQ_API_KEY is not set in environment");
 
-  const controller = new AbortController();
-  const timer = setTimeout(() => controller.abort(), TIMEOUT_MS);
+  if (!apiKey) {
+    return res.status(500).json({ error: "Missing GROQ_API_KEY on server." });
+  }
+  if (!goal || typeof goal !== "string" || !goal.trim()) {
+    return res.status(400).json({ error: "goal is required." });
+  }
+
+  const niche    = memory?.niche    || "content creation";
+  const platform = memory?.platform || "YouTube";
+
+  const systemPrompt = `You are Xarvis in Agent Mode — an elite AI co-founder and strategic operator.
+You break down big ambitious goals into concrete, week-by-week execution plans that actually work.
+You think like a startup founder, content growth hacker, and business builder combined.
+Niche: ${niche} | Platform: ${platform}
+${context || ""}`.trim();
+
+  const userPrompt = `My goal: "${goal}"
+
+Build me a complete, phased execution roadmap. Be specific — no vague advice.
+
+Structure your response like this:
+
+🎯 GOAL BREAKDOWN
+[Reframe the goal into 3 measurable milestones]
+
+📅 PHASE 1 — WEEKS 1–2: Foundation
+[5 specific daily/weekly actions to start immediately]
+
+📅 PHASE 2 — WEEKS 3–6: Momentum
+[5 specific actions to build traction and systems]
+
+📅 PHASE 3 — WEEKS 7–12: Scale
+[5 specific actions to accelerate and monetize]
+
+⚡ QUICK WINS (Do in 24 hours)
+[3 things to do TODAY to start moving]
+
+🚧 BIGGEST OBSTACLES & HOW TO BEAT THEM
+[Top 3 likely obstacles with specific countermeasures]
+
+💰 MONETIZATION PATH
+[Specific revenue streams to build in order, with realistic timelines]
+
+Be direct, tactical, and specific. No filler.`;
 
   try {
-    const response = await fetch(GROQ_API_URL, {
+    const groqRes = await fetch(GROQ_API_URL, {
       method:  "POST",
       headers: {
-        "Authorization": `Bearer ${apiKey}`,
-        "Content-Type":  "application/json",
+        Authorization:  `Bearer ${apiKey}`,
+        "Content-Type": "application/json",
       },
       body: JSON.stringify({
         model:       MODEL,
         temperature: 0.7,
-        max_tokens:  1024,
+        max_tokens:  2000,
         messages: [
           { role: "system", content: systemPrompt },
-          ...messages,
+          { role: "user",   content: userPrompt   },
         ],
       }),
-      signal: controller.signal,
     });
 
-    const data = await response.json();
-
-    if (!response.ok) {
-      const msg = data?.error?.message || `Groq error (${response.status})`;
-      throw new Error(msg);
+    if (!groqRes.ok) {
+      const e = await groqRes.json().catch(() => ({}));
+      return res.status(500).json({ error: e?.error?.message || `Groq error ${groqRes.status}` });
     }
 
-    const reply = data?.choices?.[0]?.message?.content;
-    if (!reply) throw new Error("Empty response from Groq");
+    const data = await groqRes.json();
+    const plan  = data?.choices?.[0]?.message?.content;
 
-    return reply;
-  } finally {
-    clearTimeout(timer);
+    if (!plan) {
+      return res.status(500).json({ error: "Empty response from model" });
+    }
+
+    return res.json({ success: true, plan });
+
+  } catch (err) {
+    console.error("[agent/plan] error:", err.message);
+    return res.status(500).json({ error: err.message || "Internal server error" });
   }
-}
+});
 
-module.exports = { groqChat, DEFAULT_SYSTEM };
+module.exports = router;
