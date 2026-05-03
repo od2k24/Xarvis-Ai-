@@ -1,9 +1,13 @@
 const express = require("express");
-const router = express.Router();
+const router  = express.Router();
 
-// GET /api/health
 router.get("/", (_req, res) => {
-  res.json({ status: "running" });
+  res.json({
+    status:        "running",
+    nodeVersion:   process.version,
+    groqKeyLoaded: !!process.env.GROQ_API_KEY,
+    timestamp:     new Date().toISOString(),
+  });
 });
 
 module.exports = router;
