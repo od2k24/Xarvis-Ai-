@@ -1,175 +1,164 @@
 const express = require("express");
 const cors = require("cors");
-const helmet = require("helmet");
-const rateLimit = require("express-rate-limit");
+const path = require("path");
 
-// ─────────────────────────────
-// INIT
-// ─────────────────────────────
 const app = express();
 const PORT = process.env.PORT || 3001;
 
+// ─────────────────────────────────────────────
 // ─────────────────────────────
-// MIDDLEWARE
+// Middleware
+// ─────────────────────────────────────────────
 // ─────────────────────────────
-app.use(helmet());
+app.use(cors());
+app.use(express.json());
 
-app.use(cors({
-  origin: "*", // lock this later when you add frontend
-}));
-
-app.use(express.json({ limit: "1mb" }));
-
-app.use(
-  rateLimit({
-    windowMs: 15 * 60 * 1000,
-    max: 100,
-  })
-);
-
+// ─────────────────────────────────────────────
 // ─────────────────────────────
-// CONFIG
+// Config
+// ─────────────────────────────────────────────
 // ─────────────────────────────
 const GROQ_API_URL =
   "https://api.groq.com/openai/v1/chat/completions";
 
 const MODEL = "llama-3.3-70b-versatile";
 
+// ─────────────────────────────────────────────
+// Root Route (FIXED - prevents Not Found confusion)
+// ─────────────────────────────────────────────
 // ─────────────────────────────
-// HELPERS
+// ROOT (no frontend, no crash)
 // ─────────────────────────────
-const now = () => new Date().toISOString();
-
-function systemPrompt(goal) {
-  return [
-    "You are Xarvis — an elite AI co-founder.",
-    "You help users build businesses, make money, and execute fast.",
-    "Be direct, strategic, and actionable.",
-    goal ? `User goal: ${goal}` : null,
-  ].filter(Boolean).join("\n");
-}
-
-function validMessages(messages) {
-  return (
-    Array.isArray(messages) &&
-    messages.length > 0 &&
-    messages.every(m => m.role && m.content)
-  );
-}
-
-// ─────────────────────────────
-// ROUTES
-// ─────────────────────────────
-
-// ROOT
 app.get("/", (req, res) => {
   res.json({
-    status: "Xarvis API Online 🚀",
-    timestamp: now(),
+    status: "Xarvis backend running 🚀",
+    status: "Xarvis API is running 🚀",
     endpoints: ["/api/health", "/api/chat"],
   });
 });
 
-// HEALTH
+// ─────────────────────────────────────────────
+// Health Check
+// ─────────────────────────────────────────────
+// ─────────────────────────────
+// HEALTH CHECK
+// ─────────────────────────────
 app.get("/api/health", (req, res) => {
   res.json({
-    status: "ok",
-    timestamp: now(),
-    node: process.version,
-    groqKeyLoaded: !!process.env.GROQ_API_KEY,
+    status: "running",
+@@ -40,21 +39,23 @@ app.get("/api/health", (req, res) => {
   });
 });
 
-// CHAT (MAIN AI ENDPOINT)
+// ─────────────────────────────────────────────
+// Helpers
+// ─────────────────────────────────────────────
+// ─────────────────────────────
+// SYSTEM PROMPT
+// ─────────────────────────────
+function buildSystemPrompt(goal) {
+  return [
+    "You are Xarvis — an elite AI co-founder.",
+    "Give actionable steps.",
+    "Be concise and high-impact.",
+    "Focus on business, growth, and execution.",
+    "You help users build businesses, make money, and grow fast.",
+    "Be direct, practical, and actionable.",
+    goal ? `User goal: ${goal}` : null,
+  ]
+    .filter(Boolean)
+    .join("\n");
+}
+
+// ─────────────────────────────
+// VALIDATION
+// ─────────────────────────────
+function isValidMessages(messages) {
+  return (
+    Array.isArray(messages) &&
+@@ -63,9 +64,9 @@ function isValidMessages(messages) {
+  );
+}
+
+// ─────────────────────────────────────────────
+// Chat Route (MAIN AI ENGINE)
+// ─────────────────────────────────────────────
+// ─────────────────────────────
+// CHAT ROUTE (MAIN AI)
+// ─────────────────────────────
 app.post("/api/chat", async (req, res) => {
   try {
     const { messages, goal } = req.body || {};
-    const apiKey = process.env.GROQ_API_KEY;
-
+@@ -74,20 +75,20 @@ app.post("/api/chat", async (req, res) => {
+    // ❌ Missing API key
     if (!apiKey) {
       return res.status(500).json({
-        success: false,
+        error: "Missing GROQ_API_KEY in environment variables",
         error: "Missing GROQ_API_KEY",
-        timestamp: now(),
       });
     }
 
-    if (!validMessages(messages)) {
+    // ❌ Invalid messages
+    // ❌ Invalid input
+    if (!isValidMessages(messages)) {
       return res.status(400).json({
-        success: false,
         error: "Invalid messages format",
-        timestamp: now(),
       });
     }
 
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 20000);
+
+    // ─────────────────────────────
+    // Call Groq API
+    // ─────────────────────────────
     const response = await fetch(GROQ_API_URL, {
       method: "POST",
       headers: {
-        Authorization: `Bearer ${apiKey}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        model: MODEL,
-        messages: [
-          { role: "system", content: systemPrompt(goal) },
-          ...messages,
-        ],
+@@ -103,11 +104,8 @@ app.post("/api/chat", async (req, res) => {
         temperature: 0.7,
         max_tokens: 1024,
       }),
+      signal: controller.signal,
     });
+
+    clearTimeout(timeout);
 
     const data = await response.json();
 
     if (!response.ok) {
-      return res.status(500).json({
-        success: false,
-        error: data?.error?.message || "Groq API error",
-        timestamp: now(),
-      });
-    }
-
-    const reply = data?.choices?.[0]?.message?.content;
-
-    if (!reply) {
-      return res.status(500).json({
-        success: false,
-        error: "Empty model response",
-        timestamp: now(),
-      });
-    }
-
-    return res.json({
-      success: true,
+@@ -129,29 +127,17 @@ app.post("/api/chat", async (req, res) => {
       reply,
-      timestamp: now(),
     });
-
   } catch (err) {
-    console.error("🔥 Server Error:", err);
+    console.error("Server error:", err);
+    console.error("🔥 Server error:", err);
 
     return res.status(500).json({
-      success: false,
+      error:
+        err.name === "AbortError"
+          ? "Request timed out"
+          : "Internal server error",
       error: "Internal server error",
-      timestamp: now(),
     });
   }
 });
 
-// 404 HANDLER
-app.use((req, res) => {
-  res.status(404).json({
-    success: false,
-    error: "Route not found",
-    path: req.originalUrl,
-    timestamp: now(),
-  });
+// ─────────────────────────────────────────────
+// Static frontend (optional)
+// ─────────────────────────────────────────────
+app.use(express.static(path.join(__dirname, "public")));
+
+app.get("*", (req, res) => {
+  res.sendFile(path.join(__dirname, "public", "index.html"));
 });
 
+// ─────────────────────────────────────────────
+// Start server
+// ─────────────────────────────────────────────
 // ─────────────────────────────
 // START SERVER
 // ─────────────────────────────
 app.listen(PORT, () => {
   console.log(`🚀 Xarvis running on port ${PORT}`);
-  console.log(`🧠 Node version: ${process.version}`);
-});
+  console.log(`🧠 Node: ${process.version}`);
