@@ -9,6 +9,13 @@ setTimeout(() => {
 // ─────────────────────────────
 const express = require("express");
 const cors = require("cors");
+require("dotenv").config();
+
+const Groq = require("groq-sdk");
+
+const groq = new Groq({
+  apiKey: process.env.GROQ_API_KEY,
+});
 
 // ─────────────────────────────
 // APP SETUP
@@ -22,7 +29,6 @@ const PORT = process.env.PORT || 3001;
 app.use(cors());
 app.use(express.json());
 
-// request logger
 app.use((req, res, next) => {
   console.log(`📡 ${req.method} ${req.url}`);
   next();
@@ -51,7 +57,7 @@ app.get("/api/health", (req, res) => {
   });
 });
 
-// Ping test
+// Ping
 app.get("/api/ping", (req, res) => {
   res.json({
     success: true,
@@ -60,46 +66,63 @@ app.get("/api/ping", (req, res) => {
 });
 
 // ─────────────────────────────
-// CHAT API (FIXED)
+// CHAT (NOW WITH GROQ AI)
 // ─────────────────────────────
-app.post("/api/chat", (req, res) => {
+app.post("/api/chat", async (req, res) => {
   try {
     const { message, messages, history, context } = req.body || {};
 
     console.log("📨 Incoming body:", req.body);
 
-    // Normalize all possible formats into one
     const chatHistory = messages || history || [];
 
-    // Validation (flexible)
     if (!message && chatHistory.length === 0) {
       return res.status(400).json({
         success: false,
-        error: "No message or history provided",
+        error: "No message provided",
       });
     }
 
+    const formattedMessages = [
+      {
+        role: "system",
+        content: `You are Xarvis AI. Be helpful, concise, and intelligent. Context: ${context || "none"}`,
+      },
+      ...chatHistory.map((m) => ({
+        role: m.role,
+        content: m.content,
+      })),
+      {
+        role: "user",
+        content: message,
+      },
+    ];
+
+    const completion = await groq.chat.completions.create({
+      model: "llama-3.1-70b-versatile",
+      messages: formattedMessages,
+      temperature: 0.7,
+    });
+
+    const reply = completion.choices[0].message.content;
+
     return res.json({
       success: true,
-      reply: "Backend is connected properly 🚀",
-      debug: {
-        message: message || null,
-        history: chatHistory,
-        context: context || null,
-      },
+      reply,
     });
+
   } catch (err) {
-    console.error("❌ Chat error:", err);
+    console.error("❌ Groq error:", err);
 
     return res.status(500).json({
       success: false,
-      error: "Internal server error",
+      error: "AI request failed",
     });
   }
 });
 
 // ─────────────────────────────
-// 404 HANDLER
+// 404
 // ─────────────────────────────
 app.use((req, res) => {
   res.status(404).json({
@@ -114,6 +137,7 @@ app.use((req, res) => {
 // ─────────────────────────────
 app.use((err, req, res, next) => {
   console.error("🔥 Server error:", err);
+
   res.status(500).json({
     success: false,
     error: "Something broke on server",
