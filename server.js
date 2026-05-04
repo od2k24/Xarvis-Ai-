@@ -5,15 +5,28 @@ setTimeout(() => {
 }, 2000);
 
 // ─────────────────────────────
-// EXPRESS SETUP
+// IMPORTS
 // ─────────────────────────────
 const express = require("express");
+const cors = require("cors");
 
+// ─────────────────────────────
+// APP SETUP
+// ─────────────────────────────
 const app = express();
 const PORT = process.env.PORT || 3001;
 
-// Middleware
+// ─────────────────────────────
+// MIDDLEWARE
+// ─────────────────────────────
+app.use(cors()); // 🔥 fixes most "network error" issues
 app.use(express.json());
+
+// request logger (debugging)
+app.use((req, res, next) => {
+  console.log(`📡 ${req.method} ${req.url}`);
+  next();
+});
 
 // ─────────────────────────────
 // ROUTES
@@ -46,14 +59,51 @@ app.get("/api/ping", (req, res) => {
   });
 });
 
-// Chat placeholder
+// Chat API
 app.post("/api/chat", (req, res) => {
-  const { messages } = req.body || {};
+  try {
+    const { messages } = req.body || {};
 
-  res.json({
-    success: true,
-    reply: "Backend is working. Next step: connect AI.",
-    received: messages || null,
+    if (!messages) {
+      return res.status(400).json({
+        success: false,
+        error: "messages missing in request body",
+      });
+    }
+
+    return res.json({
+      success: true,
+      reply: "Backend is working. Next step: connect AI.",
+      received: messages,
+    });
+  } catch (err) {
+    console.error("❌ Chat error:", err);
+    res.status(500).json({
+      success: false,
+      error: "Internal server error",
+    });
+  }
+});
+
+// ─────────────────────────────
+// 404 HANDLER (IMPORTANT)
+// ─────────────────────────────
+app.use((req, res) => {
+  res.status(404).json({
+    success: false,
+    error: "Route not found",
+    path: req.path,
+  });
+});
+
+// ─────────────────────────────
+// ERROR HANDLER
+// ─────────────────────────────
+app.use((err, req, res, next) => {
+  console.error("🔥 Server error:", err);
+  res.status(500).json({
+    success: false,
+    error: "Something broke on server",
   });
 });
 
