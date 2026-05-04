@@ -1,6 +1,7 @@
 {
   "name": "xarvis-ai-backend",
   "version": "4.0.0",
+  "type": "module",
   "description": "Xarvis AI — Creator OS Backend",
   "main": "index.js",
   "scripts": {
