@@ -1,16 +1,12 @@
-// ─────────────────────────────
-// Xarvis AI Frontend Config
-// ─────────────────────────────
-
 export const CONFIG = {
-  // 🌐 Your backend API base URL (Railway)
-  API_BASE_URL: "https://xarvis-ai.up.railway.app/api",
+  // 🌐 Your Render backend URL
+  API_BASE_URL: "https://xarvis-ai.onrender.com",
 
   // 💬 Local storage keys
   GOAL_STORAGE_KEY: "xarvis_user_goal",
   HISTORY_STORAGE_KEY: "xarvis_chat_history",
 
-  // ⚙️ Optional settings (future-proofing)
+  // ⚙️ Settings
   MAX_HISTORY: 50,
-  MODEL: "default",
+  MODEL: "llama-3.1-8b-instant"
 };
