@@ -3,25 +3,25 @@ import { CONFIG } from "./config.js";
 let messages = [];
 let isSending = false;
 
-// ─── DOM ─────────────────────────────────────
+// ─── DOM ────────────────────────────────
 const chatInput = document.getElementById("chat-input");
 const sendBtn = document.getElementById("send-btn");
 const chatInner = document.getElementById("chat-inner");
 const chatContainer = document.getElementById("chat-container");
 
-// ─── INIT ────────────────────────────────────
+// ─── INIT ───────────────────────────────
 function init() {
-  messages = JSON.parse(localStorage.getItem(CONFIG.HISTORY_KEY) || "[]");
+  messages = JSON.parse(localStorage.getItem(CONFIG.HISTORY_STORAGE_KEY) || "[]");
   renderMessages();
-  setupEvents();
+  setup();
 }
 
 function renderMessages() {
   chatInner.innerHTML = "";
-  messages.forEach((m) => addMessage(m.role, m.content));
+  messages.forEach(m => addMessage(m.role, m.content));
 }
 
-// ─── UI ──────────────────────────────────────
+// ─── UI ────────────────────────────────
 function addMessage(role, text) {
   const div = document.createElement("div");
   div.className = `message ${role}`;
@@ -30,14 +30,14 @@ function addMessage(role, text) {
   chatContainer.scrollTop = chatContainer.scrollHeight;
 }
 
-// ─── API CALL ────────────────────────────────
+// ─── API CALL ──────────────────────────
 async function callAPI() {
-  const res = await fetch(`${CONFIG.API_URL}/chat`, {
+  const res = await fetch(`${CONFIG.API_BASE_URL}/chat`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
-      messages: messages.slice(-10),
-    }),
+      messages: messages.slice(-10)
+    })
   });
 
   const data = await res.json();
@@ -49,7 +49,7 @@ async function callAPI() {
   return data.reply;
 }
 
-// ─── SEND MESSAGE ────────────────────────────
+// ─── SEND ──────────────────────────────
 async function sendMessage() {
   const text = chatInput.value.trim();
   if (!text || isSending) return;
@@ -68,7 +68,7 @@ async function sendMessage() {
     messages.push({ role: "assistant", content: reply });
     addMessage("assistant", reply);
 
-    localStorage.setItem(CONFIG.HISTORY_KEY, JSON.stringify(messages));
+    localStorage.setItem(CONFIG.HISTORY_STORAGE_KEY, JSON.stringify(messages));
   } catch (err) {
     addMessage("assistant", "⚠️ " + err.message);
   }
@@ -77,8 +77,8 @@ async function sendMessage() {
   sendBtn.disabled = false;
 }
 
-// ─── EVENTS ──────────────────────────────────
-function setupEvents() {
+// ─── EVENTS ────────────────────────────
+function setup() {
   sendBtn.addEventListener("click", sendMessage);
 
   chatInput.addEventListener("keydown", (e) => {
