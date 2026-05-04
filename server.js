@@ -19,10 +19,10 @@ const PORT = process.env.PORT || 3001;
 // ─────────────────────────────
 // MIDDLEWARE
 // ─────────────────────────────
-app.use(cors()); // 🔥 fixes most "network error" issues
+app.use(cors());
 app.use(express.json());
 
-// request logger (debugging)
+// request logger
 app.use((req, res, next) => {
   console.log(`📡 ${req.method} ${req.url}`);
   next();
@@ -59,26 +59,39 @@ app.get("/api/ping", (req, res) => {
   });
 });
 
-// Chat API
+// ─────────────────────────────
+// CHAT API (FIXED)
+// ─────────────────────────────
 app.post("/api/chat", (req, res) => {
   try {
-    const { messages } = req.body || {};
+    const { message, messages, history, context } = req.body || {};
 
-    if (!messages) {
+    console.log("📨 Incoming body:", req.body);
+
+    // Normalize all possible formats into one
+    const chatHistory = messages || history || [];
+
+    // Validation (flexible)
+    if (!message && chatHistory.length === 0) {
       return res.status(400).json({
         success: false,
-        error: "messages missing in request body",
+        error: "No message or history provided",
       });
     }
 
     return res.json({
       success: true,
-      reply: "Backend is working. Next step: connect AI.",
-      received: messages,
+      reply: "Backend is connected properly 🚀",
+      debug: {
+        message: message || null,
+        history: chatHistory,
+        context: context || null,
+      },
     });
   } catch (err) {
     console.error("❌ Chat error:", err);
-    res.status(500).json({
+
+    return res.status(500).json({
       success: false,
       error: "Internal server error",
     });
@@ -86,7 +99,7 @@ app.post("/api/chat", (req, res) => {
 });
 
 // ─────────────────────────────
-// 404 HANDLER (IMPORTANT)
+// 404 HANDLER
 // ─────────────────────────────
 app.use((req, res) => {
   res.status(404).json({
