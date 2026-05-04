@@ -1,30 +1,75 @@
-// server.js — place this BEFORE all route definitions
+console.log("🔥 NODE STARTED - FILE IS RUNNING");
 
-const cors = require('cors');
+setTimeout(() => {
+  console.log("⏱ still alive after 2s");
+}, 2000);
 
-const ALLOWED_ORIGINS = new Set([
-  'https://od2k24.github.io',
-  'http://localhost:3001',
-  'http://localhost:5500',
-  'http://127.0.0.1:5500',
-]);
+// ─────────────────────────────
+// Express Server
+// ─────────────────────────────
+const express = require("express");
 
-const corsOptions = {
-  origin(origin, callback) {
-    // No origin = curl / Postman / same-origin health checks — allow
-    if (!origin || ALLOWED_ORIGINS.has(origin)) {
-      return callback(null, true);
-    }
-    callback(new Error(`CORS: origin not allowed — ${origin}`));
-  },
-  methods: ['GET', 'POST', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Accept'],
-  optionsSuccessStatus: 200, // IE11 treats 204 as an error
-};
+const app = express();
+const PORT = process.env.PORT || 3001;
 
-// Apply to all routes
-app.use(cors(corsOptions));
+// Middleware
+app.use(express.json());
 
-// Explicit OPTIONS handler — required for Railway's proxy layer
-// which sometimes strips middleware-handled preflight responses
-app.options('*', cors(corsOptions));
+// Root test route
+// ─────────────────────────────
+// ROOT
+// ─────────────────────────────
+app.get("/", (req, res) => {
+  res.send("Xarvis server is alive 🚀");
+  res.json({
+    status: "Xarvis API running 🚀",
+    time: new Date().toISOString()
+  });
+});
+
+// Health check
+// ─────────────────────────────
+// HEALTH CHECK
+// ─────────────────────────────
+app.get("/api/health", (req, res) => {
+  res.json({
+    status: "ok",
+    message: "server running",
+    time: new Date().toISOString()
+    uptime: process.uptime(),
+    node: process.version
+  });
+});
+
+// Simple ping
+// ─────────────────────────────
+// PING TEST
+// ─────────────────────────────
+app.get("/api/ping", (req, res) => {
+  res.json({
+    success: true,
+    message: "pong 🟢"
+  });
+});
+
+// Start server
+// ─────────────────────────────
+// CHAT (placeholder for now)
+// ─────────────────────────────
+app.post("/api/chat", (req, res) => {
+  const { messages } = req.body || {};
+
+  res.json({
+    success: true,
+    reply: "Backend is working. Next step: connect AI.",
+    received: messages || null
+  });
+});
+
+// ─────────────────────────────
+// START SERVER
+// ─────────────────────────────
+app.listen(PORT, () => {
+  console.log("🚀 EXPRESS SERVER STARTED ON PORT:", PORT);
+  console.log("🚀 SERVER RUNNING ON PORT:", PORT);
+});
