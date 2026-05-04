@@ -1,6 +1,5 @@
 import { CONFIG } from "./config.js";
 
-let userGoal = "";
 let messages = [];
 let isStreaming = false;
 
@@ -12,19 +11,14 @@ const chatContainer = document.getElementById("chat-container");
 
 // ─── INIT ───────────────────────────────────────────────
 function init() {
-  userGoal = localStorage.getItem(CONFIG.GOAL_STORAGE_KEY) || "";
   messages = JSON.parse(localStorage.getItem(CONFIG.HISTORY_STORAGE_KEY) || "[]");
-
   renderAll();
   setup();
 }
 
 function renderAll() {
   chatInner.innerHTML = "";
-
-  messages.forEach((m) => {
-    addMessage(m.role, m.content);
-  });
+  messages.forEach((m) => addMessage(m.role, m.content));
 }
 
 // ─── UI MESSAGE ─────────────────────────────────────────
@@ -37,13 +31,12 @@ function addMessage(role, text) {
 }
 
 // ─── API CALL ───────────────────────────────────────────
-async function callAPI(message, history) {
+async function callAPI(messages) {
   const res = await fetch(`${CONFIG.API_BASE_URL}/chat`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
-      messages: history,   // ✅ FIXED (was message/history/context mismatch)
-      context: userGoal,
+      messages: messages.slice(-10) // send last 10 messages
     }),
   });
 
@@ -62,15 +55,16 @@ async function sendMessage() {
   if (!text || isStreaming) return;
 
   isStreaming = true;
-
-  chatInput.value = "";
   sendBtn.disabled = true;
 
+  chatInput.value = "";
+
+  // add user message
   messages.push({ role: "user", content: text });
   addMessage("user", text);
 
   try {
-    const reply = await callAPI(text, messages.slice(-10));
+    const reply = await callAPI(messages);
 
     messages.push({ role: "assistant", content: reply });
     addMessage("assistant", reply);
