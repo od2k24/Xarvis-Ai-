@@ -9,10 +9,11 @@ setTimeout(() => {
 // ─────────────────────────────
 const express = require("express");
 const cors = require("cors");
-require("dotenv").config();
-
 const Groq = require("groq-sdk");
 
+// ─────────────────────────────
+// GROQ SETUP (Railway env variable)
+// ─────────────────────────────
 const groq = new Groq({
   apiKey: process.env.GROQ_API_KEY,
 });
@@ -29,6 +30,7 @@ const PORT = process.env.PORT || 3001;
 app.use(cors());
 app.use(express.json());
 
+// logger
 app.use((req, res, next) => {
   console.log(`📡 ${req.method} ${req.url}`);
   next();
@@ -41,17 +43,15 @@ app.use((req, res, next) => {
 // Root
 app.get("/", (req, res) => {
   res.json({
-    status: "Xarvis API running 🚀",
+    status: "Xarvis AI API running 🚀",
     time: new Date().toISOString(),
   });
 });
 
-// Health check
+// Health
 app.get("/api/health", (req, res) => {
   res.json({
     status: "ok",
-    message: "server running",
-    time: new Date().toISOString(),
     uptime: process.uptime(),
     node: process.version,
   });
@@ -66,7 +66,7 @@ app.get("/api/ping", (req, res) => {
 });
 
 // ─────────────────────────────
-// CHAT (NOW WITH GROQ AI)
+// CHAT (REAL GROQ AI)
 // ─────────────────────────────
 app.post("/api/chat", async (req, res) => {
   try {
@@ -86,7 +86,7 @@ app.post("/api/chat", async (req, res) => {
     const formattedMessages = [
       {
         role: "system",
-        content: `You are Xarvis AI. Be helpful, concise, and intelligent. Context: ${context || "none"}`,
+        content: `You are Xarvis AI. Be smart, helpful, and concise. Context: ${context || "none"}`,
       },
       ...chatHistory.map((m) => ({
         role: m.role,
@@ -112,7 +112,7 @@ app.post("/api/chat", async (req, res) => {
     });
 
   } catch (err) {
-    console.error("❌ Groq error:", err);
+    console.error("❌ AI ERROR:", err);
 
     return res.status(500).json({
       success: false,
@@ -128,19 +128,6 @@ app.use((req, res) => {
   res.status(404).json({
     success: false,
     error: "Route not found",
-    path: req.path,
-  });
-});
-
-// ─────────────────────────────
-// ERROR HANDLER
-// ─────────────────────────────
-app.use((err, req, res, next) => {
-  console.error("🔥 Server error:", err);
-
-  res.status(500).json({
-    success: false,
-    error: "Something broke on server",
   });
 });
 
