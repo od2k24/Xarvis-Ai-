@@ -1,45 +1,59 @@
 import express from "express";
+import cors from "cors";
 import dotenv from "dotenv";
-import fetch from "node-fetch";
+import Groq from "groq-sdk";
 
 dotenv.config();
 
 const app = express();
+
+// ─── MIDDLEWARE ─────────────────────────────
+app.use(cors());
 app.use(express.json());
 
-app.get("/", (req, res) => {
-  res.send("Server is running 🚀");
+// ─── GROQ SETUP ─────────────────────────────
+const groq = new Groq({
+  apiKey: process.env.GROQ_API_KEY,
 });
 
+// ─── HEALTH CHECK ────────────────────────────
+app.get("/", (req, res) => {
+  res.json({ status: "Xarvis AI server running 🚀" });
+});
+
+// ─── CHAT ROUTE (MATCHES YOUR FRONTEND) ─────
 app.post("/chat", async (req, res) => {
   try {
-    const userMessage = req.body.message;
+    const { messages } = req.body;
 
-    if (!process.env.API_KEY) {
-      return res.status(500).json({ error: "Missing API key" });
+    if (!messages || !Array.isArray(messages)) {
+      return res.status(400).json({ error: "Invalid messages format" });
     }
 
-    const response = await fetch("YOUR_API_URL_HERE", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "Authorization": `Bearer ${process.env.API_KEY}`
-      },
-      body: JSON.stringify({
-        message: userMessage
-      })
+    const completion = await groq.chat.completions.create({
+      model: "llama-3.1-8b-instant",
+      messages: [
+        {
+          role: "system",
+          content:
+            "You are Xarvis AI, a smart assistant for creators, productivity, and business building.",
+        },
+        ...messages,
+      ],
+      temperature: 0.7,
     });
 
-    const data = await response.json();
+    const reply = completion.choices?.[0]?.message?.content;
 
-    res.json({ reply: data });
+    res.json({ reply });
 
   } catch (error) {
-    console.error("Server error:", error);
-    res.status(500).json({ error: "Server failed" });
+    console.error("Groq Error:", error);
+    res.status(500).json({ error: "AI request failed" });
   }
 });
 
+// ─── START SERVER ───────────────────────────
 const PORT = process.env.PORT || 3000;
 
 app.listen(PORT, () => {
