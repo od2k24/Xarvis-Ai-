@@ -18,6 +18,9 @@ const groq = new Groq({
   apiKey: process.env.GROQ_API_KEY,
 });
 
+// Debug: check if key exists
+console.log("🔑 GROQ KEY EXISTS:", !!process.env.GROQ_API_KEY);
+
 // ─────────────────────────────
 // APP SETUP
 // ─────────────────────────────
@@ -43,6 +46,7 @@ app.use((req, res, next) => {
 app.get("/", (req, res) => {
   res.json({
     status: "Xarvis AI API running 🚀",
+    time: new Date().toISOString(),
   });
 });
 
@@ -64,7 +68,7 @@ app.get("/api/ping", (req, res) => {
 });
 
 // ─────────────────────────────
-// CHAT (FIXED + DEBUG SAFE)
+// CHAT (FULLY FIXED)
 // ─────────────────────────────
 app.post("/api/chat", async (req, res) => {
   try {
@@ -96,24 +100,21 @@ app.post("/api/chat", async (req, res) => {
       },
     ];
 
-    // ─────────────────────────────
-    // GROQ CALL (SAFE + DEBUGGED)
-    // ─────────────────────────────
     let completion;
 
     try {
       completion = await groq.chat.completions.create({
-        model: "llama3-70b-8192", // ✅ stable Groq model
+        model: "llama-3.1-8b-instant", // ✅ safest working model
         messages: formattedMessages,
         temperature: 0.7,
       });
     } catch (groqError) {
-      console.error("🔥 GROQ ERROR FULL:", groqError);
+      console.error("🔥 FULL GROQ ERROR:", groqError);
 
       return res.status(500).json({
         success: false,
         error: "Groq request failed",
-        details: groqError.message,
+        details: groqError?.message || groqError,
       });
     }
 
@@ -122,7 +123,7 @@ app.post("/api/chat", async (req, res) => {
     if (!reply) {
       return res.status(500).json({
         success: false,
-        error: "Empty response from AI",
+        error: "Empty AI response",
       });
     }
 
