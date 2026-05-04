@@ -12,7 +12,7 @@ const cors = require("cors");
 const Groq = require("groq-sdk");
 
 // ─────────────────────────────
-// GROQ SETUP (Railway env variable)
+// GROQ SETUP
 // ─────────────────────────────
 const groq = new Groq({
   apiKey: process.env.GROQ_API_KEY,
@@ -30,7 +30,6 @@ const PORT = process.env.PORT || 3001;
 app.use(cors());
 app.use(express.json());
 
-// logger
 app.use((req, res, next) => {
   console.log(`📡 ${req.method} ${req.url}`);
   next();
@@ -44,7 +43,6 @@ app.use((req, res, next) => {
 app.get("/", (req, res) => {
   res.json({
     status: "Xarvis AI API running 🚀",
-    time: new Date().toISOString(),
   });
 });
 
@@ -66,13 +64,13 @@ app.get("/api/ping", (req, res) => {
 });
 
 // ─────────────────────────────
-// CHAT (REAL GROQ AI)
+// CHAT (FIXED + DEBUG SAFE)
 // ─────────────────────────────
 app.post("/api/chat", async (req, res) => {
   try {
     const { message, messages, history, context } = req.body || {};
 
-    console.log("📨 Incoming body:", req.body);
+    console.log("📨 BODY RECEIVED:", req.body);
 
     const chatHistory = messages || history || [];
 
@@ -86,7 +84,7 @@ app.post("/api/chat", async (req, res) => {
     const formattedMessages = [
       {
         role: "system",
-        content: `You are Xarvis AI. Be smart, helpful, and concise. Context: ${context || "none"}`,
+        content: `You are Xarvis AI. Be helpful, smart, and concise. Context: ${context || "none"}`,
       },
       ...chatHistory.map((m) => ({
         role: m.role,
@@ -98,13 +96,35 @@ app.post("/api/chat", async (req, res) => {
       },
     ];
 
-    const completion = await groq.chat.completions.create({
-      model: "llama-3.1-70b-versatile",
-      messages: formattedMessages,
-      temperature: 0.7,
-    });
+    // ─────────────────────────────
+    // GROQ CALL (SAFE + DEBUGGED)
+    // ─────────────────────────────
+    let completion;
 
-    const reply = completion.choices[0].message.content;
+    try {
+      completion = await groq.chat.completions.create({
+        model: "llama3-70b-8192", // ✅ stable Groq model
+        messages: formattedMessages,
+        temperature: 0.7,
+      });
+    } catch (groqError) {
+      console.error("🔥 GROQ ERROR FULL:", groqError);
+
+      return res.status(500).json({
+        success: false,
+        error: "Groq request failed",
+        details: groqError.message,
+      });
+    }
+
+    const reply = completion?.choices?.[0]?.message?.content;
+
+    if (!reply) {
+      return res.status(500).json({
+        success: false,
+        error: "Empty response from AI",
+      });
+    }
 
     return res.json({
       success: true,
@@ -112,11 +132,12 @@ app.post("/api/chat", async (req, res) => {
     });
 
   } catch (err) {
-    console.error("❌ AI ERROR:", err);
+    console.error("❌ SERVER ERROR:", err);
 
     return res.status(500).json({
       success: false,
-      error: "AI request failed",
+      error: "Internal server error",
+      details: err.message,
     });
   }
 });
