@@ -42,8 +42,7 @@ async function callAPI(message, history) {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
-      message,
-      history,
+      messages: history,   // ✅ FIXED (was message/history/context mismatch)
       context: userGoal,
     }),
   });
@@ -71,10 +70,7 @@ async function sendMessage() {
   addMessage("user", text);
 
   try {
-    const reply = await callAPI(
-      text,
-      messages.slice(-10)
-    );
+    const reply = await callAPI(text, messages.slice(-10));
 
     messages.push({ role: "assistant", content: reply });
     addMessage("assistant", reply);
