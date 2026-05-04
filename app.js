@@ -32,11 +32,13 @@ function addMessage(role, text) {
 
 // ─── API CALL ──────────────────────────
 async function callAPI() {
+  const history = messages.slice(-4); // ⚡ FIX: faster + lighter context
+
   const res = await fetch(`${CONFIG.API_BASE_URL}/chat`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
-      messages: messages.slice(-10)
+      messages: history.length ? history : []
     })
   });
 
