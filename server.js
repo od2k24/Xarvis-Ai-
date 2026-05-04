@@ -1,61 +1,45 @@
-import express from "express";
-import cors from "cors";
-import dotenv from "dotenv";
-import Groq from "groq-sdk";
+const express = require("express");
+const cors = require("cors");
+const dotenv = require("dotenv");
+const Groq = require("groq-sdk");
 
 dotenv.config();
 
 const app = express();
 
-// ─── MIDDLEWARE ─────────────────────────────
 app.use(cors());
 app.use(express.json());
 
-// ─── GROQ SETUP ─────────────────────────────
 const groq = new Groq({
   apiKey: process.env.GROQ_API_KEY,
 });
 
-// ─── HEALTH CHECK ────────────────────────────
 app.get("/", (req, res) => {
-  res.json({ status: "Xarvis AI server running 🚀" });
+  res.json({ status: "Xarvis AI running 🚀" });
 });
 
-// ─── CHAT ROUTE (MATCHES YOUR FRONTEND) ─────
 app.post("/chat", async (req, res) => {
   try {
     const { messages } = req.body;
 
-    if (!messages || !Array.isArray(messages)) {
-      return res.status(400).json({ error: "Invalid messages format" });
-    }
-
     const completion = await groq.chat.completions.create({
       model: "llama-3.1-8b-instant",
       messages: [
-        {
-          role: "system",
-          content:
-            "You are Xarvis AI, a smart assistant for creators, productivity, and business building.",
-        },
+        { role: "system", content: "You are Xarvis AI." },
         ...messages,
       ],
-      temperature: 0.7,
     });
 
-    const reply = completion.choices?.[0]?.message?.content;
-
-    res.json({ reply });
-
-  } catch (error) {
-    console.error("Groq Error:", error);
+    res.json({
+      reply: completion.choices[0].message.content,
+    });
+  } catch (err) {
     res.status(500).json({ error: "AI request failed" });
   }
 });
 
-// ─── START SERVER ───────────────────────────
 const PORT = process.env.PORT || 3000;
 
 app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
+  console.log("Server running on", PORT);
 });
