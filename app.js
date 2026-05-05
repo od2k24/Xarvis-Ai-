@@ -1,31 +1,29 @@
-// ─── API CALL (ROBUST VERSION) ─────────
+// ─── API CALL (ROBUST SYSTEM) ─────────
 async function callAPI() {
   const history = messages.slice(-6);
 
-  return await sendRequestWithRetry(history, 3);
+  return await sendWithRetry(history, 3);
 }
 
-// 🔁 retry system with timeout
-async function sendRequestWithRetry(history, retries) {
+// 🔁 retry wrapper
+async function sendWithRetry(history, retries) {
   try {
     return await sendRequest(history);
   } catch (err) {
     if (retries > 0) {
-      addMessage("assistant", "⏳ Xarvis is waking up...");
+      addMessage("assistant", "⏳ Waking up Xarvis AI...");
       await new Promise(r => setTimeout(r, 3000));
-      return sendRequestWithRetry(history, retries - 1);
+      return sendWithRetry(history, retries - 1);
     }
     throw err;
   }
 }
 
-// ⏱️ timeout-safe fetch
+// ⏱️ safe fetch with timeout
 async function sendRequest(history) {
   const controller = new AbortController();
 
-  const timeout = setTimeout(() => {
-    controller.abort();
-  }, 20000); // 20s timeout
+  const timeout = setTimeout(() => controller.abort(), 20000);
 
   try {
     const res = await fetch(`${CONFIG.API_BASE_URL}/chat`, {
@@ -47,7 +45,7 @@ async function sendRequest(history) {
 
   } catch (err) {
     if (err.name === "AbortError") {
-      throw new Error("Server took too long to respond (waking up...)");
+      throw new Error("Server is waking up... please retry");
     }
     throw err;
   }
