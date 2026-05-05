@@ -13,19 +13,15 @@ const groq = new Groq({
   apiKey: process.env.GROQ_API_KEY,
 });
 
-// ─── HEALTH CHECK ───────────────────────
+// HEALTH
 app.get("/", (req, res) => {
   res.json({ status: "Xarvis AI running 🚀" });
 });
 
-// ─── CHAT ENDPOINT ──────────────────────
+// CHAT
 app.post("/chat", async (req, res) => {
   try {
     const messages = req.body?.messages;
-
-    if (!process.env.GROQ_API_KEY) {
-      return res.status(500).json({ error: "Missing GROQ_API_KEY" });
-    }
 
     if (!messages || !Array.isArray(messages)) {
       return res.status(400).json({ error: "Invalid messages format" });
@@ -45,14 +41,10 @@ app.post("/chat", async (req, res) => {
 
   } catch (err) {
     console.error("CHAT ERROR:", err);
-
-    res.status(500).json({
-      error: "AI temporarily unavailable",
-    });
+    res.status(500).json({ error: "AI temporarily unavailable" });
   }
 });
 
-// ─── START SERVER ───────────────────────
 const PORT = process.env.PORT || 3000;
 
 app.listen(PORT, () => {
