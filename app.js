@@ -30,10 +30,26 @@ function addMessage(role, text) {
   chatContainer.scrollTop = chatContainer.scrollHeight;
 }
 
-// ─── API CALL ──────────────────────────
+// ─── API CALL (FIXED) ──────────────────
 async function callAPI() {
-  const history = messages.slice(-4); // ⚡ FIX: faster + lighter context
+  const history = messages.slice(-4);
 
+  try {
+    return await sendRequest(history);
+  } catch (err) {
+    // ⏳ Show loading instead of error
+    addMessage("assistant", "⏳ Waking up server...");
+
+    // wait for Render to wake
+    await new Promise(r => setTimeout(r, 4000));
+
+    // retry
+    return await sendRequest(history);
+  }
+}
+
+// 🔁 actual request logic
+async function sendRequest(history) {
   const res = await fetch(`${CONFIG.API_BASE_URL}/chat`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
