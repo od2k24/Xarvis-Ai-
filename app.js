@@ -1,107 +1,54 @@
-import { CONFIG } from "./config.js";
-
-let messages = [];
-let isSending = false;
-
-// ─── DOM ────────────────────────────────
-const chatInput = document.getElementById("chat-input");
-const sendBtn = document.getElementById("send-btn");
-const chatInner = document.getElementById("chat-inner");
-const chatContainer = document.getElementById("chat-container");
-
-// ─── INIT ───────────────────────────────
-function init() {
-  messages = JSON.parse(localStorage.getItem(CONFIG.HISTORY_STORAGE_KEY) || "[]");
-  renderMessages();
-  setup();
-}
-
-function renderMessages() {
-  chatInner.innerHTML = "";
-  messages.forEach(m => addMessage(m.role, m.content));
-}
-
-// ─── UI ────────────────────────────────
-function addMessage(role, text) {
-  const div = document.createElement("div");
-  div.className = `message ${role}`;
-  div.textContent = text;
-  chatInner.appendChild(div);
-  chatContainer.scrollTop = chatContainer.scrollHeight;
-}
-
-// ─── API CALL (FIXED) ──────────────────
+// ─── API CALL (ROBUST VERSION) ─────────
 async function callAPI() {
-  const history = messages.slice(-4);
+  const history = messages.slice(-6);
 
+  return await sendRequestWithRetry(history, 3);
+}
+
+// 🔁 retry system with timeout
+async function sendRequestWithRetry(history, retries) {
   try {
     return await sendRequest(history);
   } catch (err) {
-    // ⏳ Show loading instead of error
-    addMessage("assistant", "⏳ Waking up server...");
-
-    // wait for Render to wake
-    await new Promise(r => setTimeout(r, 4000));
-
-    // retry
-    return await sendRequest(history);
+    if (retries > 0) {
+      addMessage("assistant", "⏳ Xarvis is waking up...");
+      await new Promise(r => setTimeout(r, 3000));
+      return sendRequestWithRetry(history, retries - 1);
+    }
+    throw err;
   }
 }
 
-// 🔁 actual request logic
+// ⏱️ timeout-safe fetch
 async function sendRequest(history) {
-  const res = await fetch(`${CONFIG.API_BASE_URL}/chat`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      messages: history.length ? history : []
-    })
-  });
+  const controller = new AbortController();
 
-  const data = await res.json();
-
-  if (!res.ok) {
-    throw new Error(data.error || "Server error");
-  }
-
-  return data.reply;
-}
-
-// ─── SEND ──────────────────────────────
-async function sendMessage() {
-  const text = chatInput.value.trim();
-  if (!text || isSending) return;
-
-  isSending = true;
-  sendBtn.disabled = true;
-
-  chatInput.value = "";
-
-  messages.push({ role: "user", content: text });
-  addMessage("user", text);
+  const timeout = setTimeout(() => {
+    controller.abort();
+  }, 20000); // 20s timeout
 
   try {
-    const reply = await callAPI();
+    const res = await fetch(`${CONFIG.API_BASE_URL}/chat`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ messages: history }),
+      signal: controller.signal
+    });
 
-    messages.push({ role: "assistant", content: reply });
-    addMessage("assistant", reply);
+    clearTimeout(timeout);
 
-    localStorage.setItem(CONFIG.HISTORY_STORAGE_KEY, JSON.stringify(messages));
+    const data = await res.json();
+
+    if (!res.ok) {
+      throw new Error(data.error || "Server error");
+    }
+
+    return data.reply;
+
   } catch (err) {
-    addMessage("assistant", "⚠️ " + err.message);
+    if (err.name === "AbortError") {
+      throw new Error("Server took too long to respond (waking up...)");
+    }
+    throw err;
   }
-
-  isSending = false;
-  sendBtn.disabled = false;
 }
-
-// ─── EVENTS ────────────────────────────
-function setup() {
-  sendBtn.addEventListener("click", sendMessage);
-
-  chatInput.addEventListener("keydown", (e) => {
-    if (e.key === "Enter") sendMessage();
-  });
-}
-
-init();
