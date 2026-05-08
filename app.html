@@ -169,7 +169,7 @@ body{background:var(--bg);color:var(--text);font-family:'Outfit',sans-serif;disp
 .day-lbl{font-size:.6rem;font-weight:700;text-transform:uppercase;letter-spacing:.14em;color:var(--blue)}
 .day-topic{font-weight:700;font-size:.92rem;line-height:1.3;letter-spacing:-.15px}
 .day-angle{font-size:.77rem;color:var(--text2);line-height:1.5}
-.day-hook{padding:9px 11px;background:rgba(91,143,255,.05);border-left:2px solid rgba(91,143,255,.35);font-size:.74px;font-size:.74rem;color:var(--text);line-height:1.5;font-style:italic}
+.day-hook{padding:9px 11px;background:rgba(91,143,255,.05);border-left:2px solid rgba(91,143,255,.35);font-size:.74rem;color:var(--text);line-height:1.5;font-style:italic}
 
 /* Feedback */
 .fb-textarea{width:100%;min-height:110px;padding:13px 15px;background:var(--bg2);border:1px solid var(--border2);border-radius:11px;color:var(--text);font-family:'Outfit',sans-serif;font-size:.86rem;outline:none;resize:vertical;line-height:1.6;transition:all .2s;display:block;margin-bottom:13px}
@@ -238,7 +238,7 @@ body{background:var(--bg);color:var(--text);font-family:'Outfit',sans-serif;disp
   </nav>
   <div class="sspacer"></div>
   <div class="sbottom">
-    <div class="sinfo">AI powered by <span>Claude</span><br>No backend · Works offline</div>
+    <div class="sinfo">AI powered by <span>Groq</span><br>Llama 3.3 · Ultra Fast</div>
   </div>
 </aside>
 
@@ -440,11 +440,12 @@ body{background:var(--bg);color:var(--text);font-family:'Outfit',sans-serif;disp
 <script>
 'use strict';
 
-// ─────────────────────────────────────────────────────────
-// XARVIS AI — Direct Claude API (no backend required)
-// ─────────────────────────────────────────────────────────
-const CLAUDE_API = 'https://api.anthropic.com/v1/messages';
-const MODEL = 'claude-sonnet-4-20250514';
+// =============================================================
+// XARVIS AI — Groq API (CORS-enabled, no backend needed)
+// =============================================================
+const GROQ_API   = 'https://api.groq.com/openai/v1/chat/completions';
+const GROQ_KEY   = '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';
+const MODEL      = 'llama-3.3-70b-versatile';
 
 const SYSTEM = `You are Xarvis AI — a world-class AI co-founder for content creators.
 You specialise in viral content strategy, YouTube growth, hooks, scripts, monetisation, and content planning.
@@ -459,20 +460,31 @@ const BC_LABELS = {
 const chatHistory = [];
 let isSending = false;
 
-// ── API: streaming ────────────────────────────────────────
-async function streamClaude(messages, onChunk, maxTokens = 1000) {
-  const res = await fetch(CLAUDE_API, {
+// ── GROQ: streaming ──────────────────────────────────────────
+async function streamGroq(messages, onChunk, maxTokens = 1024) {
+  const res = await fetch(GROQ_API, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ model: MODEL, max_tokens: maxTokens, system: SYSTEM, messages, stream: true })
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${GROQ_KEY}`
+    },
+    body: JSON.stringify({
+      model: MODEL,
+      max_tokens: maxTokens,
+      stream: true,
+      messages: [{ role: 'system', content: SYSTEM }, ...messages]
+    })
   });
+
   if (!res.ok) {
     const err = await res.json().catch(() => ({}));
-    throw new Error(err.error?.message || `API error ${res.status}`);
+    throw new Error(err.error?.message || `Groq error ${res.status}`);
   }
+
   const reader = res.body.getReader();
-  const dec = new TextDecoder();
+  const dec    = new TextDecoder();
   let buf = '';
+
   while (true) {
     const { value, done } = await reader.read();
     if (done) break;
@@ -485,25 +497,36 @@ async function streamClaude(messages, onChunk, maxTokens = 1000) {
       if (raw === '[DONE]') return;
       try {
         const ev = JSON.parse(raw);
-        if (ev.type === 'content_block_delta' && ev.delta?.text) onChunk(ev.delta.text);
+        const chunk = ev.choices?.[0]?.delta?.content;
+        if (chunk) onChunk(chunk);
       } catch {}
     }
   }
 }
 
-// ── API: one-shot ─────────────────────────────────────────
-async function askClaude(messages, maxTokens = 1000) {
-  const res = await fetch(CLAUDE_API, {
+// ── GROQ: one-shot ───────────────────────────────────────────
+async function askGroq(messages, maxTokens = 1024) {
+  const res = await fetch(GROQ_API, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ model: MODEL, max_tokens: maxTokens, system: SYSTEM, messages })
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${GROQ_KEY}`
+    },
+    body: JSON.stringify({
+      model: MODEL,
+      max_tokens: maxTokens,
+      stream: false,
+      messages: [{ role: 'system', content: SYSTEM }, ...messages]
+    })
   });
+
   if (!res.ok) {
     const err = await res.json().catch(() => ({}));
-    throw new Error(err.error?.message || `API error ${res.status}`);
+    throw new Error(err.error?.message || `Groq error ${res.status}`);
   }
+
   const data = await res.json();
-  return data.content?.[0]?.text || '';
+  return data.choices?.[0]?.message?.content || '';
 }
 
 // ── NAV ───────────────────────────────────────────────────
@@ -538,7 +561,6 @@ function fmt(text) {
     .replace(/^#{1,3}\s+(.+)$/gm,'<strong>$1</strong>')
     .replace(/\n/g,'<br>');
 }
-
 function esc(s) {
   return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
 }
@@ -584,7 +606,7 @@ async function sendMessage(text) {
 
   let full = '';
   try {
-    await streamClaude(
+    await streamGroq(
       chatHistory.slice(-14).map(m => ({ role: m.role, content: m.content })),
       chunk => { full += chunk; bBub.innerHTML = fmt(full); scrollToBottom(); },
       1100
@@ -615,17 +637,6 @@ document.querySelectorAll('.sug[data-prompt]').forEach(el =>
 );
 
 // ── HELPERS ───────────────────────────────────────────────
-function showSection(id, show) {
-  const el = document.getElementById(id);
-  if (!el) return;
-  if (id.includes('out') && !id.includes('loading')) {
-    el.classList.toggle('show', show);
-    if (!show) el.classList.remove('show');
-  } else {
-    el.classList.toggle('show', show);
-  }
-}
-
 function setLoad(btnId, loading) {
   const btn = document.getElementById(btnId);
   if (!btn) return;
@@ -653,7 +664,6 @@ function setText(id, val) {
   if (el) el.textContent = val;
 }
 
-// Copy buttons (delegated)
 document.addEventListener('click', e => {
   const btn = e.target.closest('.copy-btn[data-target]');
   if (btn) copyText(btn.dataset.target, btn);
@@ -661,7 +671,7 @@ document.addEventListener('click', e => {
 
 // ── VIRAL GENERATOR ───────────────────────────────────────
 document.getElementById('viral-btn').addEventListener('click', async () => {
-  const topic = document.getElementById('viral-topic').value.trim();
+  const topic    = document.getElementById('viral-topic').value.trim();
   const platform = document.getElementById('viral-platform').value;
   if (!topic) { document.getElementById('viral-topic').focus(); return; }
 
@@ -687,11 +697,11 @@ THUMBNAIL:
 [Describe the ideal thumbnail — text overlay words, visual composition, colors, facial expression, and emotion]`;
 
   try {
-    const reply = await askClaude([{ role: 'user', content: prompt }], 1500);
-    setText('out-hook', extract(reply, 'HOOK', 'TITLE'));
-    setText('out-title', extract(reply, 'TITLE', 'SCRIPT'));
+    const reply = await askGroq([{ role: 'user', content: prompt }], 1500);
+    setText('out-hook',   extract(reply, 'HOOK', 'TITLE'));
+    setText('out-title',  extract(reply, 'TITLE', 'SCRIPT'));
     setText('out-script', extract(reply, 'SCRIPT', 'THUMBNAIL'));
-    setText('out-thumb', extract(reply, 'THUMBNAIL', '$'));
+    setText('out-thumb',  extract(reply, 'THUMBNAIL', '$'));
     document.getElementById('viral-label').textContent = `"${topic}" · ${platform}`;
     document.getElementById('viral-loading').classList.remove('show');
     document.getElementById('viral-out').classList.add('show');
@@ -724,7 +734,7 @@ document.getElementById('viral-copy-all').addEventListener('click', () => {
 // ── POST NEXT ─────────────────────────────────────────────
 async function runPostNext() {
   const niche = document.getElementById('pn-niche').value.trim() || 'general content';
-  const goal = document.getElementById('pn-goal').value.trim() || 'grow my channel';
+  const goal  = document.getElementById('pn-goal').value.trim()  || 'grow my channel';
   setLoad('pn-btn', true); setLoad('pn-regen', true);
   document.getElementById('pn-out').classList.remove('show');
 
@@ -743,10 +753,10 @@ WHY IT WILL WORK: [2-3 sentences on the psychology, trend, or timing making this
 BEST TIME TO POST: [Specific day and time with a brief reason why]`;
 
   try {
-    const reply = await askClaude([{ role: 'user', content: prompt }], 700);
+    const reply = await askGroq([{ role: 'user', content: prompt }], 700);
     setText('pn-idea', extract(reply, 'IDEA', 'HOOK'));
     setText('pn-hook', extract(reply, 'HOOK', 'WHY'));
-    setText('pn-why', extract(reply, 'WHY IT WILL WORK', 'BEST TIME'));
+    setText('pn-why',  extract(reply, 'WHY IT WILL WORK', 'BEST TIME'));
     setText('pn-time', extract(reply, 'BEST TIME TO POST', '$'));
     document.getElementById('pn-out').classList.add('show');
   } catch (err) {
@@ -775,7 +785,7 @@ DAY 6 | [Specific topic] | [Unique angle or hook reason] | [Opening hook sentenc
 DAY 7 | [Specific topic] | [Unique angle or hook reason] | [Opening hook sentence]`;
 
   try {
-    const reply = await askClaude([{ role: 'user', content: prompt }], 900);
+    const reply = await askGroq([{ role: 'user', content: prompt }], 900);
     const days = reply.split('\n')
       .filter(l => /^DAY\s*\d/i.test(l.trim()))
       .map((line, i) => {
@@ -830,12 +840,12 @@ VIRAL SCORE: [X/10]
 VERDICT: [1-2 direct sentences — call it like you see it]`;
 
   try {
-    const reply = await askClaude([{ role: 'user', content: prompt }], 750);
+    const reply = await askGroq([{ role: 'user', content: prompt }], 750);
     const sc = reply.match(/VIRAL SCORE:\s*(\d+)\s*(?:\/\s*10)?/i);
-    setText('fb-strengths', extract(reply, 'STRENGTHS', 'WEAKNESSES'));
-    setText('fb-weaknesses', extract(reply, 'WEAKNESSES', 'IMPROVEMENTS'));
-    setText('fb-improvements', extract(reply, 'IMPROVEMENTS', 'VIRAL SCORE'));
-    setText('fb-score', sc ? sc[1] : '?');
+    setText('fb-strengths',   extract(reply, 'STRENGTHS', 'WEAKNESSES'));
+    setText('fb-weaknesses',  extract(reply, 'WEAKNESSES', 'IMPROVEMENTS'));
+    setText('fb-improvements',extract(reply, 'IMPROVEMENTS', 'VIRAL SCORE'));
+    setText('fb-score',   sc ? sc[1] : '?');
     setText('fb-verdict', extract(reply, 'VERDICT', '$'));
     document.getElementById('fb-out').classList.add('show');
   } catch (err) {
@@ -868,7 +878,7 @@ Build a complete, numbered execution roadmap. Structure it as follows:
 Be extremely specific. No fluff. This is their blueprint — make it actionable.`;
 
   try {
-    await streamClaude(
+    await streamGroq(
       [{ role: 'user', content: prompt }],
       chunk => { el.textContent += chunk; },
       1800
