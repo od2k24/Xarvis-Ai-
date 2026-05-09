@@ -1,137 +1,116 @@
-# Xarvis AI — Clean Rebuild
+# Xarvis AI — Creator Operating System
 
-Production-ready AI SaaS with Express backend + vanilla JS frontend.
+Full-stack AI SaaS. Express backend (Groq AI) + pure HTML/CSS/JS frontend.
+**API key lives only on the backend. Frontend never touches it.**
 
 ---
 
-## File Structure
+## Folder Structure
 
 ```
 xarvis-ai/
 ├── server/
 │   ├── index.js              ← Express entry point
 │   ├── package.json
-│   ├── .env.example          ← Copy to .env
+│   ├── .env.example          ← Copy → .env and add key
 │   └── routes/
-│       ├── health.js         ← GET  /api/health
-│       ├── chat.js           ← POST /api/chat
-│       └── generate.js       ← POST /api/generate
+│       ├── chat.js           ← POST /api/chat/stream  (SSE streaming)
+│       ├── generate.js       ← POST /api/generate     (viral, postnext, calendar, feedback)
+│       └── agent.js          ← POST /api/agent/plan   (SSE streaming)
 │
-└── frontend/
-    └── index.html            ← Single-file UI (no framework)
+├── frontend/
+│   ├── index.html            ← Landing page (splash → hero → features)
+│   └── app.html              ← Full OS dashboard (all 7 tools)
+│
+└── README.md
 ```
 
 ---
 
-## Setup Instructions
+## Quick Start
 
-### 1. Install backend dependencies
+### 1 — Install backend
 
 ```bash
 cd server
 npm install
 ```
 
-### 2. Configure environment variables
+### 2 — Add your Groq API key
 
 ```bash
 cp .env.example .env
-# Then edit .env and paste your Groq API key:
+# Open .env and paste your key:
 # GROQ_API_KEY=gsk_...
 ```
 
-Get a free Groq API key at: https://console.groq.com
+Get a free key at https://console.groq.com
 
-### 3. Start the server
+### 3 — Start the server
 
 ```bash
-# Development (auto-restart on save)
-npm run dev
-
-# Production
-npm start
+npm run dev      # development (auto-restarts)
+npm start        # production
 ```
 
-Server runs on: http://localhost:3001
+Server → http://localhost:3001
 
-### 4. Test the health check
+### 4 — Open the frontend
+
+```bash
+# Option A: just open the file
+open frontend/index.html
+
+# Option B: serve locally (recommended)
+npx serve frontend
+# → http://localhost:3000
+```
+
+### 5 — Verify it works
 
 ```bash
 curl http://localhost:3001/api/health
-# → {"status":"running"}
+# → { "ok": true, "status": "online" }
 ```
 
-### 5. Open the frontend
+---
 
-Open `frontend/index.html` in your browser.
-Update `BACKEND_URL` in the `<script>` tag if your server runs on a different URL.
+## Deploy to Production
+
+### Backend → Railway / Render / Fly.io
+
+1. Push `server/` folder to GitHub
+2. Connect repo to Railway or Render
+3. Set environment variable: `GROQ_API_KEY=gsk_...`
+4. Note the deployed URL (e.g. `https://xarvis-ai.up.railway.app`)
+
+### Frontend → Netlify / Vercel / GitHub Pages
+
+1. Open `frontend/app.html`
+2. Find the `BACKEND` constant at the top of the `<script>` tag
+3. Replace the production URL with your deployed backend URL
+4. Deploy the `frontend/` folder
 
 ---
 
 ## API Reference
 
-### GET /api/health
-Returns server status.
+| Method | Endpoint            | Body                                      | Response          |
+|--------|---------------------|-------------------------------------------|-------------------|
+| GET    | /api/health         | —                                         | `{ ok: true }`   |
+| POST   | /api/chat/stream    | `{ message, history[], context }`         | SSE stream        |
+| POST   | /api/generate       | `{ type, topic, platform, content, memory }` | `{ reply }`   |
+| POST   | /api/agent/plan     | `{ goal, context, memory }`               | SSE stream        |
+
+### SSE Event format (chat + agent)
 ```json
-{ "status": "running" }
+{ "type": "delta",   "content": "chunk of text" }
+{ "type": "done"                                  }
+{ "type": "error",   "message": "reason"          }
 ```
 
-### POST /api/chat
-Multi-turn conversation endpoint.
-```json
-// Request
-{
-  "messages": [
-    { "role": "user", "content": "Hello!" }
-  ],
-  "systemPrompt": "Optional system prompt"
-}
-
-// Response
-{
-  "reply": "Hi! How can I help you today?",
-  "model": "llama3-8b-8192",
-  "usage": { "prompt_tokens": 20, "completion_tokens": 10, "total_tokens": 30 }
-}
-```
-
-### POST /api/generate
-Single-shot content generation.
-```json
-// Request
-{
-  "prompt": "Write a hook for a YouTube video about discipline",
-  "temperature": 0.8,
-  "maxTokens": 1024
-}
-
-// Response
-{
-  "output": "Most people quit when it gets hard...",
-  "model": "llama3-8b-8192",
-  "usage": { ... }
-}
-```
-
----
-
-## Deploying to Production
-
-### Backend → Railway / Render / Fly.io
-1. Push `server/` to GitHub
-2. Connect to Railway/Render
-3. Set `GROQ_API_KEY` as an environment variable
-4. Copy the deployed URL
-
-### Frontend → Netlify / Vercel / GitHub Pages
-1. Update `BACKEND_URL` in `frontend/index.html` to your deployed backend URL
-2. Deploy the `frontend/` folder
-
----
-
-## Critical Rules (Never Break)
-
-- All API calls go through `apiRequest(path, payload)` — never raw `fetch`
-- Routes always include the `/api` prefix — never `/chat` directly
-- `BACKEND_URL` is defined in exactly one place
-- No duplicate scripts or route definitions
+### Generate types
+- `viral` — requires `topic`
+- `postnext` — uses `memory.niche`, `memory.platform`, `memory.tone`
+- `calendar` — uses `memory.niche`, `memory.platform`
+- `feedback` — requires `content`
