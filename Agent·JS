@@ -1,95 +1,90 @@
-const express = require("express");
-const router  = express.Router();
+import { CONFIG } from "./config.js";
 
-const GROQ_API_URL = "https://api.groq.com/openai/v1/chat/completions";
-const MODEL        = "llama-3.3-70b-versatile";
+export async function runAgent(goal, memory = {}, onChunk) {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), CONFIG.REQUEST_TIMEOUT);
 
-// ─── POST /api/agent/plan ─────────────────────────────────────────────────────
-router.post("/plan", async (req, res) => {
-  const { goal, context, memory } = req.body || {};
-  const apiKey = process.env.GROQ_API_KEY;
+  // Try streaming endpoint first, fall back to regular generate
+  try {
+    const res = await fetch(`${CONFIG.API_BASE}/api/chat/stream`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        message: buildAgentPrompt(goal, memory),
+        history: []
+      }),
+      signal: controller.signal
+    });
+    clearTimeout(timer);
 
-  if (!apiKey) {
-    return res.status(500).json({ error: "Missing GROQ_API_KEY on server." });
+    if (!res.ok) throw new Error("Stream failed");
+
+    const reader = res.body.getReader();
+    const dec = new TextDecoder();
+    let buf = "", full = "";
+
+    while (true) {
+      const { value, done } = await reader.read();
+      if (done) break;
+      buf += dec.decode(value, { stream: true });
+      const lines = buf.split("\n");
+      buf = lines.pop();
+      for (const line of lines) {
+        if (!line.startsWith("data: ")) continue;
+        const raw = line.slice(6).trim();
+        if (raw === "[DONE]") return full;
+        try {
+          const ev = JSON.parse(raw);
+          if (ev.type === "delta" && ev.content) { full += ev.content; onChunk && onChunk(full); }
+          if (ev.type === "error") throw new Error(ev.message);
+        } catch {}
+      }
+    }
+    return full;
+  } catch (err) {
+    clearTimeout(timer);
+    if (err.name === "AbortError") throw new Error("Request timed out — the server may be waking up. Please try again.");
+
+    // Fallback: non-streaming
+    const res2 = await fetch(`${CONFIG.API_BASE}/api/generate`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ type: "agent", goal, memory })
+    });
+    if (!res2.ok) throw new Error(`Server error ${res2.status}`);
+    const data = await res2.json();
+    const text = data.reply || "";
+    onChunk && onChunk(text);
+    return text;
   }
-  if (!goal || typeof goal !== "string" || !goal.trim()) {
-    return res.status(400).json({ error: "goal is required." });
-  }
+}
 
-  const niche    = memory?.niche    || "content creation";
-  const platform = memory?.platform || "YouTube";
+function buildAgentPrompt(goal, memory) {
+  return `AGENT MODE. Creator goal: "${goal}"
+${memory.niche ? `Niche: ${memory.niche} | Platform: ${memory.platform || "YouTube Shorts"}` : ""}
 
-  const systemPrompt = `You are Xarvis in Agent Mode — an elite AI co-founder and strategic operator.
-You break down big ambitious goals into concrete, week-by-week execution plans that actually work.
-You think like a startup founder, content growth hacker, and business builder combined.
-Niche: ${niche} | Platform: ${platform}
-${context || ""}`.trim();
-
-  const userPrompt = `My goal: "${goal}"
-
-Build me a complete, phased execution roadmap. Be specific — no vague advice.
-
-Structure your response like this:
+Build a complete, numbered execution roadmap:
 
 🎯 GOAL BREAKDOWN
-[Reframe the goal into 3 measurable milestones]
+[3 measurable milestones]
 
-📅 PHASE 1 — WEEKS 1–2: Foundation
-[5 specific daily/weekly actions to start immediately]
+📅 PHASE 1 — WEEKS 1-2: Foundation
+[5 specific daily actions]
 
-📅 PHASE 2 — WEEKS 3–6: Momentum
-[5 specific actions to build traction and systems]
+📅 PHASE 2 — WEEKS 3-6: Momentum
+[5 specific traction-building actions]
 
-📅 PHASE 3 — WEEKS 7–12: Scale
-[5 specific actions to accelerate and monetize]
+📅 PHASE 3 — WEEKS 7-12: Scale
+[5 acceleration actions]
 
 ⚡ QUICK WINS (Do in 24 hours)
-[3 things to do TODAY to start moving]
+[3 things to do TODAY]
 
 🚧 BIGGEST OBSTACLES & HOW TO BEAT THEM
-[Top 3 likely obstacles with specific countermeasures]
+[Top 3 with specific countermeasures]
 
 💰 MONETIZATION PATH
-[Specific revenue streams to build in order, with realistic timelines]
+[Revenue streams with realistic timelines]
 
-Be direct, tactical, and specific. No filler.`;
-
-  try {
-    const groqRes = await fetch(GROQ_API_URL, {
-      method:  "POST",
-      headers: {
-        Authorization:  `Bearer ${apiKey}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        model:       MODEL,
-        temperature: 0.7,
-        max_tokens:  2000,
-        messages: [
-          { role: "system", content: systemPrompt },
-          { role: "user",   content: userPrompt   },
-        ],
-      }),
-    });
-
-    if (!groqRes.ok) {
-      const e = await groqRes.json().catch(() => ({}));
-      return res.status(500).json({ error: e?.error?.message || `Groq error ${groqRes.status}` });
-    }
-
-    const data = await groqRes.json();
-    const plan  = data?.choices?.[0]?.message?.content;
-
-    if (!plan) {
-      return res.status(500).json({ error: "Empty response from model" });
-    }
-
-    return res.json({ success: true, plan });
-
-  } catch (err) {
-    console.error("[agent/plan] error:", err.message);
-    return res.status(500).json({ error: err.message || "Internal server error" });
-  }
-});
-
-module.exports = router;
+Be extremely specific. No fluff. This is their blueprint.`;
+}
