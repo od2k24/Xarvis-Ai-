@@ -7,14 +7,26 @@ dotenv.config();
 
 const app = express();
 
-// ─── MIDDLEWARE ─────────────────────────────────────────────
-app.use(cors({ origin: "*" }));
+// ─────────────────────────────────────────────
+// CORS (FIXED FOR GITHUB PAGES)
+// ─────────────────────────────────────────────
+app.use(cors({
+  origin: "*",
+  methods: ["GET", "POST", "OPTIONS"],
+  allowedHeaders: ["Content-Type"]
+}));
+
+// handle preflight explicitly (IMPORTANT)
+app.options("*", cors());
+
 app.use(express.json());
 
-// ─── RATE LIMIT (basic protection) ──────────────────────────
+// ─────────────────────────────────────────────
+// RATE LIMIT
+// ─────────────────────────────────────────────
 const requestCounts = new Map();
 
-const rateLimit = (req, res, next) => {
+app.use((req, res, next) => {
   const ip = req.ip || "unknown";
   const now = Date.now();
 
@@ -33,153 +45,144 @@ const rateLimit = (req, res, next) => {
 
   requestCounts.set(ip, data);
   next();
-};
+});
 
-app.use(rateLimit);
-
-// ─── GROQ CLIENT ───────────────────────────────────────────
+// ─────────────────────────────────────────────
+// GROQ
+// ─────────────────────────────────────────────
 const groq = new Groq({ apiKey: process.env.GROQ_API_KEY });
 
-// ─── SYSTEM PROMPT ──────────────────────────────────────────
 const SYSTEM_PROMPT = `
-You are Xarvis AI — a world-class AI co-founder for content creators.
-You specialise in viral content strategy, YouTube growth, hooks, scripts, monetisation,
-and content planning. Be direct, actionable, and high-energy.
+You are Xarvis AI — a world-class AI co-founder for creators.
+Be direct, actionable, and high-energy.
 `;
 
-// ─── TIMEOUT HELPER ─────────────────────────────────────────
-const timeout = (ms) =>
-  new Promise((_, reject) =>
-    setTimeout(() => reject(new Error("Request timeout")), ms)
-  );
-
-// ─── GROQ WRAPPER ───────────────────────────────────────────
 async function askGroq(messages, max_tokens = 1200) {
   if (!process.env.GROQ_API_KEY) throw new Error("Missing GROQ_API_KEY");
 
-  const completion = await Promise.race([
-    groq.chat.completions.create({
-      model: "llama-3.1-8b-instant",
-      messages: [{ role: "system", content: SYSTEM_PROMPT }, ...messages],
-      max_tokens,
-      temperature: 0.85,
-    }),
-    timeout(15000),
-  ]);
+  const completion = await groq.chat.completions.create({
+    model: "llama-3.1-8b-instant",
+    messages: [
+      { role: "system", content: SYSTEM_PROMPT },
+      ...messages
+    ],
+    max_tokens,
+    temperature: 0.85,
+  });
 
   return completion?.choices?.[0]?.message?.content ?? "";
 }
 
-// ─── HEALTH CHECK ───────────────────────────────────────────
+// ─────────────────────────────────────────────
+// HEALTH
+// ─────────────────────────────────────────────
 app.get("/", (req, res) => {
   res.json({ status: "Xarvis AI running 🚀" });
 });
 
 app.get("/api/health", (req, res) => {
-  res.json({ ok: true, status: "online" });
+  res.json({ ok: true });
 });
 
-// ─── CHAT ENDPOINT ──────────────────────────────────────────
+// ─────────────────────────────────────────────
+// CHAT
+// ─────────────────────────────────────────────
 app.post("/api/chat", async (req, res) => {
   try {
-    const { message, history = [], context = "" } = req.body;
+    const { message, history = [] } = req.body;
 
     if (!message) {
-      return res.status(400).json({ error: "message is required" });
+      return res.status(400).json({ error: "message required" });
     }
 
-    const msgs = [
-      ...(context
-        ? [
-            {
-              role: "user",
-              content: `Creator context: ${context}`,
-            },
-            {
-              role: "assistant",
-              content: "Got it — tailoring response.",
-            },
-          ]
-        : []),
+    const reply = await askGroq([
       ...history.slice(-10),
-      { role: "user", content: message },
-    ];
+      { role: "user", content: message }
+    ], 900);
 
-    const reply = await askGroq(msgs, 900);
     res.json({ reply });
+
   } catch (err) {
-    console.error("CHAT ERROR:", err.message);
-    res.status(500).json({ error: "AI temporarily unavailable" });
+    console.error(err);
+    res.status(500).json({ error: "AI error" });
   }
 });
 
-// ─── GENERATE ENDPOINT ──────────────────────────────────────
+// ─────────────────────────────────────────────
+// STREAM CHAT (FIX FOR YOUR FRONTEND)
+// ─────────────────────────────────────────────
+app.post("/api/chat/stream", async (req, res) => {
+  try {
+    const { message } = req.body;
+
+    res.setHeader("Content-Type", "text/event-stream");
+    res.setHeader("Cache-Control", "no-cache");
+    res.setHeader("Connection", "keep-alive");
+
+    const reply = await askGroq([{ role: "user", content: message }], 900);
+
+    // simulate streaming
+    for (let i = 0; i < reply.length; i++) {
+      res.write(`data: ${JSON.stringify({
+        type: "delta",
+        content: reply[i]
+      })}\n\n`);
+    }
+
+    res.write(`data: [DONE]\n\n`);
+    res.end();
+
+  } catch (err) {
+    console.error(err);
+    res.write(`data: ${JSON.stringify({ type: "error", message: err.message })}\n\n`);
+    res.end();
+  }
+});
+
+// ─────────────────────────────────────────────
+// GENERATE
+// ─────────────────────────────────────────────
 app.post("/api/generate", async (req, res) => {
   try {
-    const { type, topic, platform, content, goal, context = "" } = req.body;
+    const { type, topic, platform, content, goal } = req.body;
 
     let prompt = "";
 
     if (type === "viral") {
-      prompt = `Generate viral content for: "${topic}" on ${platform || "YouTube Shorts"}
-${context}
-Format:
-HOOK:
-SCRIPT:
-TITLE:
-THUMBNAIL:`;
+      prompt = `Create viral content for: ${topic} on ${platform}`;
+    }
 
-    } else if (type === "postnext") {
-      prompt = `Suggest the next viral video idea:
-${context}
-Format:
-IDEA:
-HOOK:
-WHY IT WORKS:
-BEST TIME TO POST:`;
+    if (type === "postnext") {
+      prompt = `Next viral idea for creator niche: ${topic}`;
+    }
 
-    } else if (type === "calendar") {
-      prompt = `Create 7-day content plan:
-${context}
-Format 7 lines:
-DAY | TOPIC | ANGLE | HOOK`;
+    if (type === "calendar") {
+      prompt = `7-day content calendar for: ${topic}`;
+    }
 
-    } else if (type === "feedback") {
-      prompt = `Analyse content:
-"${content}"
-${context}
-Format:
-STRENGTHS:
-WEAKNESSES:
-IMPROVEMENTS:
-VIRAL SCORE:
-VERDICT:`;
+    if (type === "feedback") {
+      prompt = `Analyse this content: ${content}`;
+    }
 
-    } else if (type === "agent") {
-      prompt = `Build execution roadmap for goal:
-"${goal}"
-${context}
-Include:
-Phases
-Daily actions
-Content strategy
-Monetisation
-Metrics`;
-    } else {
-      return res.status(400).json({ error: "Unknown type" });
+    if (type === "agent") {
+      prompt = `Build execution plan for: ${goal}`;
     }
 
     const reply = await askGroq([{ role: "user", content: prompt }], 1400);
+
     res.json({ reply });
+
   } catch (err) {
-    console.error("GENERATE ERROR:", err.message);
+    console.error(err);
     res.status(500).json({ error: "Generation failed" });
   }
 });
 
-// ─── START SERVER ───────────────────────────────────────────
+// ─────────────────────────────────────────────
+// START
+// ─────────────────────────────────────────────
 const PORT = process.env.PORT || 3001;
 
 app.listen(PORT, () => {
-  console.log(`🚀 Xarvis AI server running on port ${PORT}`);
+  console.log(`🚀 Xarvis AI running on ${PORT}`);
 });
