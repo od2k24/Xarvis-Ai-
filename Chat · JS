@@ -1,105 +1,64 @@
-const express = require("express");
-const router  = express.Router();
+import { CONFIG } from "./config.js";
 
-const GROQ_API_URL = "https://api.groq.com/openai/v1/chat/completions";
-const MODEL        = "llama-3.3-70b-versatile";
-
-function buildSystemPrompt(context) {
-  return [
-    "You are Xarvis — an elite AI co-founder and creator strategist.",
-    "You help creators build businesses, go viral, and make money online.",
-    "Be direct, practical, sharp, and always give actionable steps.",
-    "Format your responses with bold headers using **text** when helpful.",
-    context || null,
-  ]
-    .filter(Boolean)
-    .join("\n");
+async function fetchWithRetry(url, options, retries = CONFIG.RETRY_ATTEMPTS) {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), CONFIG.REQUEST_TIMEOUT);
+  try {
+    const res = await fetch(url, { ...options, signal: controller.signal });
+    clearTimeout(timer);
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err.error || `Server error ${res.status}`);
+    }
+    return res;
+  } catch (err) {
+    clearTimeout(timer);
+    if (retries > 0 && err.name !== "AbortError") {
+      await new Promise(r => setTimeout(r, CONFIG.RETRY_DELAY));
+      return fetchWithRetry(url, options, retries - 1);
+    }
+    if (err.name === "AbortError") throw new Error("Request timed out. The server may be waking up — try again in a moment.");
+    throw err;
+  }
 }
 
-// ─── POST /api/chat/stream ────────────────────────────────────────────────────
-// Streams SSE events: { type:'delta', content } | { type:'done' } | { type:'error', message }
-router.post("/stream", async (req, res) => {
-  const { message, context, history = [] } = req.body || {};
-  const apiKey = process.env.GROQ_API_KEY;
+export async function sendChat(message, history = []) {
+  const res = await fetchWithRetry(`${CONFIG.API_BASE}/api/chat`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ message, history: history.slice(-CONFIG.MAX_HISTORY) })
+  });
+  const data = await res.json();
+  return data.reply || "";
+}
 
-  // ── Validate ────────────────────────────────────────────────────────────────
-  if (!apiKey) {
-    return res.status(500).json({ error: "Missing GROQ_API_KEY on server." });
-  }
-  if (!message || typeof message !== "string" || !message.trim()) {
-    return res.status(400).json({ error: "message is required." });
-  }
+export async function streamChat(message, history = [], onChunk) {
+  const res = await fetchWithRetry(`${CONFIG.API_BASE}/api/chat/stream`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ message, history: history.slice(-CONFIG.MAX_HISTORY) })
+  });
 
-  // ── SSE headers ─────────────────────────────────────────────────────────────
-  res.setHeader("Content-Type",  "text/event-stream");
-  res.setHeader("Cache-Control", "no-cache");
-  res.setHeader("Connection",    "keep-alive");
-  res.flushHeaders();
+  const reader = res.body.getReader();
+  const dec = new TextDecoder();
+  let buf = "", full = "";
 
-  const send = (obj) => res.write(`data: ${JSON.stringify(obj)}\n\n`);
-
-  // ── Build messages ───────────────────────────────────────────────────────────
-  const messages = [
-    { role: "system", content: buildSystemPrompt(context) },
-    ...history.slice(-12),
-    { role: "user",   content: message },
-  ];
-
-  try {
-    const groqRes = await fetch(GROQ_API_URL, {
-      method:  "POST",
-      headers: {
-        Authorization:  `Bearer ${apiKey}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        model:       MODEL,
-        messages,
-        temperature: 0.75,
-        max_tokens:  1024,
-        stream:      true,
-      }),
-    });
-
-    if (!groqRes.ok) {
-      const err = await groqRes.json().catch(() => ({}));
-      send({ type: "error", message: err?.error?.message || `Groq error ${groqRes.status}` });
-      return res.end();
+  while (true) {
+    const { value, done } = await reader.read();
+    if (done) break;
+    buf += dec.decode(value, { stream: true });
+    const lines = buf.split("\n");
+    buf = lines.pop();
+    for (const line of lines) {
+      if (!line.startsWith("data: ")) continue;
+      const raw = line.slice(6).trim();
+      if (raw === "[DONE]") return full;
+      try {
+        const ev = JSON.parse(raw);
+        if (ev.type === "delta" && ev.content) { full += ev.content; onChunk(full); }
+        if (ev.type === "error") throw new Error(ev.message);
+      } catch {}
     }
-
-    // ── Stream chunks ────────────────────────────────────────────────────────
-    const reader  = groqRes.body.getReader();
-    const decoder = new TextDecoder();
-    let   buffer  = "";
-
-    while (true) {
-      const { value, done } = await reader.read();
-      if (done) break;
-
-      buffer += decoder.decode(value, { stream: true });
-      const lines = buffer.split("\n");
-      buffer = lines.pop(); // keep incomplete line
-
-      for (const line of lines) {
-        if (!line.startsWith("data: ")) continue;
-        const raw = line.slice(6).trim();
-        if (raw === "[DONE]") { send({ type: "done" }); return res.end(); }
-        try {
-          const parsed = JSON.parse(raw);
-          const chunk  = parsed?.choices?.[0]?.delta?.content;
-          if (chunk) send({ type: "delta", content: chunk });
-        } catch {}
-      }
-    }
-
-    send({ type: "done" });
-    res.end();
-
-  } catch (err) {
-    console.error("[chat/stream] error:", err.message);
-    send({ type: "error", message: "Internal server error — please try again." });
-    res.end();
   }
-});
-
-module.exports = router;
+  return full;
+}
