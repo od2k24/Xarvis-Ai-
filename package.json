@@ -2,6 +2,7 @@
   "name": "xarvis-ai-backend",
   "version": "4.0.0",
   "description": "Xarvis AI — Express backend for Creator OS",
+  "type": "module",
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
