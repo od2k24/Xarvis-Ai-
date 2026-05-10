@@ -1,64 +1,131 @@
 import { CONFIG } from "./config.js";
 
-async function fetchWithRetry(url, options, retries = CONFIG.RETRY_ATTEMPTS) {
+// ─── SAFE FETCH WITH RETRY + COLD START HANDLING ─────────────
+async function fetchWithRetry(url, options = {}, retries = CONFIG.RETRY_ATTEMPTS) {
   const controller = new AbortController();
-  const timer = setTimeout(() => controller.abort(), CONFIG.REQUEST_TIMEOUT);
+  const timeout = setTimeout(() => controller.abort(), CONFIG.REQUEST_TIMEOUT);
+
   try {
-    const res = await fetch(url, { ...options, signal: controller.signal });
-    clearTimeout(timer);
+    const res = await fetch(url, {
+      ...options,
+      signal: controller.signal
+    });
+
+    clearTimeout(timeout);
+
+    // Handle non-JSON / Render cold start HTML fallback
+    const contentType = res.headers.get("content-type") || "";
+
     if (!res.ok) {
-      const err = await res.json().catch(() => ({}));
-      throw new Error(err.error || `Server error ${res.status}`);
+      let msg = `Server error ${res.status}`;
+
+      if (contentType.includes("application/json")) {
+        try {
+          const err = await res.json();
+          msg = err?.error || msg;
+        } catch {}
+      }
+
+      throw new Error(msg);
     }
+
     return res;
   } catch (err) {
-    clearTimeout(timer);
-    if (retries > 0 && err.name !== "AbortError") {
-      await new Promise(r => setTimeout(r, CONFIG.RETRY_DELAY));
+    clearTimeout(timeout);
+
+    const isAbort = err.name === "AbortError";
+    const isNetwork = err.message?.includes("fetch");
+
+    if (retries > 0 && !isAbort) {
+      await new Promise(r => setTimeout(r, CONFIG.RETRY_DELAY || 800));
       return fetchWithRetry(url, options, retries - 1);
     }
-    if (err.name === "AbortError") throw new Error("Request timed out. The server may be waking up — try again in a moment.");
+
+    if (isAbort) {
+      throw new Error("Server is waking up. Try again in a few seconds.");
+    }
+
+    if (isNetwork) {
+      throw new Error("Network error. Backend may be cold starting.");
+    }
+
     throw err;
   }
 }
 
+// ─── NORMAL CHAT ─────────────────────────────────────────────
 export async function sendChat(message, history = []) {
   const res = await fetchWithRetry(`${CONFIG.API_BASE}/api/chat`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ message, history: history.slice(-CONFIG.MAX_HISTORY) })
+    body: JSON.stringify({
+      message,
+      history: history.slice(-CONFIG.MAX_HISTORY)
+    })
   });
-  const data = await res.json();
+
+  const data = await res.json().catch(() => ({}));
   return data.reply || "";
 }
 
+// ─── STREAM CHAT (FIXED SAFE STREAM HANDLING) ────────────────
 export async function streamChat(message, history = [], onChunk) {
   const res = await fetchWithRetry(`${CONFIG.API_BASE}/api/chat/stream`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ message, history: history.slice(-CONFIG.MAX_HISTORY) })
+    body: JSON.stringify({
+      message,
+      history: history.slice(-CONFIG.MAX_HISTORY)
+    })
   });
 
-  const reader = res.body.getReader();
-  const dec = new TextDecoder();
-  let buf = "", full = "";
-
-  while (true) {
-    const { value, done } = await reader.read();
-    if (done) break;
-    buf += dec.decode(value, { stream: true });
-    const lines = buf.split("\n");
-    buf = lines.pop();
-    for (const line of lines) {
-      if (!line.startsWith("data: ")) continue;
-      const raw = line.slice(6).trim();
-      if (raw === "[DONE]") return full;
-      try {
-        const ev = JSON.parse(raw);
-        if (ev.type === "delta" && ev.content) { full += ev.content; onChunk(full); }
-        if (ev.type === "error") throw new Error(ev.message);
-      } catch {}
-    }
+  if (!res.body) {
+    throw new Error("Streaming not supported by server response.");
   }
+
+  const reader = res.body.getReader();
+  const decoder = new TextDecoder();
+
+  let buffer = "";
+  let full = "";
+
+  try {
+    while (true) {
+      const { value, done } = await reader.read();
+      if (done) break;
+
+      buffer += decoder.decode(value, { stream: true });
+
+      const lines = buffer.split("\n");
+      buffer = lines.pop() || "";
+
+      for (const line of lines) {
+        if (!line.startsWith("data: ")) continue;
+
+        const raw = line.slice(6).trim();
+        if (!raw) continue;
+
+        if (raw === "[DONE]") return full;
+
+        try {
+          const ev = JSON.parse(raw);
+
+          if (ev.type === "delta" && ev.content) {
+            full += ev.content;
+            onChunk?.(full);
+          }
+
+          if (ev.type === "error") {
+            throw new Error(ev.message || "Stream error");
+          }
+        } catch {
+          // ignore malformed chunks safely
+        }
+      }
+    }
+  } finally {
+    reader.releaseLock?.();
+  }
+
   return full;
 }
