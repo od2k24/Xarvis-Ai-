@@ -1,411 +1,679 @@
-import { useState, useEffect, useRef } from "react";
-
-/* ══════════════════════════════════════════════════════
-   XARVIS AI — Creator Operating System
-   Splash → Landing → Dashboard (Chat, Studio, Post Next,
-   Calendar, Feedback, Agent Mode, Memory)
-══════════════════════════════════════════════════════ */
-
-const API = "https://api.anthropic.com/v1/messages";
-const MODEL = "claude-sonnet-4-20250514";
-const SYS = `You are Xarvis AI — the world's most elite AI co-founder for content creators. You master viral content strategy, YouTube/TikTok/Instagram algorithms, hooks, scripts, monetisation, and creator business building. Be direct, bold, high-energy, always actionable. Give copy-paste-ready outputs. Use **bold** to highlight key terms and structure with line breaks.`;
-
-/* ─── API ──────────────────────────────────────────── */
-async function callAI(msgs, onChunk = null, tok = 1300) {
-  const r = await fetch(API, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ model: MODEL, max_tokens: tok, system: SYS, messages: msgs, stream: !!onChunk }),
-  });
-  if (!r.ok) { const e = await r.json().catch(() => ({})); throw new Error(e.error?.message || `Error ${r.status}`); }
-  if (onChunk) {
-    const reader = r.body.getReader(), dec = new TextDecoder();
-    let buf = "", full = "";
-    while (true) {
-      const { value, done } = await reader.read();
-      if (done) break;
-      buf += dec.decode(value, { stream: true });
-      const lines = buf.split("\n"); buf = lines.pop();
-      for (const l of lines) {
-        if (!l.startsWith("data: ")) continue;
-        const raw = l.slice(6).trim();
-        if (raw === "[DONE]") return full;
-        try { const ev = JSON.parse(raw); if (ev.delta?.text) { full += ev.delta.text; onChunk(full); } } catch {}
-      }
-    }
-    return full;
-  }
-  const d = await r.json();
-  return d.content?.[0]?.text || "";
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>Xarvis AI — Creator OS</title>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+<style>
+:root{
+  --bg:#050810;--bg2:#080d1a;--surface:#0d1425;--surface2:#111b30;--surface3:#162038;
+  --border:rgba(255,255,255,0.05);--border2:rgba(255,255,255,0.09);--border3:rgba(255,255,255,0.16);
+  --blue:#5b8fff;--purple:#8b5cf6;--cyan:#06b6d4;
+  --green:#10b981;--amber:#f59e0b;--red:#ef4444;
+  --text:#eef2ff;--text2:#94a3b8;--muted:#475569;
+  --glow:rgba(91,143,255,0.18);
+  --grad:linear-gradient(135deg,#5b8fff,#8b5cf6);
+  --sw:248px;--topbar:56px;
+  --r:14px;--r2:20px;--r3:24px;
 }
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+html,body{height:100%;overflow:hidden}
+body{background:var(--bg);color:var(--text);font-family:'Outfit',sans-serif;display:flex;height:100vh}
 
-/* ─── Helpers ──────────────────────────────────────── */
-const ex = (txt, label, next) => {
-  const m = (txt || "").match(new RegExp(label + ":[\\s\\n]*([\\s\\S]*?)(?=(?:" + next + "):|$)", "i"));
-  return m ? m[1].trim() : "";
-};
-const fmt = t => String(t).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")
-  .replace(/\*\*(.*?)\*\*/g, '<strong style="color:#818cf8">$1</strong>')
-  .replace(/^#{1,3}\s+(.+)$/gm, '<strong style="color:#818cf8;font-size:1.05em">$1</strong>')
-  .replace(/\n/g, "<br>");
-
-/* ─── Design tokens ────────────────────────────────── */
-const T = {
-  bg: "#030408", s: "rgba(255,255,255,.028)", s2: "rgba(255,255,255,.055)",
-  b: "rgba(255,255,255,.07)", b2: "rgba(255,255,255,.13)",
-  p: "#6366f1", pu: "#a855f7", gr: "linear-gradient(135deg,#6366f1,#a855f7)",
-  t: "#eef2ff", t2: "#94a3b8", mu: "#475569",
-  g: "#22c55e", am: "#f59e0b", re: "#ef4444", cy: "#06b6d4",
-  fh: "'Syne',sans-serif", fb: "'DM Sans',sans-serif",
-};
-const CD = (x = {}) => ({ background: T.s, border: `1px solid ${T.b}`, borderRadius: 16, padding: 20, ...x });
-const IN = (x = {}) => ({ padding: "11px 14px", background: "rgba(255,255,255,.03)", border: `1px solid ${T.b2}`, borderRadius: 11, color: T.t, fontFamily: T.fb, fontSize: 14, outline: "none", transition: "border-color .2s", ...x });
-const BT = (x = {}) => ({ padding: "11px 20px", background: T.gr, border: "none", borderRadius: 11, color: "#fff", fontFamily: T.fh, fontWeight: 700, fontSize: 14, cursor: "pointer", display: "flex", alignItems: "center", gap: 8, transition: "all .2s", boxShadow: "0 0 20px rgba(99,102,241,.2)", ...x });
-
-const CSS = `
-  @keyframes xlogoIn{from{opacity:0;transform:scale(.6) rotate(-10deg)}to{opacity:1;transform:scale(1) rotate(0)}}
-  @keyframes xfadeUp{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:translateY(0)}}
-  @keyframes xspin{to{transform:rotate(360deg)}}
-  @keyframes xblink{0%,100%{opacity:1}50%{opacity:0}}
-  @keyframes xslide{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
-  @keyframes xshimmer{0%{background-position:200%}100%{background-position:-200%}}
-  @keyframes xpulse{0%,100%{opacity:1}50%{opacity:.25}}
-  *::-webkit-scrollbar{width:4px}*::-webkit-scrollbar-track{background:transparent}
-  *::-webkit-scrollbar-thumb{background:rgba(255,255,255,.08);border-radius:2px}
-  input::placeholder,textarea::placeholder{color:#475569}
-`;
-const Spin = () => <span style={{ width: 14, height: 14, border: "2px solid rgba(255,255,255,.25)", borderTop: "2px solid #fff", borderRadius: "50%", animation: "xspin .65s linear infinite", display: "inline-block", flexShrink: 0 }} />;
-
-/* ══════════════════════════════════════════════════════
-   SPLASH
-══════════════════════════════════════════════════════ */
-function Splash() {
-  const [prog, setP] = useState(0);
-  useEffect(() => { const id = setInterval(() => setP(p => Math.min(p + 2.5, 100)), 20); return () => clearInterval(id); }, []);
-  return (
-    <div style={{ position: "fixed", inset: 0, background: T.bg, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", fontFamily: T.fb }}>
-      <style>{CSS}</style>
-      <div style={{ position: "absolute", inset: 0, background: "radial-gradient(ellipse 60% 50% at 50% 50%,rgba(99,102,241,.1),transparent 70%)", pointerEvents: "none" }} />
-      <div style={{ width: 76, height: 76, borderRadius: 22, background: T.gr, display: "flex", alignItems: "center", justifyContent: "center", fontFamily: T.fh, fontWeight: 900, fontSize: 32, color: "#fff", boxShadow: "0 0 60px rgba(99,102,241,.5)", marginBottom: 26, animation: "xlogoIn .75s cubic-bezier(.22,1,.36,1)" }}>X</div>
-      <div style={{ fontFamily: T.fh, fontSize: 30, fontWeight: 900, color: T.t, letterSpacing: -1.5, marginBottom: 7, animation: "xfadeUp .6s .25s ease both" }}>XARVIS AI</div>
-      <div style={{ color: T.t2, fontSize: 13, marginBottom: 44, animation: "xfadeUp .6s .4s ease both" }}>Creator Operating System</div>
-      <div style={{ width: 180, height: 2, background: "rgba(255,255,255,.06)", borderRadius: 2, overflow: "hidden", animation: "xfadeUp .6s .35s ease both" }}>
-        <div style={{ height: "100%", width: `${prog}%`, background: T.gr, transition: "width .04s linear", boxShadow: "0 0 10px rgba(99,102,241,.9)" }} />
-      </div>
-    </div>
-  );
+/* ── SIDEBAR ── */
+.sidebar{
+  width:var(--sw);min-width:var(--sw);
+  background:linear-gradient(180deg,var(--bg2) 0%,var(--bg) 100%);
+  border-right:1px solid var(--border);
+  display:flex;flex-direction:column;height:100vh;
+  position:relative;z-index:10;transition:transform .3s ease;
 }
+.sidebar::after{content:'';position:absolute;top:0;right:-1px;width:1px;height:100%;background:linear-gradient(180deg,transparent,var(--blue),transparent);opacity:.2}
+.slogo{padding:18px 16px 14px;display:flex;align-items:center;gap:10px;border-bottom:1px solid var(--border);flex-shrink:0;text-decoration:none}
+.lm{width:30px;height:30px;border-radius:9px;background:var(--grad);display:flex;align-items:center;justify-content:center;font-weight:800;font-size:.82rem;color:#fff;box-shadow:0 0 18px var(--glow);flex-shrink:0}
+.lt{font-weight:800;font-size:.95rem;color:var(--text);letter-spacing:-.3px}
+.lv{margin-left:auto;font-size:.52rem;padding:2px 7px;background:rgba(91,143,255,.1);border:1px solid rgba(91,143,255,.2);border-radius:20px;color:var(--blue);font-weight:700}
+.snav{padding:8px 8px 0;flex-shrink:0;display:flex;flex-direction:column;gap:1px}
+.nsec{font-size:.57rem;text-transform:uppercase;letter-spacing:.18em;color:var(--muted);font-weight:600;padding:10px 10px 4px}
+.ni{display:flex;align-items:center;gap:9px;padding:8px 11px;border-radius:9px;cursor:pointer;border:none;background:transparent;color:var(--text2);font-size:.8rem;font-family:'Outfit',sans-serif;font-weight:500;width:100%;text-align:left;transition:all .15s;position:relative}
+.ni:hover{background:rgba(255,255,255,.04);color:var(--text)}
+.ni.active{background:linear-gradient(135deg,rgba(91,143,255,.12),rgba(139,92,246,.08));color:var(--blue);border:1px solid rgba(91,143,255,.12)}
+.ni.active::before{content:'';position:absolute;left:-8px;top:25%;bottom:25%;width:2px;background:var(--grad);border-radius:0 2px 2px 0}
+.nic{width:28px;height:28px;border-radius:7px;display:flex;align-items:center;justify-content:center;font-size:.92rem;flex-shrink:0}
+.ni.active .nic{background:rgba(91,143,255,.1)}
+.nbadge{margin-left:auto;font-size:.54rem;padding:2px 7px;border-radius:20px;font-weight:700;background:rgba(16,185,129,.12);border:1px solid rgba(16,185,129,.2);color:var(--green)}
+.sspacer{flex:1}
+.sbottom{padding:10px 10px 16px;border-top:1px solid var(--border)}
+.sinfo{padding:10px 12px;background:rgba(91,143,255,.04);border:1px solid rgba(91,143,255,.1);border-radius:10px;font-size:.67rem;color:var(--muted);line-height:1.5;text-align:center}
+.sinfo span{color:var(--green);font-weight:600}
 
-/* ══════════════════════════════════════════════════════
-   LANDING
-══════════════════════════════════════════════════════ */
-function Landing({ onLaunch }) {
-  const [vis, setVis] = useState(false);
-  useEffect(() => { const t = setTimeout(() => setVis(true), 60); return () => clearTimeout(t); }, []);
+/* ── MAIN ── */
+.main{flex:1;display:flex;flex-direction:column;height:100vh;overflow:hidden;min-width:0}
+.topbar{height:var(--topbar);padding:0 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:8px;background:rgba(5,8,16,.92);backdrop-filter:blur(20px);flex-shrink:0;z-index:5}
+.mmbtn{display:none;background:none;border:none;color:var(--text2);font-size:1.1rem;cursor:pointer;padding:4px}
+.bc{display:flex;align-items:center;gap:7px;font-size:.8rem}
+.bc-a{color:var(--muted)}.bc-s{color:var(--muted);font-size:.7rem}.bc-p{color:var(--text);font-weight:700;letter-spacing:-.2px}
+.tb-r{margin-left:auto;display:flex;align-items:center;gap:8px}
+.online{display:flex;align-items:center;gap:5px;padding:4px 10px;background:rgba(16,185,129,.06);border:1px solid rgba(16,185,129,.15);border-radius:20px;font-size:.65rem;color:var(--green);font-weight:600}
+.odot{width:5px;height:5px;background:var(--green);border-radius:50%;animation:pulse 2s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
 
-  const feats = [
-    { icon: "💬", t: "AI Advisor", d: "ChatGPT-style brain trained on viral strategy and creator psychology. Ask anything, get instant strategy.", c: T.p },
-    { icon: "🔥", t: "Viral Studio", d: "Drop a topic — get scroll-stopping hooks, full scripts, title options, and thumbnail concepts in seconds.", c: "#f97316" },
-    { icon: "🎯", t: "Post Next", d: "AI picks your single highest-ROI content idea for today based on your niche and current trends.", c: T.g },
-    { icon: "🚀", t: "Agent Mode", d: "Give it a big goal. Get a complete phased execution roadmap — like having a co-founder.", c: T.pu },
-    { icon: "📅", t: "7-Day Calendar", d: "Full week of content with unique angles and hooks — planned in under 60 seconds, ready to execute.", c: T.cy },
-    { icon: "📊", t: "Feedback AI", d: "Score any idea on virality. Get specific weaknesses and actionable fixes before you waste time creating.", c: T.am },
-  ];
+/* ── PANELS ── */
+.panel{flex:1;display:none;flex-direction:column;overflow:hidden}
+.panel.active{display:flex}
 
-  return (
-    <div style={{ background: T.bg, minHeight: "100vh", fontFamily: T.fb, color: T.t, overflowX: "hidden", opacity: vis ? 1 : 0, transition: "opacity .5s" }}>
-      <style>{CSS}</style>
-      {/* NAV */}
-      <nav style={{ position: "fixed", top: 0, width: "100%", zIndex: 100, display: "flex", alignItems: "center", justifyContent: "space-between", padding: "0 5%", height: 60, background: "rgba(3,4,8,.88)", backdropFilter: "blur(22px)", borderBottom: `1px solid ${T.b}`, boxSizing: "border-box" }}>
-        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-          <div style={{ width: 32, height: 32, borderRadius: 10, background: T.gr, display: "flex", alignItems: "center", justifyContent: "center", fontFamily: T.fh, fontWeight: 900, fontSize: 15, color: "#fff" }}>X</div>
-          <span style={{ fontFamily: T.fh, fontWeight: 800, fontSize: 17 }}>Xarvis AI</span>
-          <span style={{ fontSize: 10, padding: "2px 8px", borderRadius: 20, fontWeight: 700, background: "rgba(99,102,241,.1)", border: "1px solid rgba(99,102,241,.2)", color: T.p }}>OS v4</span>
-        </div>
-        <div style={{ display: "flex", gap: 32 }}>
-          {["Features", "How It Works", "Pricing"].map(l => <span key={l} style={{ color: T.t2, fontSize: 14, cursor: "pointer" }}>{l}</span>)}
-        </div>
-        <button onClick={onLaunch} style={{ padding: "9px 24px", background: T.gr, border: "none", borderRadius: 50, color: "#fff", fontFamily: T.fh, fontWeight: 700, fontSize: 13, cursor: "pointer", boxShadow: "0 0 24px rgba(99,102,241,.35)" }}>🚀 Launch App</button>
-      </nav>
+/* ── CHAT ── */
+.chat-area{flex:1;overflow-y:auto;padding:24px 20px;display:flex;flex-direction:column;gap:16px;scrollbar-width:thin;scrollbar-color:var(--border) transparent}
+.empty-state{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;gap:24px;min-height:55vh}
+.eav{width:54px;height:54px;border-radius:16px;background:var(--grad);display:flex;align-items:center;justify-content:center;font-weight:800;font-size:1.35rem;color:#fff;box-shadow:0 0 32px var(--glow),0 0 70px rgba(91,143,255,.08)}
+.empty-state h2{font-size:1.5rem;font-weight:800;letter-spacing:-.5px;margin-bottom:8px}
+.empty-state p{color:var(--text2);font-size:.88rem;max-width:340px;line-height:1.65}
+.sug-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:9px;max-width:480px;width:100%}
+.sug{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:13px;text-align:left;cursor:pointer;transition:all .2s}
+.sug:hover{border-color:rgba(91,143,255,.2);transform:translateY(-2px);background:var(--surface2)}
+.si{font-size:1.15rem;margin-bottom:6px}
+.st{font-weight:700;font-size:.78rem;margin-bottom:3px}
+.sd{color:var(--text2);font-size:.68rem;line-height:1.35}
+.msg-row{display:flex;gap:9px;max-width:740px;align-self:flex-start;animation:msgIn .22s ease}
+.msg-row.user{align-self:flex-end;flex-direction:row-reverse}
+@keyframes msgIn{from{opacity:0;transform:translateY(7px)}to{opacity:1;transform:translateY(0)}}
+.mav{width:28px;height:28px;border-radius:50%;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:.68rem}
+.mav.bot{background:var(--grad)}.mav.user{background:var(--surface3);border:1px solid var(--border2)}
+.mbub{padding:11px 15px;border-radius:15px;max-width:82%;font-size:.86rem;line-height:1.72}
+.mbub.bot{background:var(--surface);border:1px solid var(--border);border-radius:3px 15px 15px 15px;color:var(--text2)}
+.mbub.bot b,.mbub.bot strong{color:var(--blue);font-weight:600}
+.mbub.user{background:var(--grad);color:#fff;border-radius:15px 3px 15px 15px}
+.streaming::after{content:'▋';animation:blink .7s step-end infinite;color:var(--blue);font-size:.78em}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:0}}
 
-      {/* HERO */}
-      <section style={{ minHeight: "100vh", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", textAlign: "center", padding: "120px 5% 80px", position: "relative", overflow: "hidden" }}>
-        <div style={{ position: "absolute", inset: 0, backgroundImage: `linear-gradient(rgba(99,102,241,.04) 1px,transparent 1px),linear-gradient(90deg,rgba(99,102,241,.04) 1px,transparent 1px)`, backgroundSize: "64px 64px", maskImage: "radial-gradient(ellipse 80% 70% at 50% 50%,black 20%,transparent 100%)", pointerEvents: "none" }} />
-        <div style={{ position: "absolute", top: "30%", left: "50%", transform: "translate(-50%,-50%)", width: 700, height: 700, borderRadius: "50%", background: "radial-gradient(circle,rgba(99,102,241,.09),transparent 70%)", pointerEvents: "none" }} />
-        <div style={{ display: "inline-flex", alignItems: "center", gap: 8, padding: "6px 18px", marginBottom: 32, background: "rgba(99,102,241,.08)", border: `1px solid rgba(99,102,241,.22)`, borderRadius: 50, fontSize: 12, color: T.p, fontWeight: 600, animation: "xfadeUp .8s ease" }}>
-          <span style={{ width: 6, height: 6, borderRadius: "50%", background: T.g, display: "inline-block", animation: "xpulse 2s infinite" }} />
-          No waitlist — Start free in 60 seconds
-        </div>
-        <h1 style={{ fontFamily: T.fh, fontSize: "clamp(3rem,7.5vw,5.5rem)", fontWeight: 900, lineHeight: 1.02, letterSpacing: -3, maxWidth: 860, marginBottom: 22, animation: "xfadeUp .8s .1s ease both", opacity: 0 }}>
-          Your AI Co-Founder<br />for <span style={{ background: T.gr, WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", backgroundClip: "text" }}>Going Viral.</span>
-        </h1>
-        <p style={{ color: T.t2, fontSize: 17, maxWidth: 500, lineHeight: 1.78, marginBottom: 48, animation: "xfadeUp .8s .2s ease both", opacity: 0 }}>
-          Xarvis AI is the operating system every creator needs — writing hooks, planning content, building growth engines. No team required.
-        </p>
-        <div style={{ display: "flex", gap: 14, flexWrap: "wrap", justifyContent: "center", marginBottom: 76, animation: "xfadeUp .8s .3s ease both", opacity: 0 }}>
-          <button onClick={onLaunch} style={{ padding: "17px 44px", background: T.gr, border: "none", borderRadius: 50, color: "#fff", fontFamily: T.fh, fontWeight: 700, fontSize: 16, cursor: "pointer", boxShadow: "0 0 44px rgba(99,102,241,.4)", display: "flex", alignItems: "center", gap: 8 }}>🚀 Launch App Free</button>
-          <button style={{ padding: "17px 42px", background: "transparent", border: `1px solid ${T.b2}`, borderRadius: 50, color: T.t, fontSize: 15, cursor: "pointer", fontFamily: T.fb }}>Watch Demo ↓</button>
-        </div>
-        <div style={{ display: "flex", gap: 56, flexWrap: "wrap", justifyContent: "center", animation: "xfadeUp .8s .44s ease both", opacity: 0 }}>
-          {[["94%", "Virality Accuracy"], ["12hrs", "Saved Weekly"], ["4.2×", "Avg Engagement"], ["8k+", "Creators"]].map(([n, l]) => (
-            <div key={l} style={{ textAlign: "center" }}>
-              <div style={{ fontFamily: T.fh, fontSize: 36, fontWeight: 900, lineHeight: 1, background: T.gr, WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", backgroundClip: "text" }}>{n}</div>
-              <div style={{ color: T.mu, fontSize: 12, marginTop: 6 }}>{l}</div>
-            </div>
-          ))}
-        </div>
-      </section>
+.input-area{padding:10px 18px 16px;border-top:1px solid var(--border);flex-shrink:0}
+.input-wrap{max-width:760px;margin:0 auto;background:var(--surface);border:1px solid var(--border2);border-radius:15px;display:flex;align-items:flex-end;gap:7px;padding:9px 11px;transition:all .2s}
+.input-wrap:focus-within{border-color:rgba(91,143,255,.35);box-shadow:0 0 0 3px rgba(91,143,255,.05)}
+#chat-input{flex:1;background:transparent;border:none;outline:none;color:var(--text);font-family:'Outfit',sans-serif;font-size:.88rem;resize:none;min-height:22px;max-height:130px;line-height:1.5;font-weight:400}
+#chat-input::placeholder{color:var(--muted)}
+.send-btn{width:30px;height:30px;border-radius:50%;background:var(--grad);border:none;color:#fff;cursor:pointer;font-size:.85rem;display:flex;align-items:center;justify-content:center;transition:all .2s;box-shadow:0 0 14px var(--glow);flex-shrink:0}
+.send-btn:hover{opacity:.88;transform:scale(1.08)}
+.send-btn:disabled{opacity:.3;cursor:not-allowed;transform:none;box-shadow:none}
+.ihint{text-align:center;font-size:.61rem;color:var(--muted);margin-top:5px;letter-spacing:.02em}
 
-      {/* FEATURES */}
-      <section style={{ padding: "100px 5%", maxWidth: 1080, margin: "0 auto" }}>
-        <div style={{ textAlign: "center", marginBottom: 64 }}>
-          <div style={{ fontFamily: T.fh, fontSize: 11, textTransform: "uppercase", letterSpacing: "0.2em", color: T.p, fontWeight: 700, marginBottom: 16 }}>── The Creator OS ──</div>
-          <h2 style={{ fontFamily: T.fh, fontSize: "clamp(2rem,4vw,3rem)", fontWeight: 900, letterSpacing: -1.5, marginBottom: 14 }}>
-            Six tools. One <span style={{ background: T.gr, WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", backgroundClip: "text" }}>unstoppable</span> creator.
-          </h2>
-          <p style={{ color: T.t2, fontSize: 15, maxWidth: 460, margin: "0 auto", lineHeight: 1.72 }}>Everything to build, grow, and monetize your content — powered by AI that never sleeps.</p>
-        </div>
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: 14 }}>
-          {feats.map(f => (
-            <div key={f.t} style={{ ...CD({ padding: 26 }), cursor: "default", transition: "all .25s" }}
-              onMouseEnter={e => { e.currentTarget.style.borderColor = T.b2; e.currentTarget.style.transform = "translateY(-5px)"; }}
-              onMouseLeave={e => { e.currentTarget.style.borderColor = T.b; e.currentTarget.style.transform = "translateY(0)"; }}>
-              <div style={{ width: 46, height: 46, borderRadius: 13, background: `${f.c}18`, border: `1px solid ${f.c}2a`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 21, marginBottom: 16 }}>{f.icon}</div>
-              <div style={{ fontFamily: T.fh, fontWeight: 700, fontSize: 15, marginBottom: 9 }}>{f.t}</div>
-              <div style={{ color: T.t2, fontSize: 13, lineHeight: 1.68 }}>{f.d}</div>
-            </div>
-          ))}
-        </div>
-      </section>
+/* ── FEATURE PANELS ── */
+.feat-scroll{flex:1;overflow-y:auto;padding:28px 26px 52px;scrollbar-width:thin;scrollbar-color:var(--border) transparent}
+.feat-inner{max-width:900px;margin:0 auto;display:flex;flex-direction:column;gap:20px}
+.ph-icon{width:46px;height:46px;border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:1.35rem;margin-bottom:12px}
+.ph-title{font-size:1.45rem;font-weight:800;letter-spacing:-.5px;margin-bottom:6px}
+.hl{background:var(--grad);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.ph-sub{color:var(--text2);font-size:.84rem;line-height:1.65;max-width:520px}
+.feat-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r2);padding:22px}
+.feat-row{display:flex;gap:9px;flex-wrap:wrap}
+.feat-input{flex:1;min-width:160px;padding:11px 14px;background:var(--bg2);border:1px solid var(--border2);border-radius:11px;color:var(--text);font-family:'Outfit',sans-serif;font-size:.88rem;outline:none;transition:all .2s}
+.feat-input::placeholder{color:var(--muted)}
+.feat-input:focus{border-color:rgba(91,143,255,.35);box-shadow:0 0 0 3px rgba(91,143,255,.05)}
+.feat-select{padding:11px 32px 11px 13px;background:var(--bg2);border:1px solid var(--border2);border-radius:11px;color:var(--text);font-family:'Outfit',sans-serif;font-size:.84rem;outline:none;cursor:pointer;appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='11' height='7' fill='none'%3E%3Cpath d='M1 1l4.5 5 4.5-5' stroke='%23475569' stroke-width='1.5' stroke-linecap='round'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 11px center}
+.feat-select option{background:var(--surface)}
+.feat-btn{padding:11px 20px;background:var(--grad);border:none;border-radius:11px;color:#fff;font-family:'Outfit',sans-serif;font-weight:700;font-size:.83rem;cursor:pointer;white-space:nowrap;transition:all .2s;box-shadow:0 0 18px var(--glow);display:flex;align-items:center;gap:7px}
+.feat-btn:hover{transform:translateY(-2px);box-shadow:0 0 32px var(--glow);opacity:.92}
+.feat-btn:disabled{opacity:.4;cursor:not-allowed;transform:none;box-shadow:none}
+.spin{width:12px;height:12px;border:2px solid rgba(255,255,255,.3);border-top-color:#fff;border-radius:50%;animation:spin .65s linear infinite;display:none}
+.feat-btn.loading .spin{display:block}
+@keyframes spin{to{transform:rotate(360deg)}}
 
-      {/* CTA */}
-      <section style={{ padding: "100px 5%", textAlign: "center", borderTop: `1px solid ${T.b}`, position: "relative" }}>
-        <div style={{ position: "absolute", inset: 0, background: "radial-gradient(ellipse 60% 50% at 50% 50%,rgba(99,102,241,.07),transparent 70%)", pointerEvents: "none" }} />
-        <h2 style={{ fontFamily: T.fh, fontSize: "clamp(2.5rem,5vw,3.6rem)", fontWeight: 900, letterSpacing: -2, marginBottom: 20, position: "relative", zIndex: 1 }}>
-          Ready to <span style={{ background: T.gr, WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", backgroundClip: "text" }}>scale your content?</span>
-        </h2>
-        <p style={{ color: T.t2, fontSize: 16, marginBottom: 44, position: "relative", zIndex: 1 }}>Start free. No credit card. No waitlist.</p>
-        <button onClick={onLaunch} style={{ padding: "19px 58px", background: T.gr, border: "none", borderRadius: 50, color: "#fff", fontFamily: T.fh, fontWeight: 700, fontSize: 17, cursor: "pointer", boxShadow: "0 0 50px rgba(99,102,241,.44)", position: "relative", zIndex: 1 }}>🚀 Launch Xarvis AI Free</button>
-      </section>
-    </div>
-  );
+.out-section{display:none;flex-direction:column;gap:13px}
+.out-section.show{display:flex;animation:msgIn .35s ease}
+.out-header{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px}
+.out-label{font-size:.76rem;color:var(--text2)}
+.out-label span{color:var(--blue)}
+.copy-all-btn{padding:5px 13px;background:var(--bg2);border:1px solid var(--border2);border-radius:20px;color:var(--text2);font-size:.7rem;font-weight:600;cursor:pointer;transition:all .2s;font-family:'Outfit',sans-serif}
+.copy-all-btn:hover{color:var(--text);border-color:var(--border3)}
+
+.out-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:11px}
+.out-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r2);padding:18px;display:flex;flex-direction:column;gap:11px;transition:all .2s}
+.out-card:hover{border-color:var(--border2);transform:translateY(-2px)}
+.out-card.wide{grid-column:1/-1}
+.oc-header{display:flex;align-items:center;justify-content:space-between}
+.oc-chip{width:26px;height:26px;border-radius:7px;display:flex;align-items:center;justify-content:center;font-size:.85rem}
+.oc-label{font-size:.62rem;font-weight:700;text-transform:uppercase;letter-spacing:.12em;color:var(--text2)}
+.copy-btn{width:25px;height:25px;border-radius:6px;background:var(--bg2);border:1px solid var(--border);color:var(--muted);font-size:.68rem;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .2s}
+.copy-btn:hover{color:var(--blue);border-color:rgba(91,143,255,.3);background:rgba(91,143,255,.06)}
+.copy-btn.ok{color:var(--green);border-color:rgba(16,185,129,.3);background:rgba(16,185,129,.06)}
+.out-content{font-size:.84rem;line-height:1.78;color:var(--text);white-space:pre-wrap;word-break:break-word}
+.out-content.streaming::after{content:'▋';animation:blink .7s step-end infinite;color:var(--blue);font-size:.78em}
+
+.skel-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:11px}
+.skel-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r2);padding:18px;display:flex;flex-direction:column;gap:9px}
+.skel-line{height:10px;border-radius:5px;background:linear-gradient(90deg,var(--border) 25%,rgba(255,255,255,.05) 50%,var(--border) 75%);background-size:200%;animation:shimmer 1.4s ease infinite}
+.skel-line.s{width:36%}.skel-line.m{width:62%}.skel-line.t{height:60px}
+@keyframes shimmer{0%{background-position:200%}100%{background-position:-200%}}
+.loading-block{display:none;flex-direction:column;gap:11px}
+.loading-block.show{display:flex}
+
+/* Post Next */
+.pn-hero{background:var(--surface);border:1px solid var(--border);border-radius:var(--r2);padding:36px;text-align:center;position:relative;overflow:hidden}
+.pn-hero::before{content:'';position:absolute;top:-50px;left:50%;transform:translateX(-50%);width:380px;height:180px;background:radial-gradient(ellipse,rgba(91,143,255,.07),transparent 70%);pointer-events:none}
+.pn-emoji{font-size:2.8rem;margin-bottom:14px}
+.pn-title{font-size:1.4rem;font-weight:800;letter-spacing:-.4px;margin-bottom:8px}
+.pn-sub{color:var(--text2);font-size:.85rem;max-width:380px;margin:0 auto 22px;line-height:1.65}
+.pn-inputs{display:flex;gap:9px;justify-content:center;flex-wrap:wrap;margin-bottom:18px}
+.pn-result{background:var(--surface);border:1px solid var(--border);border-radius:var(--r2);overflow:hidden}
+.pn-badge{padding:11px 20px;background:linear-gradient(90deg,rgba(91,143,255,.08),rgba(139,92,246,.05));border-bottom:1px solid var(--border);font-weight:700;font-size:.76rem;color:var(--blue);display:flex;align-items:center;gap:7px}
+.pn-sections{padding:22px;display:flex;flex-direction:column;gap:20px}
+.pn-lbl{font-size:.61rem;font-weight:700;text-transform:uppercase;letter-spacing:.13em;color:var(--muted);margin-bottom:7px}
+.pn-txt{font-size:.86rem;line-height:1.75;color:var(--text);white-space:pre-wrap}
+.pn-hook-box{padding:13px 16px;background:rgba(91,143,255,.05);border-left:3px solid var(--blue);border-radius:0 10px 10px 0}
+
+/* Calendar */
+.cal-grid{display:none;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:11px}
+.cal-grid.show{display:grid}
+.day-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r2);padding:18px;display:flex;flex-direction:column;gap:9px;transition:all .2s;animation:msgIn .45s ease both}
+.day-card:hover{border-color:var(--border2);transform:translateY(-2px)}
+.day-lbl{font-size:.6rem;font-weight:700;text-transform:uppercase;letter-spacing:.14em;color:var(--blue)}
+.day-topic{font-weight:700;font-size:.92rem;line-height:1.3;letter-spacing:-.15px}
+.day-angle{font-size:.77rem;color:var(--text2);line-height:1.5}
+.day-hook{padding:9px 11px;background:rgba(91,143,255,.05);border-left:2px solid rgba(91,143,255,.35);font-size:.74px;font-size:.74rem;color:var(--text);line-height:1.5;font-style:italic}
+
+/* Feedback */
+.fb-textarea{width:100%;min-height:110px;padding:13px 15px;background:var(--bg2);border:1px solid var(--border2);border-radius:11px;color:var(--text);font-family:'Outfit',sans-serif;font-size:.86rem;outline:none;resize:vertical;line-height:1.6;transition:all .2s;display:block;margin-bottom:13px}
+.fb-textarea::placeholder{color:var(--muted)}
+.fb-textarea:focus{border-color:rgba(91,143,255,.35)}
+.fb-cards{display:grid;grid-template-columns:1fr 1fr;gap:11px}
+.fb-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r2);padding:18px;animation:msgIn .35s ease both}
+.fb-card:nth-child(1){animation-delay:.05s;border-top:2px solid rgba(16,185,129,.28)}
+.fb-card:nth-child(2){animation-delay:.1s;border-top:2px solid rgba(239,68,68,.28)}
+.fb-card:nth-child(3){animation-delay:.16s;grid-column:1/-1;border-top:2px solid rgba(91,143,255,.35)}
+.fb-card-title{display:flex;align-items:center;gap:6px;font-size:.7rem;font-weight:700;text-transform:uppercase;letter-spacing:.12em;color:var(--text2);margin-bottom:11px}
+.fb-body{font-size:.83rem;line-height:1.8;color:var(--text);white-space:pre-wrap}
+.verdict-row{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:14px;padding:20px 24px;background:linear-gradient(135deg,rgba(91,143,255,.06),rgba(139,92,246,.04));border:1px solid rgba(91,143,255,.14);border-radius:var(--r2);animation:msgIn .4s ease .2s both}
+.v-score{text-align:center}
+.v-num{font-size:2.7rem;font-weight:800;line-height:1;letter-spacing:-1px;background:var(--grad);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.v-denom{font-size:.6rem;color:var(--muted);text-transform:uppercase;letter-spacing:.12em;margin-top:3px;font-weight:600}
+.v-copy{font-size:.88rem;line-height:1.55;color:var(--text);max-width:480px}
+
+/* Agent */
+#agent-out-content{font-size:.85rem;line-height:1.82;color:var(--text);white-space:pre-wrap}
+
+/* Mobile overlay */
+.overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:9;backdrop-filter:blur(4px)}
+.overlay.open{display:block}
+
+/* Mobile */
+@media(max-width:820px){
+  .sidebar{position:fixed;left:-100%;top:0;z-index:200;transition:left .28s ease;box-shadow:4px 0 40px rgba(0,0,0,.5)}
+  .sidebar.open{left:0}
+  .mmbtn{display:block}
+  .out-grid,.skel-grid,.fb-cards{grid-template-columns:1fr}
+  .out-card.wide{grid-column:auto}
+  .feat-row{flex-direction:column}
+  .feat-btn,.feat-select{width:100%;justify-content:center}
+  .feat-scroll{padding:18px 14px 40px}
+  .chat-area{padding:16px 12px}
+  .cal-grid{grid-template-columns:1fr 1fr}
+  .pn-inputs{flex-direction:column}
 }
-
-/* ══════════════════════════════════════════════════════
-   DASHBOARD SHELL
-══════════════════════════════════════════════════════ */
-const NAV = [
-  { id: "chat", icon: "💬", label: "AI Advisor", grp: "Workspace" },
-  { id: "studio", icon: "🔥", label: "Viral Studio", grp: "Creator Tools" },
-  { id: "postnext", icon: "🎯", label: "Post Next", badge: "AI", grp: "Creator Tools" },
-  { id: "calendar", icon: "📅", label: "7-Day Calendar", grp: "Creator Tools" },
-  { id: "feedback", icon: "📊", label: "Feedback AI", grp: "Creator Tools" },
-  { id: "agent", icon: "🚀", label: "Agent Mode", badge: "NEW", grp: "Agent Mode" },
-  { id: "memory", icon: "🧠", label: "My Memory", grp: "Settings" },
-];
-
-function Dashboard({ mod, setMod, mem, setMem }) {
-  return (
-    <div style={{ display: "flex", height: "100vh", background: T.bg, fontFamily: T.fb, color: T.t, overflow: "hidden" }}>
-      <style>{CSS}</style>
-      {/* SIDEBAR */}
-      <aside style={{ width: 236, minWidth: 236, background: "rgba(255,255,255,.015)", borderRight: `1px solid ${T.b}`, display: "flex", flexDirection: "column", flexShrink: 0 }}>
-        <div style={{ padding: "15px 14px", display: "flex", alignItems: "center", gap: 10, borderBottom: `1px solid ${T.b}`, flexShrink: 0 }}>
-          <div style={{ width: 33, height: 33, borderRadius: 10, background: T.gr, display: "flex", alignItems: "center", justifyContent: "center", fontFamily: T.fh, fontWeight: 900, fontSize: 16, color: "#fff", boxShadow: "0 0 18px rgba(99,102,241,.38)", flexShrink: 0 }}>X</div>
-          <span style={{ fontFamily: T.fh, fontWeight: 800, fontSize: 15 }}>Xarvis AI</span>
-          <span style={{ fontSize: 9, padding: "2px 7px", borderRadius: 20, fontWeight: 700, background: "rgba(99,102,241,.1)", border: "1px solid rgba(99,102,241,.2)", color: T.p, marginLeft: "auto" }}>OS v4</span>
-        </div>
-        <nav style={{ padding: "8px 8px 0", flex: 1, overflow: "hidden" }}>
-          {NAV.map((item, i) => {
-            const active = mod === item.id;
-            const showGrp = i === 0 || NAV[i - 1].grp !== item.grp;
-            return (
-              <div key={item.id}>
-                {showGrp && <div style={{ fontSize: 9, textTransform: "uppercase", letterSpacing: "0.18em", color: T.mu, fontWeight: 700, padding: "10px 10px 4px" }}>{item.grp}</div>}
-                <button onClick={() => setMod(item.id)} style={{ display: "flex", alignItems: "center", gap: 9, padding: "8px 10px", borderRadius: 9, cursor: "pointer", border: active ? `1px solid rgba(99,102,241,.18)` : "1px solid transparent", background: active ? "rgba(99,102,241,.1)" : "transparent", color: active ? T.p : T.t2, fontSize: 13, fontFamily: T.fb, fontWeight: 500, width: "100%", textAlign: "left", transition: "all .15s", whiteSpace: "nowrap" }}>
-                  <span style={{ flexShrink: 0, fontSize: 16 }}>{item.icon}</span>
-                  <span style={{ flex: 1 }}>{item.label}</span>
-                  {item.badge && <span style={{ fontSize: 9, padding: "2px 7px", borderRadius: 20, fontWeight: 700, background: "rgba(34,197,94,.12)", border: "1px solid rgba(34,197,94,.22)", color: T.g }}>{item.badge}</span>}
-                </button>
-              </div>
-            );
-          })}
-        </nav>
-        <div style={{ padding: "10px 12px 16px", borderTop: `1px solid ${T.b}` }}>
-          <div style={{ padding: "9px 12px", background: "rgba(99,102,241,.04)", border: `1px solid rgba(99,102,241,.1)`, borderRadius: 10, fontSize: 11, color: T.mu, textAlign: "center", lineHeight: 1.6 }}>
-            Powered by <span style={{ color: T.p, fontWeight: 600 }}>Claude AI</span><br />
-            <span style={{ color: T.g }}>● Online</span>
-          </div>
-        </div>
-      </aside>
-
-      {/* MAIN */}
-      <div style={{ flex: 1, display: "flex", flexDirection: "column", overflow: "hidden", minWidth: 0 }}>
-        <div style={{ height: 52, padding: "0 20px", display: "flex", alignItems: "center", gap: 10, borderBottom: `1px solid ${T.b}`, background: "rgba(3,4,8,.8)", backdropFilter: "blur(20px)", flexShrink: 0 }}>
-          <span style={{ color: T.mu, fontSize: 13 }}>Xarvis AI</span>
-          <span style={{ color: T.mu, fontSize: 12 }}>›</span>
-          <span style={{ fontWeight: 700, fontSize: 13, letterSpacing: -.2 }}>{NAV.find(n => n.id === mod)?.label}</span>
-          <div style={{ marginLeft: "auto", display: "flex", alignItems: "center", gap: 6, padding: "4px 11px", background: "rgba(34,197,94,.06)", border: "1px solid rgba(34,197,94,.15)", borderRadius: 20, fontSize: 11, color: T.g, fontWeight: 600 }}>
-            <span style={{ width: 5, height: 5, borderRadius: "50%", background: T.g, display: "inline-block", animation: "xpulse 2s infinite" }} />
-            AI Online
-          </div>
-        </div>
-        <div style={{ flex: 1, overflow: "hidden" }}>
-          {mod === "chat" && <ChatPanel mem={mem} />}
-          {mod === "studio" && <StudioPanel mem={mem} />}
-          {mod === "postnext" && <PostNextPanel mem={mem} />}
-          {mod === "calendar" && <CalendarPanel mem={mem} />}
-          {mod === "feedback" && <FeedbackPanel mem={mem} />}
-          {mod === "agent" && <AgentPanel mem={mem} />}
-          {mod === "memory" && <MemoryPanel mem={mem} setMem={setMem} />}
-        </div>
-      </div>
-    </div>
-  );
+@media(max-width:480px){
+  .cal-grid{grid-template-columns:1fr}
+  .sug-grid{grid-template-columns:1fr}
 }
+</style>
+</head>
+<body>
 
-/* ══════════════════════════════════════════════════════
-   CHAT PANEL
-══════════════════════════════════════════════════════ */
-function ChatPanel({ mem }) {
-  const [msgs, setMsgs] = useState([]);
-  const [input, setInput] = useState("");
-  const [streaming, setStreaming] = useState("");
-  const [busy, setBusy] = useState(false);
-  const endRef = useRef(null);
-  const taRef = useRef(null);
+<div class="overlay" id="overlay"></div>
 
-  const scroll = () => endRef.current?.scrollIntoView({ behavior: "smooth" });
-
-  const send = async (txt) => {
-    const msg = txt || input.trim();
-    if (!msg || busy) return;
-    setInput("");
-    if (taRef.current) { taRef.current.style.height = "auto"; }
-    const ctx = mem.niche ? `Creator context — niche: ${mem.niche}, platform: ${mem.platform}, goal: ${mem.goal}.` : null;
-    const hist = msgs.slice(-14).map(m => ({ role: m.role, content: m.content }));
-    const apiMsgs = ctx ? [{ role: "user", content: ctx }, { role: "assistant", content: "Got it — tailoring everything to your profile." }, ...hist, { role: "user", content: msg }] : [...hist, { role: "user", content: msg }];
-    setMsgs(m => [...m, { role: "user", content: msg }]);
-    setBusy(true);
-    setStreaming("");
-    scroll();
-    try {
-      let full = "";
-      await callAI(apiMsgs, t => { full = t; setStreaming(t); scroll(); });
-      setMsgs(m => [...m, { role: "assistant", content: full }]);
-    } catch (err) { setMsgs(m => [...m, { role: "assistant", content: `⚠️ ${err.message}` }]); }
-    setStreaming("");
-    setBusy(false);
-  };
-
-  const sugs = [
-    { icon: "🪝", t: "Viral Hooks", p: "Write me 5 scroll-stopping viral hooks for a YouTube Shorts channel. Make them shocking, curiosity-driven, and bold. Include the exact words.", d: "Scroll-stopping openers" },
-    { icon: "📈", t: "Growth Plan", p: "Give me a specific 90-day plan to hit 100k YouTube subscribers from scratch. Break it down week by week with exact action items.", d: "Roadmap to scale fast" },
-    { icon: "🔮", t: "Trend Intel", p: "What content formats and topics are going viral on YouTube Shorts right now? Give me the top 5 with specific angles I can steal today.", d: "What's blowing up now" },
-    { icon: "💰", t: "First $1k", p: "How do I make my first $1,000 as a creator with under 5,000 followers? Give me 3 concrete income streams with exact steps.", d: "Turn audience into income" },
-  ];
-
-  return (
-    <div style={{ display: "flex", flexDirection: "column", height: "100%", overflow: "hidden" }}>
-      <div style={{ flex: 1, overflowY: "auto", padding: "20px", display: "flex", flexDirection: "column", gap: 14 }}>
-        {msgs.length === 0 && !busy && (
-          <div style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 24, paddingBottom: 40, minHeight: "50vh" }}>
-            <div style={{ width: 58, height: 58, borderRadius: 17, background: T.gr, display: "flex", alignItems: "center", justifyContent: "center", fontFamily: T.fh, fontWeight: 900, fontSize: 24, color: "#fff", boxShadow: "0 0 36px rgba(99,102,241,.45)" }}>X</div>
-            <div style={{ textAlign: "center" }}>
-              <h2 style={{ fontFamily: T.fh, fontWeight: 800, fontSize: 22, marginBottom: 8 }}>Your AI Advisor is Ready.</h2>
-              <p style={{ color: T.t2, fontSize: 14, maxWidth: 340, lineHeight: 1.65 }}>Ask anything about growing your channel, viral hooks, content strategy, or monetization.</p>
-            </div>
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, maxWidth: 460, width: "100%" }}>
-              {sugs.map(sg => (
-                <button key={sg.t} onClick={() => send(sg.p)} style={{ ...CD({ padding: 15 }), cursor: "pointer", textAlign: "left", transition: "all .2s" }}
-                  onMouseEnter={e => { e.currentTarget.style.borderColor = T.b2; e.currentTarget.style.transform = "translateY(-2px)"; }}
-                  onMouseLeave={e => { e.currentTarget.style.borderColor = T.b; e.currentTarget.style.transform = "translateY(0)"; }}>
-                  <div style={{ fontSize: 18, marginBottom: 6 }}>{sg.icon}</div>
-                  <div style={{ fontWeight: 700, fontSize: 13, marginBottom: 3 }}>{sg.t}</div>
-                  <div style={{ color: T.t2, fontSize: 11, lineHeight: 1.4 }}>{sg.d}</div>
-                </button>
-              ))}
-            </div>
-          </div>
-        )}
-        {msgs.map((m, i) => (
-          <div key={i} style={{ display: "flex", gap: 10, maxWidth: 720, alignSelf: m.role === "user" ? "flex-end" : "flex-start", flexDirection: m.role === "user" ? "row-reverse" : "row", animation: "xslide .25s ease" }}>
-            <div style={{ width: 28, height: 28, borderRadius: "50%", flexShrink: 0, background: m.role === "user" ? T.s2 : T.gr, border: m.role === "user" ? `1px solid ${T.b2}` : "none", display: "flex", alignItems: "center", justifyContent: "center", fontFamily: T.fh, fontWeight: 900, fontSize: 12, color: "#fff" }}>{m.role === "user" ? "U" : "X"}</div>
-            <div style={{ padding: "11px 15px", maxWidth: "82%", background: m.role === "user" ? T.gr : T.s, border: m.role === "user" ? "none" : `1px solid ${T.b}`, color: m.role === "user" ? "#fff" : T.t, fontSize: 14, lineHeight: 1.72, borderRadius: m.role === "user" ? "14px 3px 14px 14px" : "3px 14px 14px 14px" }}>
-              {m.role === "assistant" ? <span dangerouslySetInnerHTML={{ __html: fmt(m.content) }} /> : m.content}
-            </div>
-          </div>
-        ))}
-        {busy && (
-          <div style={{ display: "flex", gap: 10, maxWidth: 720, alignSelf: "flex-start", animation: "xslide .25s ease" }}>
-            <div style={{ width: 28, height: 28, borderRadius: "50%", background: T.gr, display: "flex", alignItems: "center", justifyContent: "center", fontFamily: T.fh, fontWeight: 900, fontSize: 12, color: "#fff", flexShrink: 0 }}>X</div>
-            <div style={{ padding: "11px 15px", background: T.s, border: `1px solid ${T.b}`, fontSize: 14, lineHeight: 1.72, borderRadius: "3px 14px 14px 14px", color: T.t }}>
-              {streaming
-                ? <><span dangerouslySetInnerHTML={{ __html: fmt(streaming) }} /><span style={{ animation: "xblink .7s step-end infinite", color: T.p }}>▋</span></>
-                : <span style={{ color: T.mu }}>Thinking<span style={{ animation: "xblink 1.2s step-end infinite" }}>...</span></span>
-              }
-            </div>
-          </div>
-        )}
-        <div ref={endRef} />
-      </div>
-      <div style={{ padding: "10px 20px 16px", borderTop: `1px solid ${T.b}`, flexShrink: 0 }}>
-        <div style={{ maxWidth: 760, margin: "0 auto", background: T.s, border: `1px solid ${T.b2}`, borderRadius: 14, display: "flex", alignItems: "flex-end", gap: 8, padding: "9px 11px" }}>
-          <textarea ref={taRef} value={input} onChange={e => { setInput(e.target.value); e.target.style.height = "auto"; e.target.style.height = Math.min(e.target.scrollHeight, 130) + "px"; }}
-            onKeyDown={e => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); send(); } }}
-            placeholder="Ask Xarvis anything…" rows={1}
-            style={{ flex: 1, background: "transparent", border: "none", outline: "none", color: T.t, fontFamily: T.fb, fontSize: 14, resize: "none", minHeight: 22, maxHeight: 130, lineHeight: 1.5 }} />
-          <button onClick={send} disabled={busy || !input.trim()} style={{ width: 32, height: 32, borderRadius: "50%", background: busy || !input.trim() ? T.mu : T.gr, border: "none", color: "#fff", cursor: busy || !input.trim() ? "not-allowed" : "pointer", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 13, flexShrink: 0, transition: "all .2s" }}>
-            {busy ? <Spin /> : "➤"}
-          </button>
-        </div>
-        <div style={{ textAlign: "center", fontSize: 11, color: T.mu, marginTop: 6 }}>Enter to send · Shift+Enter for new line</div>
-      </div>
-    </div>
-  );
-}
-
-/* ══════════════════════════════════════════════════════
-   VIRAL STUDIO
-══════════════════════════════════════════════════════ */
-function OutCard({ label, content, wide }) {
-  const [cp, setCp] = useState(false);
-  return (
-    <div style={{ ...CD(), ...(wide ? { gridColumn: "1/-1" } : {}), display: "flex", flexDirection: "column", gap: 12, animation: "xfadeUp .4s ease" }}>
-      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-        <span style={{ fontSize: 12, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.12em", color: T.t2 }}>{label}</span>
-        <button onClick={() => { navigator.clipboard.writeText(content); setCp(true); setTimeout(() => setCp(false), 2000); }}
-          style={{ width: 26, height: 26, borderRadius: 6, background: T.s2, border: `1px solid ${T.b}`, color: cp ? T.g : T.mu, fontSize: 12, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", transition: "all .2s" }}>
-          {cp ? "✓" : "📋"}
-        </button>
-      </div>
-      <div style={{ fontSize: 13.5, lineHeight: 1.78, color: T.t, whiteSpace: "pre-wrap", wordBreak: "break-word" }}>{content}</div>
-    </div>
-  );
-}
-
-const SKL = (wide) => (
-  <div style={{ ...CD(), ...(wide ? { gridColumn: "1/-1" } : {}), display: "flex", flexDirection: "column", gap: 9 }}>
-    <div style={{ height: 10, borderRadius: 5, width: "38%", background: `linear-gradient(90deg,${T.b} 25%,rgba(255,255,255,.04) 50%,${T.b} 75%)`, backgroundSize: "200%", animation: "xshimmer 1.4s ease infinite" }} />
-    <div style={{ height: wide ? 80 : 55, borderRadius: 5, background: `linear-gradient(90deg,${T.b} 25%,rgba(255,255,255,.04) 50%,${T.b} 75%)`, backgroundSize: "200%", animation: "xshimmer 1.4s ease infinite" }} />
+<aside class="sidebar" id="sidebar">
+  <a href="index.html" class="slogo">
+    <div class="lm">X</div>
+    <span class="lt">Xarvis AI</span>
+    <span class="lv">v4</span>
+  </a>
+  <nav class="snav">
+    <div class="nsec">Workspace</div>
+    <button class="ni active" data-mode="chat"><div class="nic">💬</div><span>AI Advisor</span></button>
+    <div class="nsec">Creator Tools</div>
+    <button class="ni" data-mode="viral"><div class="nic">🔥</div><span>Viral Generator</span></button>
+    <button class="ni" data-mode="postnext"><div class="nic">🎯</div><span>Post Next</span><span class="nbadge">AI</span></button>
+    <button class="ni" data-mode="calendar"><div class="nic">📅</div><span>7-Day Calendar</span></button>
+    <button class="ni" data-mode="feedback"><div class="nic">📊</div><span>Feedback</span></button>
+    <div class="nsec">Agent Mode</div>
+    <button class="ni" data-mode="agent"><div class="nic">🚀</div><span>Agent Planner</span><span class="nbadge">NEW</span></button>
+  </nav>
+  <div class="sspacer"></div>
+  <div class="sbottom">
+    <div class="sinfo">AI powered by <span>Claude</span><br>No backend · Works offline</div>
   </div>
+</aside>
+
+<div class="main">
+  <div class="topbar">
+    <button class="mmbtn" id="menu-btn">☰</button>
+    <div class="bc">
+      <span class="bc-a">Xarvis AI</span>
+      <span class="bc-s">›</span>
+      <span class="bc-p" id="bc-page">AI Advisor</span>
+    </div>
+    <div class="tb-r">
+      <div class="online"><div class="odot"></div>AI Online</div>
+    </div>
+  </div>
+
+  <!-- ── CHAT ── -->
+  <div class="panel active" id="panel-chat">
+    <div class="chat-area" id="chat-area">
+      <div class="empty-state" id="empty-state">
+        <div class="eav">X</div>
+        <div>
+          <h2>Your AI Advisor is Ready.</h2>
+          <p>Ask anything about growing your channel, viral hooks, content strategy, or monetization.</p>
+        </div>
+        <div class="sug-grid">
+          <div class="sug" data-prompt="Write me 3 scroll-stopping viral hooks for a fitness YouTube Shorts channel. Make them bold and curiosity-driven."><div class="si">🪝</div><div class="st">Viral Hooks</div><div class="sd">Scroll-stopping openers</div></div>
+          <div class="sug" data-prompt="Give me a realistic 90-day plan to hit 100k YouTube subscribers from zero. Be specific with weekly targets."><div class="si">📈</div><div class="st">Growth Plan</div><div class="sd">Roadmap to scale fast</div></div>
+          <div class="sug" data-prompt="What content formats and topics are going viral on YouTube Shorts and TikTok right now in 2025? Give me the top 5."><div class="si">🔮</div><div class="st">Trend Intel</div><div class="sd">What's blowing up now</div></div>
+          <div class="sug" data-prompt="How do I land my first brand sponsorship as a creator with under 10k followers? Give me a step-by-step pitch script."><div class="si">💰</div><div class="st">Monetize</div><div class="sd">Turn audience into income</div></div>
+        </div>
+      </div>
+    </div>
+    <div class="input-area">
+      <div class="input-wrap">
+        <textarea id="chat-input" placeholder="Ask Xarvis anything…" rows="1"></textarea>
+        <button class="send-btn" id="send-btn">➤</button>
+      </div>
+      <div class="ihint">Enter to send · Shift+Enter for new line</div>
+    </div>
+  </div>
+
+  <!-- ── VIRAL GENERATOR ── -->
+  <div class="panel" id="panel-viral">
+    <div class="feat-scroll"><div class="feat-inner">
+      <div>
+        <div class="ph-icon" style="background:rgba(91,143,255,.1);border:1px solid rgba(91,143,255,.15)">🔥</div>
+        <div class="ph-title"><span class="hl">Viral Content</span> Generator</div>
+        <div class="ph-sub">Drop your idea — get a scroll-stopping hook, full script, title options, and thumbnail concept in seconds.</div>
+      </div>
+      <div class="feat-card">
+        <div class="feat-row">
+          <input type="text" class="feat-input" id="viral-topic" placeholder="e.g. gym motivation, morning routines, making money at 17…">
+          <select class="feat-select" id="viral-platform">
+            <option value="YouTube Shorts">▶ YouTube Shorts</option>
+            <option value="TikTok">♪ TikTok</option>
+            <option value="Instagram Reels">◉ Instagram Reels</option>
+            <option value="YouTube Long-form">▶ YouTube Long-form</option>
+          </select>
+          <button class="feat-btn" id="viral-btn"><div class="spin"></div><span>⚡ Generate</span></button>
+        </div>
+      </div>
+      <div class="loading-block" id="viral-loading">
+        <div class="skel-grid">
+          <div class="skel-card"><div class="skel-line s"></div><div class="skel-line t"></div><div class="skel-line m"></div></div>
+          <div class="skel-card"><div class="skel-line s"></div><div class="skel-line t"></div><div class="skel-line m"></div></div>
+          <div class="skel-card"><div class="skel-line s"></div><div class="skel-line t"></div><div class="skel-line m"></div></div>
+          <div class="skel-card"><div class="skel-line s"></div><div class="skel-line t"></div><div class="skel-line m"></div></div>
+        </div>
+      </div>
+      <div class="out-section" id="viral-out">
+        <div class="out-header">
+          <div class="out-label">Generated for: <span id="viral-label"></span></div>
+          <button class="copy-all-btn" id="viral-copy-all">📋 Copy All</button>
+        </div>
+        <div class="out-grid">
+          <div class="out-card"><div class="oc-header"><div style="display:flex;align-items:center;gap:7px"><div class="oc-chip" style="background:rgba(239,68,68,.1)">🪝</div><span class="oc-label">Hook</span></div><button class="copy-btn" data-target="out-hook">📋</button></div><div class="out-content" id="out-hook"></div></div>
+          <div class="out-card"><div class="oc-header"><div style="display:flex;align-items:center;gap:7px"><div class="oc-chip" style="background:rgba(245,158,11,.1)">✏️</div><span class="oc-label">Title Options</span></div><button class="copy-btn" data-target="out-title">📋</button></div><div class="out-content" id="out-title"></div></div>
+          <div class="out-card wide"><div class="oc-header"><div style="display:flex;align-items:center;gap:7px"><div class="oc-chip" style="background:rgba(91,143,255,.1)">📝</div><span class="oc-label">Script</span></div><button class="copy-btn" data-target="out-script">📋</button></div><div class="out-content" id="out-script"></div></div>
+          <div class="out-card wide"><div class="oc-header"><div style="display:flex;align-items:center;gap:7px"><div class="oc-chip" style="background:rgba(16,185,129,.1)">🖼</div><span class="oc-label">Thumbnail Concept</span></div><button class="copy-btn" data-target="out-thumb">📋</button></div><div class="out-content" id="out-thumb"></div></div>
+        </div>
+      </div>
+    </div></div>
+  </div>
+
+  <!-- ── POST NEXT ── -->
+  <div class="panel" id="panel-postnext">
+    <div class="feat-scroll"><div class="feat-inner">
+      <div>
+        <div class="ph-icon" style="background:rgba(16,185,129,.1);border:1px solid rgba(16,185,129,.15)">🎯</div>
+        <div class="ph-title"><span class="hl">Post Next</span> — AI Picks For You</div>
+        <div class="ph-sub">Stop guessing. One click — Xarvis surfaces the ONE idea most likely to go viral right now, built for your niche.</div>
+      </div>
+      <div class="pn-hero">
+        <div class="pn-emoji">🎯</div>
+        <div class="pn-title">What should I post today?</div>
+        <div class="pn-sub">Tell Xarvis your niche and goal. Get your highest-potential post idea instantly.</div>
+        <div class="pn-inputs">
+          <input type="text" class="feat-input" id="pn-niche" placeholder="Your niche (e.g. fitness, business…)" style="max-width:240px">
+          <input type="text" class="feat-input" id="pn-goal" placeholder="Your goal (e.g. hit 10k subs)" style="max-width:220px">
+        </div>
+        <button class="feat-btn" id="pn-btn" style="margin:0 auto"><div class="spin"></div><span>🎯 Tell me what to post</span></button>
+      </div>
+      <div class="out-section" id="pn-out">
+        <div class="pn-result">
+          <div class="pn-badge">⚡ Today's Highest-Potential Post</div>
+          <div class="pn-sections">
+            <div><div class="pn-lbl">💡 The Idea</div><div class="pn-txt" id="pn-idea"></div></div>
+            <div><div class="pn-lbl">🪝 Your Hook</div><div class="pn-hook-box"><div class="pn-txt" id="pn-hook"></div></div></div>
+            <div><div class="pn-lbl">📊 Why It Will Work</div><div class="pn-txt" id="pn-why"></div></div>
+            <div><div class="pn-lbl">⏰ Best Time to Post</div><div class="pn-txt" id="pn-time"></div></div>
+          </div>
+        </div>
+        <div style="text-align:center">
+          <button class="feat-btn" id="pn-regen" style="margin:0 auto;font-size:.8rem"><div class="spin"></div><span>↻ Give me another idea</span></button>
+        </div>
+      </div>
+    </div></div>
+  </div>
+
+  <!-- ── CALENDAR ── -->
+  <div class="panel" id="panel-calendar">
+    <div class="feat-scroll"><div class="feat-inner">
+      <div style="display:flex;align-items:flex-end;justify-content:space-between;gap:14px;flex-wrap:wrap">
+        <div>
+          <div class="ph-icon" style="background:rgba(139,92,246,.1);border:1px solid rgba(139,92,246,.15)">📅</div>
+          <div class="ph-title"><span class="hl">7-Day Content</span> Calendar</div>
+          <div class="ph-sub">A full week of personalized content — topics, angles, and ready-to-use hooks.</div>
+        </div>
+        <div class="feat-row">
+          <input type="text" class="feat-input" id="cal-niche" placeholder="Your niche…" style="max-width:180px">
+          <button class="feat-btn" id="cal-btn"><div class="spin"></div><span>📅 Generate My Week</span></button>
+        </div>
+      </div>
+      <div class="loading-block" id="cal-loading">
+        <div class="skel-card"><div class="skel-line s"></div><div class="skel-line t"></div><div class="skel-line m"></div></div>
+      </div>
+      <div class="cal-grid" id="cal-grid"></div>
+    </div></div>
+  </div>
+
+  <!-- ── FEEDBACK ── -->
+  <div class="panel" id="panel-feedback">
+    <div class="feat-scroll"><div class="feat-inner">
+      <div>
+        <div class="ph-icon" style="background:rgba(245,158,11,.1);border:1px solid rgba(245,158,11,.15)">📊</div>
+        <div class="ph-title"><span class="hl">Feedback</span> Analyzer</div>
+        <div class="ph-sub">Paste your video idea. Get a viral score, what's wrong, and exactly how to fix it.</div>
+      </div>
+      <div class="feat-card">
+        <textarea class="fb-textarea" id="fb-input" placeholder="e.g. I want to make a video about 5 habits that took me from broke to making $3k/month…"></textarea>
+        <button class="feat-btn" id="fb-btn"><div class="spin"></div><span>🔍 Analyze My Content</span></button>
+      </div>
+      <div class="out-section" id="fb-out">
+        <div class="fb-cards">
+          <div class="fb-card"><div class="fb-card-title">✅ Strengths</div><div class="fb-body" id="fb-strengths"></div></div>
+          <div class="fb-card"><div class="fb-card-title">⚠️ Weaknesses</div><div class="fb-body" id="fb-weaknesses"></div></div>
+          <div class="fb-card"><div class="fb-card-title">🚀 How to Fix It</div><div class="fb-body" id="fb-improvements"></div></div>
+        </div>
+        <div class="verdict-row">
+          <div class="v-score"><div class="v-num" id="fb-score">?</div><div class="v-denom">Viral Score / 10</div></div>
+          <div class="v-copy" id="fb-verdict"></div>
+        </div>
+      </div>
+    </div></div>
+  </div>
+
+  <!-- ── AGENT ── -->
+  <div class="panel" id="panel-agent">
+    <div class="feat-scroll"><div class="feat-inner">
+      <div>
+        <div class="ph-icon" style="background:rgba(139,92,246,.1);border:1px solid rgba(139,92,246,.18)">🚀</div>
+        <div class="ph-title"><span class="hl">Agent Mode</span> — Full Planning</div>
+        <div class="ph-sub">Give Xarvis a big goal. It will build you a complete, numbered execution roadmap — like having a co-founder.</div>
+      </div>
+      <div class="feat-card">
+        <div style="font-size:.78rem;color:var(--text2);margin-bottom:11px">Try: "Build a content business from zero" · "Hit 100k in 90 days" · "Launch my first digital product"</div>
+        <div class="feat-row">
+          <input type="text" class="feat-input" id="agent-goal" placeholder="Enter your big goal…">
+          <button class="feat-btn" id="agent-btn" style="background:linear-gradient(135deg,var(--purple),var(--blue))"><div class="spin"></div><span>🚀 Build My Plan</span></button>
+        </div>
+      </div>
+      <div class="loading-block" id="agent-loading">
+        <div class="skel-card"><div class="skel-line s"></div><div class="skel-line t"></div><div class="skel-line m"></div></div>
+      </div>
+      <div class="out-section" id="agent-out">
+        <div class="out-card wide">
+          <div class="oc-header">
+            <div style="display:flex;align-items:center;gap:7px"><div class="oc-chip" style="background:rgba(139,92,246,.1)">🚀</div><span class="oc-label">Agent Execution Plan</span></div>
+            <button class="copy-btn" data-target="agent-out-content">📋</button>
+          </div>
+          <div class="out-content" id="agent-out-content"></div>
+        </div>
+      </div>
+    </div></div>
+  </div>
+</div>
+
+<script>
+'use strict';
+
+// ─────────────────────────────────────────────────────────
+// XARVIS AI — Direct Claude API (no backend required)
+// ─────────────────────────────────────────────────────────
+const CLAUDE_API = 'https://api.anthropic.com/v1/messages';
+const MODEL = 'claude-sonnet-4-20250514';
+
+const SYSTEM = `You are Xarvis AI — a world-class AI co-founder for content creators.
+You specialise in viral content strategy, YouTube growth, hooks, scripts, monetisation, and content planning.
+Be direct, bold, and high-energy. Think like a top strategist who has studied every viral trend.
+Always give practical, copy-paste-ready output. Never be vague or generic.`;
+
+const BC_LABELS = {
+  chat:'AI Advisor', viral:'Viral Generator', postnext:'Post Next',
+  calendar:'7-Day Calendar', feedback:'Feedback Analyzer', agent:'Agent Planner'
+};
+
+const chatHistory = [];
+let isSending = false;
+
+// ── API: streaming ────────────────────────────────────────
+async function streamClaude(messages, onChunk, maxTokens = 1000) {
+  const res = await fetch(CLAUDE_API, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ model: MODEL, max_tokens: maxTokens, system: SYSTEM, messages, stream: true })
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.error?.message || `API error ${res.status}`);
+  }
+  const reader = res.body.getReader();
+  const dec = new TextDecoder();
+  let buf = '';
+  while (true) {
+    const { value, done } = await reader.read();
+    if (done) break;
+    buf += dec.decode(value, { stream: true });
+    const lines = buf.split('\n');
+    buf = lines.pop();
+    for (const line of lines) {
+      if (!line.startsWith('data: ')) continue;
+      const raw = line.slice(6).trim();
+      if (raw === '[DONE]') return;
+      try {
+        const ev = JSON.parse(raw);
+        if (ev.type === 'content_block_delta' && ev.delta?.text) onChunk(ev.delta.text);
+      } catch {}
+    }
+  }
+}
+
+// ── API: one-shot ─────────────────────────────────────────
+async function askClaude(messages, maxTokens = 1000) {
+  const res = await fetch(CLAUDE_API, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ model: MODEL, max_tokens: maxTokens, system: SYSTEM, messages })
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.error?.message || `API error ${res.status}`);
+  }
+  const data = await res.json();
+  return data.content?.[0]?.text || '';
+}
+
+// ── NAV ───────────────────────────────────────────────────
+function switchMode(mode) {
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.ni').forEach(n => n.classList.remove('active'));
+  document.getElementById(`panel-${mode}`)?.classList.add('active');
+  document.querySelector(`[data-mode="${mode}"]`)?.classList.add('active');
+  document.getElementById('bc-page').textContent = BC_LABELS[mode] || mode;
+  closeSidebar();
+}
+
+function closeSidebar() {
+  document.getElementById('sidebar').classList.remove('open');
+  document.getElementById('overlay').classList.remove('open');
+}
+
+document.querySelectorAll('[data-mode]').forEach(el =>
+  el.addEventListener('click', () => switchMode(el.dataset.mode))
+);
+document.getElementById('menu-btn').addEventListener('click', () => {
+  document.getElementById('sidebar').classList.toggle('open');
+  document.getElementById('overlay').classList.toggle('open');
+});
+document.getElementById('overlay').addEventListener('click', closeSidebar);
+
+// ── FORMAT ────────────────────────────────────────────────
+function fmt(text) {
+  return String(text)
+    .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+    .replace(/\*\*(.*?)\*\*/g,'<strong>$1</strong>')
+    .replace(/^#{1,3}\s+(.+)$/gm,'<strong>$1</strong>')
+    .replace(/\n/g,'<br>');
+}
+
+function esc(s) {
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+// ── CHAT ──────────────────────────────────────────────────
+function scrollToBottom() {
+  const area = document.getElementById('chat-area');
+  if (area) setTimeout(() => { area.scrollTop = area.scrollHeight; }, 20);
+}
+
+function createMsgRow(role) {
+  const row = document.createElement('div');
+  row.className = 'msg-row' + (role === 'user' ? ' user' : '');
+  const av = document.createElement('div');
+  av.className = 'mav ' + (role === 'user' ? 'user' : 'bot');
+  av.textContent = role === 'user' ? 'U' : 'X';
+  const bub = document.createElement('div');
+  bub.className = 'mbub ' + (role === 'user' ? 'user' : 'bot');
+  row.appendChild(av);
+  row.appendChild(bub);
+  return { row, bub };
+}
+
+async function sendMessage(text) {
+  if (isSending || !text?.trim()) return;
+  isSending = true;
+
+  document.getElementById('empty-state')?.remove();
+  const inp = document.getElementById('chat-input');
+  if (inp) { inp.value = ''; inp.style.height = 'auto'; }
+  document.getElementById('send-btn').disabled = true;
+
+  const { row: uRow, bub: uBub } = createMsgRow('user');
+  uBub.innerHTML = fmt(text);
+  document.getElementById('chat-area').appendChild(uRow);
+  chatHistory.push({ role: 'user', content: text });
+  scrollToBottom();
+
+  const { row: bRow, bub: bBub } = createMsgRow('bot');
+  bBub.classList.add('streaming');
+  document.getElementById('chat-area').appendChild(bRow);
+  scrollToBottom();
+
+  let full = '';
+  try {
+    await streamClaude(
+      chatHistory.slice(-14).map(m => ({ role: m.role, content: m.content })),
+      chunk => { full += chunk; bBub.innerHTML = fmt(full); scrollToBottom(); },
+      1100
+    );
+    bBub.classList.remove('streaming');
+    chatHistory.push({ role: 'assistant', content: full });
+  } catch (err) {
+    bBub.classList.remove('streaming');
+    bBub.innerHTML = `⚠️ ${esc(err.message || 'Something went wrong. Please try again.')}`;
+  }
+
+  document.getElementById('send-btn').disabled = false;
+  isSending = false;
+}
+
+document.getElementById('send-btn').addEventListener('click', () =>
+  sendMessage(document.getElementById('chat-input').value.trim())
+);
+document.getElementById('chat-input').addEventListener('keydown', e => {
+  if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(document.getElementById('chat-input').value.trim()); }
+});
+document.getElementById('chat-input').addEventListener('input', e => {
+  e.target.style.height = 'auto';
+  e.target.style.height = Math.min(e.target.scrollHeight, 130) + 'px';
+});
+document.querySelectorAll('.sug[data-prompt]').forEach(el =>
+  el.addEventListener('click', () => sendMessage(el.dataset.prompt))
 );
 
-function StudioPanel() {
-  const [topic, setTopic] = useState("");
-  const [plat, setPlat] = useState("YouTube Shorts");
-  const [busy, setBusy] = useState(false);
-  const [res, setRes] = useState(null);
+// ── HELPERS ───────────────────────────────────────────────
+function showSection(id, show) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  if (id.includes('out') && !id.includes('loading')) {
+    el.classList.toggle('show', show);
+    if (!show) el.classList.remove('show');
+  } else {
+    el.classList.toggle('show', show);
+  }
+}
 
-  const go = async () => {
-    if (!topic.trim() || busy) return;
-    setBusy(true); setRes(null);
-    const prompt = `Generate a complete viral content package for: "${topic}" on ${plat}.
+function setLoad(btnId, loading) {
+  const btn = document.getElementById(btnId);
+  if (!btn) return;
+  btn.disabled = loading;
+  btn.classList.toggle('loading', loading);
+}
 
-Reply in EXACTLY this format:
+function copyText(id, btn) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  navigator.clipboard.writeText(el.textContent).then(() => {
+    const orig = btn.textContent; btn.textContent = '✓'; btn.classList.add('ok');
+    setTimeout(() => { btn.textContent = orig; btn.classList.remove('ok'); }, 1800);
+  });
+}
 
-HOOK:
-[One scroll-stopping opening — bold claim or curiosity gap, max 2 sentences]
+function extract(text, label, nextLabel) {
+  const pattern = new RegExp(label + ':\\s*([\\s\\S]*?)(?=' + nextLabel + ':|$)', 'i');
+  const m = text.match(pattern);
+  return m ? m[1].trim() : '';
+}
+
+function setText(id, val) {
+  const el = document.getElementById(id);
+  if (el) el.textContent = val;
+}
+
+// Copy buttons (delegated)
+document.addEventListener('click', e => {
+  const btn = e.target.closest('.copy-btn[data-target]');
+  if (btn) copyText(btn.dataset.target, btn);
+});
+
+// ── VIRAL GENERATOR ───────────────────────────────────────
+document.getElementById('viral-btn').addEventListener('click', async () => {
+  const topic = document.getElementById('viral-topic').value.trim();
+  const platform = document.getElementById('viral-platform').value;
+  if (!topic) { document.getElementById('viral-topic').focus(); return; }
+
+  setLoad('viral-btn', true);
+  document.getElementById('viral-loading').classList.add('show');
+  document.getElementById('viral-out').classList.remove('show');
+
+  const prompt = `Generate a complete viral content package for the topic: "${topic}" on ${platform}.
+
+Reply in EXACTLY this format with each label on its own line:
+
+HOOK: [One scroll-stopping sentence under 15 words — creates massive curiosity, shock, or FOMO]
 
 TITLE:
 Option 1: [title]
@@ -413,417 +681,213 @@ Option 2: [title]
 Option 3: [title]
 
 SCRIPT:
-[Full 180-220 word script for ${plat}. Hook integrated naturally, 3-5 punchy points, strong CTA]
+[Full 180-220 word script optimised for ${platform}. Include bold hook, value delivery, and a strong CTA]
 
 THUMBNAIL:
-[Ideal thumbnail: text overlay words, visual composition, colors, facial expression, emotion trigger]`;
-    try { setRes(await callAI([{ role: "user", content: prompt }], null, 1500)); }
-    catch (e) { setRes(`Error: ${e.message}`); }
-    setBusy(false);
-  };
+[Describe the ideal thumbnail — text overlay words, visual composition, colors, facial expression, and emotion]`;
 
-  return (
-    <div style={{ height: "100%", overflowY: "auto", padding: "28px 24px" }}>
-      <div style={{ maxWidth: 900, margin: "0 auto", display: "flex", flexDirection: "column", gap: 20 }}>
-        <div>
-          <div style={{ width: 46, height: 46, borderRadius: 13, background: "rgba(249,115,22,.1)", border: "1px solid rgba(249,115,22,.22)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 21, marginBottom: 12 }}>🔥</div>
-          <h2 style={{ fontFamily: T.fh, fontWeight: 800, fontSize: 24, letterSpacing: -.5, marginBottom: 6 }}><span style={{ background: T.gr, WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", backgroundClip: "text" }}>Viral Content</span> Generator</h2>
-          <p style={{ color: T.t2, fontSize: 14, lineHeight: 1.65 }}>Drop your idea — get a hook, full script, title options, and thumbnail concept in seconds.</p>
-        </div>
-        <div style={CD()}>
-          <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
-            <input value={topic} onChange={e => setTopic(e.target.value)} onKeyDown={e => e.key === "Enter" && go()} placeholder="e.g. morning routines, side hustles, gym motivation, making money at 17…" style={{ ...IN({ flex: 1, minWidth: 200 }) }} />
-            <select value={plat} onChange={e => setPlat(e.target.value)} style={{ ...IN({ cursor: "pointer" }) }}>
-              <option>YouTube Shorts</option><option>TikTok</option><option>Instagram Reels</option><option>YouTube Long-form</option>
-            </select>
-            <button onClick={go} disabled={busy || !topic.trim()} style={{ ...BT({ opacity: busy || !topic.trim() ? .5 : 1, cursor: busy || !topic.trim() ? "not-allowed" : "pointer" }) }}>
-              {busy ? <><Spin />Generating…</> : "⚡ Generate"}
-            </button>
-          </div>
-        </div>
-        {busy && <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>{[1, 2, SKL(), SKL(true)].map((_, i) => <SKL key={i} wide={i >= 2} />)}</div>}
-        {res && !busy && (
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
-            <OutCard label="🪝 Hook" content={ex(res, "HOOK", "TITLE")} />
-            <OutCard label="✏️ Title Options" content={ex(res, "TITLE", "SCRIPT")} />
-            <OutCard label="📝 Script" content={ex(res, "SCRIPT", "THUMBNAIL")} wide />
-            <OutCard label="🖼 Thumbnail Concept" content={ex(res, "THUMBNAIL", "END")} wide />
-          </div>
-        )}
-      </div>
-    </div>
-  );
+  try {
+    const reply = await askClaude([{ role: 'user', content: prompt }], 1500);
+    setText('out-hook', extract(reply, 'HOOK', 'TITLE'));
+    setText('out-title', extract(reply, 'TITLE', 'SCRIPT'));
+    setText('out-script', extract(reply, 'SCRIPT', 'THUMBNAIL'));
+    setText('out-thumb', extract(reply, 'THUMBNAIL', '$'));
+    document.getElementById('viral-label').textContent = `"${topic}" · ${platform}`;
+    document.getElementById('viral-loading').classList.remove('show');
+    document.getElementById('viral-out').classList.add('show');
+  } catch (err) {
+    document.getElementById('viral-loading').classList.remove('show');
+    alert('Error: ' + err.message);
+  }
+  setLoad('viral-btn', false);
+});
+
+document.getElementById('viral-topic').addEventListener('keydown', e => {
+  if (e.key === 'Enter') document.getElementById('viral-btn').click();
+});
+
+document.getElementById('viral-copy-all').addEventListener('click', () => {
+  const parts = [
+    '🔥 XARVIS AI — Viral Content Package',
+    `Topic: ${document.getElementById('viral-label').textContent}`,
+    `\n🪝 HOOK:\n${document.getElementById('out-hook').textContent}`,
+    `\n✏️ TITLE OPTIONS:\n${document.getElementById('out-title').textContent}`,
+    `\n📝 SCRIPT:\n${document.getElementById('out-script').textContent}`,
+    `\n🖼 THUMBNAIL:\n${document.getElementById('out-thumb').textContent}`
+  ];
+  navigator.clipboard.writeText(parts.join('\n')).then(() => {
+    const b = document.getElementById('viral-copy-all');
+    b.textContent = '✓ Copied!'; setTimeout(() => b.textContent = '📋 Copy All', 2000);
+  });
+});
+
+// ── POST NEXT ─────────────────────────────────────────────
+async function runPostNext() {
+  const niche = document.getElementById('pn-niche').value.trim() || 'general content';
+  const goal = document.getElementById('pn-goal').value.trim() || 'grow my channel';
+  setLoad('pn-btn', true); setLoad('pn-regen', true);
+  document.getElementById('pn-out').classList.remove('show');
+
+  const prompt = `Creator niche: ${niche}. Creator goal: ${goal}.
+
+Pick ONE specific video idea they should post today for maximum virality. Be specific — not generic advice.
+
+Reply in EXACTLY this format:
+
+IDEA: [Specific video concept in 1-2 sentences — give the exact angle]
+
+HOOK: [The exact opening line — copy-paste ready, under 15 words, creates instant curiosity]
+
+WHY IT WILL WORK: [2-3 sentences on the psychology, trend, or timing making this the right move now]
+
+BEST TIME TO POST: [Specific day and time with a brief reason why]`;
+
+  try {
+    const reply = await askClaude([{ role: 'user', content: prompt }], 700);
+    setText('pn-idea', extract(reply, 'IDEA', 'HOOK'));
+    setText('pn-hook', extract(reply, 'HOOK', 'WHY'));
+    setText('pn-why', extract(reply, 'WHY IT WILL WORK', 'BEST TIME'));
+    setText('pn-time', extract(reply, 'BEST TIME TO POST', '$'));
+    document.getElementById('pn-out').classList.add('show');
+  } catch (err) {
+    alert('Error: ' + err.message);
+  }
+  setLoad('pn-btn', false); setLoad('pn-regen', false);
 }
+document.getElementById('pn-btn').addEventListener('click', runPostNext);
+document.getElementById('pn-regen').addEventListener('click', runPostNext);
 
-/* ══════════════════════════════════════════════════════
-   POST NEXT
-══════════════════════════════════════════════════════ */
-function PostNextPanel({ mem }) {
-  const [niche, setNiche] = useState(mem.niche || "");
-  const [goal, setGoal] = useState(mem.goal || "");
-  const [busy, setBusy] = useState(false);
-  const [res, setRes] = useState(null);
+// ── CALENDAR ──────────────────────────────────────────────
+document.getElementById('cal-btn').addEventListener('click', async () => {
+  const niche = document.getElementById('cal-niche').value.trim() || 'general content';
+  setLoad('cal-btn', true);
+  document.getElementById('cal-loading').classList.add('show');
+  document.getElementById('cal-grid').classList.remove('show');
 
-  const go = async () => {
-    setBusy(true); setRes(null);
-    const prompt = `Creator niche: ${niche || "general"} | Platform: ${mem.platform || "YouTube Shorts"} | Goal: ${goal || "grow my channel"}
+  const prompt = `Create a 7-day content calendar for a ${niche} creator.
+Output EXACTLY 7 lines, pipe-separated (|), no extra text before or after:
+DAY 1 | [Specific topic] | [Unique angle or hook reason] | [Opening hook sentence]
+DAY 2 | [Specific topic] | [Unique angle or hook reason] | [Opening hook sentence]
+DAY 3 | [Specific topic] | [Unique angle or hook reason] | [Opening hook sentence]
+DAY 4 | [Specific topic] | [Unique angle or hook reason] | [Opening hook sentence]
+DAY 5 | [Specific topic] | [Unique angle or hook reason] | [Opening hook sentence]
+DAY 6 | [Specific topic] | [Unique angle or hook reason] | [Opening hook sentence]
+DAY 7 | [Specific topic] | [Unique angle or hook reason] | [Opening hook sentence]`;
 
-Pick ONE video idea to post today for maximum virality. Be concrete, not generic.
+  try {
+    const reply = await askClaude([{ role: 'user', content: prompt }], 900);
+    const days = reply.split('\n')
+      .filter(l => /^DAY\s*\d/i.test(l.trim()))
+      .map((line, i) => {
+        const p = line.split('|').map(x => x.trim());
+        return { day: p[0]?.replace(/^DAY\s*/i, 'Day ') || `Day ${i+1}`, topic: p[1]||'', angle: p[2]||'', hook: p[3]||'' };
+      }).filter(d => d.topic);
 
-IDEA:
-[Specific concept in 1-2 sentences]
+    const grid = document.getElementById('cal-grid');
+    if (grid && days.length) {
+      grid.innerHTML = days.map((d, i) =>
+        `<div class="day-card" style="animation-delay:${i*.07}s">
+          <div class="day-lbl">📅 ${esc(d.day)}</div>
+          <div class="day-topic">${esc(d.topic)}</div>
+          <div class="day-angle">${esc(d.angle)}</div>
+          <div class="day-hook">"${esc(d.hook)}"</div>
+        </div>`
+      ).join('');
+      document.getElementById('cal-loading').classList.remove('show');
+      grid.classList.add('show');
+    }
+  } catch (err) {
+    document.getElementById('cal-loading').classList.remove('show');
+    alert('Error: ' + err.message);
+  }
+  setLoad('cal-btn', false);
+  const b = document.getElementById('cal-btn');
+  if (b) b.querySelector('span').textContent = '🔄 Regenerate';
+});
 
-HOOK:
-[Exact opening line — copy-paste ready, under 15 words]
+// ── FEEDBACK ──────────────────────────────────────────────
+document.getElementById('fb-btn').addEventListener('click', async () => {
+  const content = document.getElementById('fb-input').value.trim();
+  if (!content) { document.getElementById('fb-input').focus(); return; }
+  setLoad('fb-btn', true);
+  document.getElementById('fb-out').classList.remove('show');
 
-WHY IT WILL WORK:
-[2-3 sentences on psychology, trend, timing]
+  const prompt = `Analyse this video idea like a world-class content strategist: "${content}"
 
-BEST TIME TO POST:
-[Specific day and time with brief reason]`;
-    try { setRes(await callAI([{ role: "user", content: prompt }], null, 700)); }
-    catch (e) { setRes(`Error: ${e.message}`); }
-    setBusy(false);
-  };
-
-  return (
-    <div style={{ height: "100%", overflowY: "auto", padding: "28px 24px" }}>
-      <div style={{ maxWidth: 720, margin: "0 auto", display: "flex", flexDirection: "column", gap: 20 }}>
-        <div>
-          <div style={{ width: 46, height: 46, borderRadius: 13, background: `${T.g}18`, border: `1px solid ${T.g}2a`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 21, marginBottom: 12 }}>🎯</div>
-          <h2 style={{ fontFamily: T.fh, fontWeight: 800, fontSize: 24, letterSpacing: -.5, marginBottom: 6 }}><span style={{ background: T.gr, WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", backgroundClip: "text" }}>Post Next</span> — AI Picks For You</h2>
-          <p style={{ color: T.t2, fontSize: 14 }}>Stop guessing. One click — Xarvis picks the ONE idea most likely to go viral right now.</p>
-        </div>
-        <div style={{ ...CD({ padding: 40 }), textAlign: "center", position: "relative", overflow: "hidden" }}>
-          <div style={{ position: "absolute", top: -60, left: "50%", transform: "translateX(-50%)", width: 300, height: 200, background: "radial-gradient(ellipse,rgba(99,102,241,.08),transparent 70%)", pointerEvents: "none" }} />
-          <div style={{ fontSize: 42, marginBottom: 14 }}>🎯</div>
-          <h3 style={{ fontFamily: T.fh, fontWeight: 800, fontSize: 20, marginBottom: 8 }}>What should I post today?</h3>
-          <p style={{ color: T.t2, fontSize: 14, maxWidth: 360, margin: "0 auto 22px", lineHeight: 1.65 }}>Tell Xarvis your niche and goal — get your highest-potential post idea instantly.</p>
-          <div style={{ display: "flex", gap: 10, justifyContent: "center", flexWrap: "wrap", marginBottom: 18 }}>
-            <input value={niche} onChange={e => setNiche(e.target.value)} placeholder="Your niche (fitness, finance…)" style={{ ...IN({ width: 210 }) }} />
-            <input value={goal} onChange={e => setGoal(e.target.value)} placeholder="Your goal (hit 10k subs…)" style={{ ...IN({ width: 200 }) }} />
-          </div>
-          <button onClick={go} disabled={busy} style={{ ...BT({ margin: "0 auto", opacity: busy ? .5 : 1 }) }}>
-            {busy ? <><Spin />Analyzing…</> : "🎯 Tell me what to post"}
-          </button>
-        </div>
-        {res && !busy && (
-          <div style={{ ...CD({ padding: 0, overflow: "hidden" }), animation: "xfadeUp .4s ease" }}>
-            <div style={{ padding: "11px 20px", background: "linear-gradient(90deg,rgba(99,102,241,.09),rgba(168,85,247,.05))", borderBottom: `1px solid ${T.b}`, fontWeight: 700, fontSize: 13, color: T.p }}>⚡ Today's Highest-Potential Post</div>
-            <div style={{ padding: 22, display: "flex", flexDirection: "column", gap: 18 }}>
-              {[["💡 The Idea", ex(res, "IDEA", "HOOK"), false], ["🪝 Your Hook", ex(res, "HOOK", "WHY"), true], ["📊 Why It Will Work", ex(res, "WHY IT WILL WORK", "BEST TIME"), false], ["⏰ Best Time to Post", ex(res, "BEST TIME TO POST", "END"), false]].map(([l, v, accent]) => (
-                <div key={l}>
-                  <div style={{ fontSize: 10, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.14em", color: T.mu, marginBottom: 7 }}>{l}</div>
-                  {accent ? <div style={{ padding: "12px 16px", background: "rgba(99,102,241,.06)", borderLeft: `3px solid ${T.p}`, borderRadius: "0 10px 10px 0", fontSize: 14, lineHeight: 1.72, color: T.t }}>{v}</div> : <div style={{ fontSize: 14, lineHeight: 1.75, color: T.t, whiteSpace: "pre-wrap" }}>{v}</div>}
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
-        {res && !busy && (
-          <div style={{ textAlign: "center" }}>
-            <button onClick={go} style={{ padding: "10px 22px", background: T.s2, border: `1px solid ${T.b2}`, borderRadius: 50, color: T.t2, fontFamily: T.fb, fontSize: 13, cursor: "pointer" }}>↻ Give me another idea</button>
-          </div>
-        )}
-      </div>
-    </div>
-  );
-}
-
-/* ══════════════════════════════════════════════════════
-   7-DAY CALENDAR
-══════════════════════════════════════════════════════ */
-function CalendarPanel({ mem }) {
-  const [niche, setNiche] = useState(mem.niche || "");
-  const [busy, setBusy] = useState(false);
-  const [days, setDays] = useState([]);
-  const cols = [T.p, T.pu, T.cy, T.g, T.am, "#f97316", T.re];
-
-  const go = async () => {
-    setBusy(true); setDays([]);
-    const prompt = `Create a 7-day content calendar for a ${niche || "general"} creator on ${mem.platform || "YouTube Shorts"}.
-
-Output EXACTLY 7 pipe-separated lines only:
-DAY 1 | [Specific topic] | [Unique angle] | [Opening hook line]
-DAY 2 | [Specific topic] | [Unique angle] | [Opening hook line]
-DAY 3 | [Specific topic] | [Unique angle] | [Opening hook line]
-DAY 4 | [Specific topic] | [Unique angle] | [Opening hook line]
-DAY 5 | [Specific topic] | [Unique angle] | [Opening hook line]
-DAY 6 | [Specific topic] | [Unique angle] | [Opening hook line]
-DAY 7 | [Specific topic] | [Unique angle] | [Opening hook line]`;
-    try {
-      const r = await callAI([{ role: "user", content: prompt }], null, 900);
-      setDays(r.split("\n").filter(l => /^DAY\s*\d/i.test(l.trim())).map((line, i) => { const p = line.split("|").map(x => x.trim()); return { day: `Day ${i + 1}`, topic: p[1] || "", angle: p[2] || "", hook: p[3] || "" }; }).filter(d => d.topic));
-    } catch (e) { console.error(e); }
-    setBusy(false);
-  };
-
-  return (
-    <div style={{ height: "100%", overflowY: "auto", padding: "28px 24px" }}>
-      <div style={{ maxWidth: 920, margin: "0 auto", display: "flex", flexDirection: "column", gap: 20 }}>
-        <div style={{ display: "flex", alignItems: "flex-end", justifyContent: "space-between", gap: 16, flexWrap: "wrap" }}>
-          <div>
-            <div style={{ width: 46, height: 46, borderRadius: 13, background: `${T.pu}18`, border: `1px solid ${T.pu}2a`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 21, marginBottom: 12 }}>📅</div>
-            <h2 style={{ fontFamily: T.fh, fontWeight: 800, fontSize: 24, letterSpacing: -.5, marginBottom: 6 }}><span style={{ background: T.gr, WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", backgroundClip: "text" }}>7-Day Content</span> Calendar</h2>
-            <p style={{ color: T.t2, fontSize: 14 }}>Full week of content — topics, angles, and hooks. Done in 30 seconds.</p>
-          </div>
-          <div style={{ display: "flex", gap: 10 }}>
-            <input value={niche} onChange={e => setNiche(e.target.value)} placeholder="Your niche…" style={{ ...IN({ width: 180 }) }} />
-            <button onClick={go} disabled={busy} style={{ ...BT({ opacity: busy ? .5 : 1 }) }}>
-              {busy ? <><Spin />Building…</> : "📅 Generate My Week"}
-            </button>
-          </div>
-        </div>
-        {busy && <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill,minmax(230px,1fr))", gap: 12 }}>{[1, 2, 3, 4, 5, 6, 7].map(i => (<div key={i} style={CD()}><div style={{ height: 10, borderRadius: 5, width: "40%", background: `linear-gradient(90deg,${T.b} 25%,rgba(255,255,255,.04) 50%,${T.b} 75%)`, backgroundSize: "200%", animation: "xshimmer 1.4s ease infinite", marginBottom: 10 }} /><div style={{ height: 60, borderRadius: 5, background: `linear-gradient(90deg,${T.b} 25%,rgba(255,255,255,.04) 50%,${T.b} 75%)`, backgroundSize: "200%", animation: "xshimmer 1.4s ease infinite" }} /></div>))}</div>}
-        {days.length > 0 && (
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill,minmax(240px,1fr))", gap: 12 }}>
-            {days.map((d, i) => (
-              <div key={i} style={{ ...CD(), transition: "all .2s", animation: `xfadeUp .4s ${i * .07}s ease both`, opacity: 0 }}
-                onMouseEnter={e => { e.currentTarget.style.borderColor = T.b2; e.currentTarget.style.transform = "translateY(-3px)"; }}
-                onMouseLeave={e => { e.currentTarget.style.borderColor = T.b; e.currentTarget.style.transform = "translateY(0)"; }}>
-                <div style={{ fontSize: 10, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.14em", color: cols[i], marginBottom: 8 }}>📅 {d.day}</div>
-                <div style={{ fontFamily: T.fh, fontWeight: 700, fontSize: 14, lineHeight: 1.35, marginBottom: 7, letterSpacing: -.2 }}>{d.topic}</div>
-                <div style={{ fontSize: 12, color: T.t2, lineHeight: 1.5, marginBottom: 10 }}>{d.angle}</div>
-                <div style={{ padding: "9px 11px", background: "rgba(99,102,241,.05)", borderLeft: `2px solid rgba(99,102,241,.3)`, fontSize: 12, color: T.t, lineHeight: 1.5, fontStyle: "italic" }}>"{d.hook}"</div>
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
-    </div>
-  );
-}
-
-/* ══════════════════════════════════════════════════════
-   FEEDBACK AI
-══════════════════════════════════════════════════════ */
-function FeedbackPanel() {
-  const [content, setContent] = useState("");
-  const [busy, setBusy] = useState(false);
-  const [res, setRes] = useState(null);
-
-  const go = async () => {
-    if (!content.trim() || busy) return;
-    setBusy(true); setRes(null);
-    const prompt = `Analyze this video idea like a world-class content strategist: "${content}"
+Reply in EXACTLY this format:
 
 STRENGTHS:
 [3 specific bullet points on what works — be precise and creator-focused]
 
 WEAKNESSES:
-[3 bullet points on what will kill performance — be brutally honest]
+[3 bullet points on what could kill performance — be brutally honest]
 
 IMPROVEMENTS:
-[3 concrete, copy-paste-ready fixes]
+[3 concrete, actionable fixes — give copy-paste suggestions where possible]
 
 VIRAL SCORE: [X/10]
 
-VERDICT:
-[1-2 direct, honest sentences]`;
-    try { setRes(await callAI([{ role: "user", content: prompt }], null, 800)); }
-    catch (e) { setRes(`Error: ${e.message}`); }
-    setBusy(false);
-  };
+VERDICT: [1-2 direct sentences — call it like you see it]`;
 
-  const score = res?.match(/VIRAL SCORE:\s*(\d+)\s*(?:\/\s*10)?/i)?.[1] || "?";
+  try {
+    const reply = await askClaude([{ role: 'user', content: prompt }], 750);
+    const sc = reply.match(/VIRAL SCORE:\s*(\d+)\s*(?:\/\s*10)?/i);
+    setText('fb-strengths', extract(reply, 'STRENGTHS', 'WEAKNESSES'));
+    setText('fb-weaknesses', extract(reply, 'WEAKNESSES', 'IMPROVEMENTS'));
+    setText('fb-improvements', extract(reply, 'IMPROVEMENTS', 'VIRAL SCORE'));
+    setText('fb-score', sc ? sc[1] : '?');
+    setText('fb-verdict', extract(reply, 'VERDICT', '$'));
+    document.getElementById('fb-out').classList.add('show');
+  } catch (err) {
+    alert('Error: ' + err.message);
+  }
+  setLoad('fb-btn', false);
+});
 
-  return (
-    <div style={{ height: "100%", overflowY: "auto", padding: "28px 24px" }}>
-      <div style={{ maxWidth: 900, margin: "0 auto", display: "flex", flexDirection: "column", gap: 20 }}>
-        <div>
-          <div style={{ width: 46, height: 46, borderRadius: 13, background: `${T.am}18`, border: `1px solid ${T.am}2a`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 21, marginBottom: 12 }}>📊</div>
-          <h2 style={{ fontFamily: T.fh, fontWeight: 800, fontSize: 24, letterSpacing: -.5, marginBottom: 6 }}><span style={{ background: T.gr, WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", backgroundClip: "text" }}>Feedback</span> Analyzer</h2>
-          <p style={{ color: T.t2, fontSize: 14 }}>Paste any video idea — get a virality score, weaknesses found, and exactly how to fix it.</p>
-        </div>
-        <div style={CD()}>
-          <textarea value={content} onChange={e => setContent(e.target.value)} placeholder="e.g. I want to make a video about 5 habits that took me from broke to making $5k/month as a 19-year-old…" style={{ width: "100%", minHeight: 110, padding: "12px 14px", background: "rgba(255,255,255,.03)", border: `1px solid ${T.b2}`, borderRadius: 11, color: T.t, fontFamily: T.fb, fontSize: 14, outline: "none", resize: "vertical", lineHeight: 1.6, display: "block", marginBottom: 12, boxSizing: "border-box" }} />
-          <button onClick={go} disabled={busy || !content.trim()} style={{ ...BT({ opacity: busy || !content.trim() ? .5 : 1, cursor: busy || !content.trim() ? "not-allowed" : "pointer" }) }}>
-            {busy ? <><Spin />Analyzing…</> : "🔍 Analyze My Content"}
-          </button>
-        </div>
-        {res && !busy && (
-          <div style={{ display: "flex", flexDirection: "column", gap: 12, animation: "xfadeUp .4s ease" }}>
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
-              <div style={{ ...CD(), borderTop: `2px solid ${T.g}45` }}>
-                <div style={{ fontSize: 11, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.12em", color: T.t2, marginBottom: 12 }}>✅ Strengths</div>
-                <div style={{ fontSize: 13, lineHeight: 1.82, color: T.t, whiteSpace: "pre-wrap" }}>{ex(res, "STRENGTHS", "WEAKNESSES")}</div>
-              </div>
-              <div style={{ ...CD(), borderTop: `2px solid ${T.re}45` }}>
-                <div style={{ fontSize: 11, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.12em", color: T.t2, marginBottom: 12 }}>⚠️ Weaknesses</div>
-                <div style={{ fontSize: 13, lineHeight: 1.82, color: T.t, whiteSpace: "pre-wrap" }}>{ex(res, "WEAKNESSES", "IMPROVEMENTS")}</div>
-              </div>
-              <div style={{ ...CD(), borderTop: `2px solid ${T.p}45`, gridColumn: "1/-1" }}>
-                <div style={{ fontSize: 11, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.12em", color: T.t2, marginBottom: 12 }}>🚀 How to Fix It</div>
-                <div style={{ fontSize: 13, lineHeight: 1.82, color: T.t, whiteSpace: "pre-wrap" }}>{ex(res, "IMPROVEMENTS", "VIRAL SCORE")}</div>
-              </div>
-            </div>
-            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 16, padding: "20px 26px", background: "linear-gradient(135deg,rgba(99,102,241,.06),rgba(168,85,247,.04))", border: `1px solid rgba(99,102,241,.14)`, borderRadius: 18 }}>
-              <div style={{ textAlign: "center" }}>
-                <div style={{ fontFamily: T.fh, fontSize: 54, fontWeight: 900, lineHeight: 1, background: T.gr, WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", backgroundClip: "text" }}>{score}</div>
-                <div style={{ fontSize: 10, color: T.mu, textTransform: "uppercase", letterSpacing: "0.12em", marginTop: 4, fontWeight: 600 }}>Viral Score / 10</div>
-              </div>
-              <div style={{ fontSize: 14, lineHeight: 1.68, color: T.t, maxWidth: 480 }}>{ex(res, "VERDICT", "END")}</div>
-            </div>
-          </div>
-        )}
-      </div>
-    </div>
-  );
-}
+// ── AGENT PLANNER ─────────────────────────────────────────
+document.getElementById('agent-btn').addEventListener('click', async () => {
+  const goal = document.getElementById('agent-goal').value.trim();
+  if (!goal) { document.getElementById('agent-goal').focus(); return; }
+  setLoad('agent-btn', true);
+  document.getElementById('agent-loading').classList.add('show');
+  document.getElementById('agent-out').classList.remove('show');
 
-/* ══════════════════════════════════════════════════════
-   AGENT MODE
-══════════════════════════════════════════════════════ */
-function AgentPanel({ mem }) {
-  const [goal, setGoal] = useState("");
-  const [busy, setBusy] = useState(false);
-  const [res, setRes] = useState("");
+  const el = document.getElementById('agent-out-content');
+  el.textContent = '';
+  el.classList.add('streaming');
 
-  const go = async () => {
-    if (!goal.trim() || busy) return;
-    setBusy(true); setRes("");
-    const prompt = `AGENT MODE. Creator goal: "${goal}"
-${mem.niche ? `Niche: ${mem.niche} | Platform: ${mem.platform}` : ""}
+  const prompt = `AGENT MODE. Creator goal: "${goal}"
 
-Build a complete, numbered execution roadmap:
+Build a complete, numbered execution roadmap. Structure it as follows:
+1. PHASE BREAKDOWN (Week 1-4 then Month 2-3)
+2. DAILY ACTION ITEMS for the first week
+3. CONTENT STRATEGY (format, frequency, topics)
+4. MONETISATION MILESTONES and how to hit them
+5. KEY METRICS to track and what numbers to aim for
 
-🎯 GOAL BREAKDOWN
-[3 measurable milestones]
+Be extremely specific. No fluff. This is their blueprint — make it actionable.`;
 
-📅 PHASE 1 — WEEKS 1-2: Foundation
-[5 specific daily actions to start immediately]
+  try {
+    await streamClaude(
+      [{ role: 'user', content: prompt }],
+      chunk => { el.textContent += chunk; },
+      1800
+    );
+    el.classList.remove('streaming');
+    document.getElementById('agent-loading').classList.remove('show');
+    document.getElementById('agent-out').classList.add('show');
+  } catch (err) {
+    el.classList.remove('streaming');
+    document.getElementById('agent-loading').classList.remove('show');
+    el.textContent = 'Error: ' + (err.message || 'Please try again.');
+    document.getElementById('agent-out').classList.add('show');
+  }
+  setLoad('agent-btn', false);
+});
 
-📅 PHASE 2 — WEEKS 3-6: Momentum
-[5 specific actions to build traction]
-
-📅 PHASE 3 — WEEKS 7-12: Scale
-[5 specific acceleration actions]
-
-⚡ QUICK WINS (Do in 24 hours)
-[3 things to do TODAY]
-
-🚧 BIGGEST OBSTACLES & HOW TO BEAT THEM
-[Top 3 with specific countermeasures]
-
-💰 MONETIZATION PATH
-[Revenue streams in order with realistic timelines]
-
-Be extremely specific. No fluff. This is their blueprint.`;
-    try { await callAI([{ role: "user", content: prompt }], t => setRes(t), 1800); }
-    catch (e) { setRes(`Error: ${e.message}`); }
-    setBusy(false);
-  };
-
-  return (
-    <div style={{ height: "100%", overflowY: "auto", padding: "28px 24px" }}>
-      <div style={{ maxWidth: 900, margin: "0 auto", display: "flex", flexDirection: "column", gap: 20 }}>
-        <div>
-          <div style={{ width: 46, height: 46, borderRadius: 13, background: `${T.pu}18`, border: `1px solid ${T.pu}2a`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 21, marginBottom: 12 }}>🚀</div>
-          <h2 style={{ fontFamily: T.fh, fontWeight: 800, fontSize: 24, letterSpacing: -.5, marginBottom: 6 }}><span style={{ background: T.gr, WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", backgroundClip: "text" }}>Agent Mode</span> — Full Planning</h2>
-          <p style={{ color: T.t2, fontSize: 14 }}>Give Xarvis a big goal. Get a complete phased execution roadmap — like having a co-founder.</p>
-        </div>
-        <div style={CD()}>
-          <div style={{ fontSize: 12, color: T.t2, marginBottom: 10 }}>Try: "Build a content business from zero" · "Hit 100k in 90 days" · "Launch my first digital product"</div>
-          <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
-            <input value={goal} onChange={e => setGoal(e.target.value)} onKeyDown={e => e.key === "Enter" && go()} placeholder="Enter your big goal…" style={{ ...IN({ flex: 1, minWidth: 200 }) }} />
-            <button onClick={go} disabled={busy || !goal.trim()} style={{ ...BT({ background: "linear-gradient(135deg,#a855f7,#6366f1)", boxShadow: "0 0 22px rgba(168,85,247,.3)", opacity: busy || !goal.trim() ? .5 : 1, cursor: busy || !goal.trim() ? "not-allowed" : "pointer" }) }}>
-              {busy ? <><Spin />Building Plan…</> : "🚀 Build My Plan"}
-            </button>
-          </div>
-        </div>
-        {(res || busy) && (
-          <div style={{ ...CD(), animation: "xfadeUp .35s ease" }}>
-            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 16 }}>
-              <span style={{ fontSize: 12, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.12em", color: T.t2 }}>🚀 Agent Execution Plan</span>
-              {res && <button onClick={() => navigator.clipboard.writeText(res)} style={{ width: 26, height: 26, borderRadius: 6, background: T.s2, border: `1px solid ${T.b}`, color: T.mu, fontSize: 12, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}>📋</button>}
-            </div>
-            {busy && !res && <div style={{ color: T.mu, fontSize: 14 }}>Building your roadmap<span style={{ animation: "xblink 1.2s step-end infinite" }}>...</span></div>}
-            <div style={{ fontSize: 14, lineHeight: 1.88, color: T.t, whiteSpace: "pre-wrap", wordBreak: "break-word" }}>
-              <span dangerouslySetInnerHTML={{ __html: fmt(res) }} />
-              {busy && res && <span style={{ animation: "xblink .7s step-end infinite", color: T.p }}>▋</span>}
-            </div>
-          </div>
-        )}
-      </div>
-    </div>
-  );
-}
-
-/* ══════════════════════════════════════════════════════
-   MEMORY
-══════════════════════════════════════════════════════ */
-function MemoryPanel({ mem, setMem }) {
-  const [local, setLocal] = useState({ ...mem });
-  const [saved, setSaved] = useState(false);
-  const save = () => { setMem(local); setSaved(true); setTimeout(() => setSaved(false), 2200); };
-
-  return (
-    <div style={{ height: "100%", overflowY: "auto", padding: "28px 24px" }}>
-      <div style={{ maxWidth: 640, margin: "0 auto", display: "flex", flexDirection: "column", gap: 20 }}>
-        <div>
-          <div style={{ width: 46, height: 46, borderRadius: 13, background: `${T.cy}18`, border: `1px solid ${T.cy}2a`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 21, marginBottom: 12 }}>🧠</div>
-          <h2 style={{ fontFamily: T.fh, fontWeight: 800, fontSize: 24, letterSpacing: -.5, marginBottom: 6 }}><span style={{ background: T.gr, WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", backgroundClip: "text" }}>My Memory</span> — Creator Profile</h2>
-          <p style={{ color: T.t2, fontSize: 14, lineHeight: 1.65 }}>Set your context once — every Xarvis tool personalizes to your niche, platform, and goals.</p>
-        </div>
-        <div style={{ ...CD(), display: "flex", flexDirection: "column", gap: 18 }}>
-          {[
-            { k: "niche", l: "Your Niche", ph: "e.g. fitness, finance, productivity, gaming, motivation…", type: "text" },
-            { k: "platform", l: "Main Platform", type: "select", opts: ["YouTube Shorts", "TikTok", "Instagram Reels", "YouTube Long-form", "All Platforms"] },
-            { k: "goal", l: "Current Goal", ph: "e.g. Hit 100k subscribers, make $5k/month, go viral…", type: "text" },
-            { k: "tone", l: "Content Tone", type: "select", opts: ["Motivational", "Educational", "Entertainment", "Documentary", "Storytelling", "Comedy"] },
-          ].map(f => (
-            <div key={f.k}>
-              <label style={{ display: "block", fontSize: 11, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.12em", color: T.t2, marginBottom: 8 }}>{f.l}</label>
-              {f.type === "select"
-                ? <select value={local[f.k] || ""} onChange={e => setLocal({ ...local, [f.k]: e.target.value })} style={{ ...IN({ width: "100%", boxSizing: "border-box", cursor: "pointer" }) }}>
-                  {f.opts.map(o => <option key={o}>{o}</option>)}
-                </select>
-                : <input value={local[f.k] || ""} onChange={e => setLocal({ ...local, [f.k]: e.target.value })} placeholder={f.ph} style={{ ...IN({ width: "100%", boxSizing: "border-box" }) }} />
-              }
-            </div>
-          ))}
-          <button onClick={save} style={{ ...BT({ background: saved ? T.g : T.gr, justifyContent: "center", padding: 13 }) }}>
-            {saved ? "✓ Saved to Xarvis Memory" : "💾 Save My Profile"}
-          </button>
-        </div>
-        {(mem.niche || mem.goal) && (
-          <div style={{ ...CD({ background: "rgba(99,102,241,.04)", border: `1px solid rgba(99,102,241,.12)` }) }}>
-            <div style={{ fontSize: 10, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.14em", color: T.p, marginBottom: 12 }}>Active Context</div>
-            {[["Niche", mem.niche], ["Platform", mem.platform], ["Goal", mem.goal], ["Tone", mem.tone]].filter(([, v]) => v).map(([k, v]) => (
-              <div key={k} style={{ fontSize: 13, color: T.t2, marginBottom: 6 }}><strong style={{ color: T.t }}>{k}:</strong> {v}</div>
-            ))}
-          </div>
-        )}
-      </div>
-    </div>
-  );
-}
-
-/* ══════════════════════════════════════════════════════
-   ROOT
-══════════════════════════════════════════════════════ */
-export default function XarvisAI() {
-  const [screen, setScreen] = useState("splash");
-  const [mod, setMod] = useState("chat");
-  const [mem, setMem] = useState({ niche: "", platform: "YouTube Shorts", goal: "", tone: "Motivational" });
-
-  // Load Syne font
-  useEffect(() => {
-    const el = document.createElement("link");
-    el.href = "https://fonts.googleapis.com/css2?family=Syne:wght@400;700;800;900&family=DM+Sans:wght@300;400;500&display=swap";
-    el.rel = "stylesheet";
-    document.head.appendChild(el);
-  }, []);
-
-  // Splash → Landing auto-transition
-  useEffect(() => {
-    if (screen === "splash") {
-      const t = setTimeout(() => setScreen("landing"), 1900);
-      return () => clearTimeout(t);
-    }
-  }, [screen]);
-
-  if (screen === "splash") return <Splash />;
-  if (screen === "landing") return <Landing onLaunch={() => setScreen("app")} />;
-  return <Dashboard mod={mod} setMod={setMod} mem={mem} setMem={setMem} />;
-}
+document.getElementById('agent-goal').addEventListener('keydown', e => {
+  if (e.key === 'Enter') document.getElementById('agent-btn').click();
+});
+</script>
+</body>
+</html>
