@@ -1,27 +1,24 @@
+/**
+ * XARVIS AI — FRONTEND CONFIG
+ * All tunables in one place. Change API_BASE here if backend URL changes.
+ */
+
+// ✅ Your Render backend URL — no trailing slash
+const BACKEND_URL = "https://xarvis-ai.onrender.com";
+
 export const CONFIG = {
-  // ─── BACKEND ──────────────────────────────────────
-  API_BASE: "https://xarvis-ai.onrender.com",
+  API_BASE: BACKEND_URL,
 
-  // ─── AI MODEL (backend-controlled) ────────────────
-  MODEL: "llama-3.1-8b-instant",
+  // How long to wait before aborting a request (ms)
+  // Render free tier cold starts can take 15-30s
+  REQUEST_TIMEOUT: 35_000,
 
-  // ─── CHAT SETTINGS ─────────────────────────────────
-  MAX_HISTORY: 50,
+  // Retry attempts on transient network errors (not 4xx/5xx)
+  RETRY_ATTEMPTS: 2,
 
-  // ─── STORAGE KEYS ──────────────────────────────────
-  CHAT_STORAGE_KEY: "xarvis_chat_history",
-  GOAL_STORAGE_KEY: "xarvis_user_goal",
+  // Delay between retries (ms)
+  RETRY_DELAY: 1_500,
 
-  // ─── REQUEST SETTINGS ──────────────────────────────
-  TEMPERATURE: 0.7,
-  REQUEST_TIMEOUT: 20000,
-
-  // ─── RETRY SYSTEM ──────────────────────────────────
-  RETRY_ATTEMPTS: 3,
-  RETRY_DELAY: 3000,
-
-  // ─── UI ────────────────────────────────────────────
-  APP_NAME: "Xarvis AI",
-  WELCOME_MESSAGE:
-    "🚀 Xarvis AI online. Ready to help you build, create, and scale."
+  // How many chat history turns to send to the backend
+  MAX_HISTORY: 10,
 };
