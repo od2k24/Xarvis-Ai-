@@ -165,7 +165,7 @@ app.post("/api/generate", async (req, res) => {
     }
 
     if (type === "agent") {
-      prompt = `Build execution plan for: ${goal}`;
+      prompt = `Build execution plan for: ${goal}`;  
     }
 
     const reply = await askGroq([{ role: "user", content: prompt }], 1400);
