@@ -1,24 +1,68 @@
 /**
- * XARVIS AI — FRONTEND CONFIG
- * All tunables in one place. Change API_BASE here if backend URL changes.
- */
 
-// ✅ Your Render backend URL — no trailing slash
-const BACKEND_URL = "https://xarvis-ai.onrender.com";
+* XARVIS AI — PRODUCTION CONFIG
+* Centralized frontend configuration
+  */
 
+// ─────────────────────────────────────────────
+// BACKEND URL
+// ─────────────────────────────────────────────
+
+// Production Render backend
+const PROD_BACKEND = "https://xarvis-ai.onrender.com";
+
+// Local development backend
+const DEV_BACKEND = "http://localhost:3001";
+
+// Auto-detect environment
+const isLocalhost =
+location.hostname === "localhost" ||
+location.hostname === "127.0.0.1";
+
+// Final API base
+const API_BASE = isLocalhost
+? DEV_BACKEND
+: PROD_BACKEND;
+
+// ─────────────────────────────────────────────
+// CONFIG
+// ─────────────────────────────────────────────
 export const CONFIG = {
-  API_BASE: BACKEND_URL,
+// Core
+API_BASE,
 
-  // How long to wait before aborting a request (ms)
-  // Render free tier cold starts can take 15-30s
-  REQUEST_TIMEOUT: 35_000,
+// Routes
+ROUTES: {
+HEALTH: "/api/health",
+CHAT: "/api/chat",
+STREAM: "/api/chat/stream",
+GENERATE: "/api/generate",
+},
 
-  // Retry attempts on transient network errors (not 4xx/5xx)
-  RETRY_ATTEMPTS: 2,
+// Request handling
+REQUEST_TIMEOUT: 35000,
 
-  // Delay between retries (ms)
-  RETRY_DELAY: 1_500,
+// Retry logic
+RETRY_ATTEMPTS: 2,
+RETRY_DELAY: 1500,
 
-  // How many chat history turns to send to the backend
-  MAX_HISTORY: 10,
+// Chat memory
+MAX_HISTORY: 10,
+
+// Debug mode
+DEBUG: true,
 };
+
+// ─────────────────────────────────────────────
+// STARTUP VALIDATION
+// ─────────────────────────────────────────────
+if (!CONFIG.API_BASE) {
+throw new Error(
+"[Xarvis Config] Missing API_BASE"
+);
+}
+
+console.log("[Xarvis Config Loaded]", {
+API_BASE: CONFIG.API_BASE,
+MODE: isLocalhost ? "development" : "production",
+});
