@@ -1,72 +1,21 @@
+/**
+ * XARVIS AI — AGENT RUNNER
+ * Fixed: real error propagation, consistent fallback, clean abort handling
+ */
+
 import { CONFIG } from "./config.js";
 
-export async function runAgent(goal, memory = {}, onChunk) {
-  const controller = new AbortController();
-  const timer = setTimeout(() => controller.abort(), CONFIG.REQUEST_TIMEOUT);
-
-  // Try streaming endpoint first, fall back to regular generate
-  try {
-    const res = await fetch(`${CONFIG.API_BASE}/api/chat/stream`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        message: buildAgentPrompt(goal, memory),
-        history: []
-      }),
-      signal: controller.signal
-    });
-    clearTimeout(timer);
-
-    if (!res.ok) throw new Error("Stream failed");
-
-    const reader = res.body.getReader();
-    const dec = new TextDecoder();
-    let buf = "", full = "";
-
-    while (true) {
-      const { value, done } = await reader.read();
-      if (done) break;
-      buf += dec.decode(value, { stream: true });
-      const lines = buf.split("\n");
-      buf = lines.pop();
-      for (const line of lines) {
-        if (!line.startsWith("data: ")) continue;
-        const raw = line.slice(6).trim();
-        if (raw === "[DONE]") return full;
-        try {
-          const ev = JSON.parse(raw);
-          if (ev.type === "delta" && ev.content) { full += ev.content; onChunk && onChunk(full); }
-          if (ev.type === "error") throw new Error(ev.message);
-        } catch {}
-      }
-    }
-    return full;
-  } catch (err) {
-    clearTimeout(timer);
-    if (err.name === "AbortError") throw new Error("Request timed out — the server may be waking up. Please try again.");
-
-    // Fallback: non-streaming
-    const res2 = await fetch(`${CONFIG.API_BASE}/api/generate`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ type: "agent", goal, memory })
-    });
-    if (!res2.ok) throw new Error(`Server error ${res2.status}`);
-    const data = await res2.json();
-    const text = data.reply || "";
-    onChunk && onChunk(text);
-    return text;
-  }
-}
-
-function buildAgentPrompt(goal, memory) {
+// ─────────────────────────────────────────────────────────────
+// AGENT PROMPT BUILDER
+// ─────────────────────────────────────────────────────────────
+function buildAgentPrompt(goal, memory = {}) {
   return `AGENT MODE. Creator goal: "${goal}"
 ${memory.niche ? `Niche: ${memory.niche} | Platform: ${memory.platform || "YouTube Shorts"}` : ""}
 
 Build a complete, numbered execution roadmap:
 
 🎯 GOAL BREAKDOWN
-[3 measurable milestones]
+[3 measurable milestones with deadlines]
 
 📅 PHASE 1 — WEEKS 1-2: Foundation
 [5 specific daily actions]
@@ -77,7 +26,7 @@ Build a complete, numbered execution roadmap:
 📅 PHASE 3 — WEEKS 7-12: Scale
 [5 acceleration actions]
 
-⚡ QUICK WINS (Do in 24 hours)
+⚡ QUICK WINS (Do in next 24 hours)
 [3 things to do TODAY]
 
 🚧 BIGGEST OBSTACLES & HOW TO BEAT THEM
@@ -87,4 +36,101 @@ Build a complete, numbered execution roadmap:
 [Revenue streams with realistic timelines]
 
 Be extremely specific. No fluff. This is their blueprint.`;
+}
+
+// ─────────────────────────────────────────────────────────────
+// AGENT RUNNER — Stream first, fallback to /api/generate
+// ─────────────────────────────────────────────────────────────
+export async function runAgent(goal, memory = {}, onChunk) {
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), CONFIG.REQUEST_TIMEOUT);
+
+  // ── ATTEMPT 1: Streaming ──────────────────────────────────
+  try {
+    const res = await fetch(`${CONFIG.API_BASE}/api/chat/stream`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        message: buildAgentPrompt(goal, memory),
+        history: [],
+      }),
+      signal: controller.signal,
+    });
+
+    clearTimeout(timeoutId);
+
+    if (!res.ok) throw new Error(`Stream endpoint returned ${res.status}`);
+    if (!res.body) throw new Error("No stream body");
+
+    const reader = res.body.getReader();
+    const decoder = new TextDecoder();
+    let buffer = "";
+    let fullText = "";
+
+    try {
+      while (true) {
+        const { value, done } = await reader.read();
+        if (done) break;
+
+        buffer += decoder.decode(value, { stream: true });
+        const events = buffer.split("\n\n");
+        buffer = events.pop() ?? "";
+
+        for (const event of events) {
+          const dataLine = event.split("\n").find((l) => l.startsWith("data: "));
+          if (!dataLine) continue;
+
+          const raw = dataLine.slice(6).trim();
+          if (!raw || raw === "[DONE]") continue;
+
+          try {
+            const parsed = JSON.parse(raw);
+            if (parsed.type === "delta" && parsed.content) {
+              fullText += parsed.content;
+              onChunk?.(fullText);
+            }
+            if (parsed.type === "done") return fullText;
+            if (parsed.type === "error") throw new Error(parsed.message || "Stream error");
+          } catch (parseErr) {
+            if (parseErr.message?.includes("Stream error")) throw parseErr;
+          }
+        }
+      }
+    } finally {
+      try { reader.releaseLock(); } catch {}
+    }
+
+    return fullText;
+
+  } catch (streamErr) {
+    clearTimeout(timeoutId);
+
+    if (streamErr.name === "AbortError") {
+      throw new Error("Request timed out. Server may be waking up — try again in 30 seconds.");
+    }
+
+    console.warn("[Xarvis Agent] Stream failed, falling back to /api/generate:", streamErr.message);
+  }
+
+  // ── ATTEMPT 2: Non-streaming fallback ────────────────────
+  try {
+    const res2 = await fetch(`${CONFIG.API_BASE}/api/generate`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ type: "agent", goal, memory }),
+    });
+
+    if (!res2.ok) {
+      const err = await res2.json().catch(() => ({}));
+      throw new Error(err.error || `Server error ${res2.status}`);
+    }
+
+    const data = await res2.json();
+    const text = data.reply || "";
+    onChunk?.(text);
+    return text;
+
+  } catch (fallbackErr) {
+    throw new Error(fallbackErr.message || "Agent failed. Please try again.");
+  }
 }
