@@ -3,506 +3,417 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Xarvis AI — Your AI Co-Founder for Content Creators</title>
-  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@600;700;800;900&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,400&display=swap" rel="stylesheet" />
+  <title>Xarvis AI — The Creator Operating System</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Outfit:wght@300;400;500;600&family=JetBrains+Mono:wght@400&display=swap" rel="stylesheet" />
   <style>
     :root {
-      --bg: #04060f; --bg2: #070b18; --surface: #0c1120;
-      --border: rgba(255,255,255,0.07); --border2: rgba(255,255,255,0.12);
-      --blue: #4f8eff; --purple: #7c3aff; --cyan: #22d3ee;
-      --green: #34d399; --amber: #fbbf24; --text: #e8eeff;
-      --text2: #a8b4cc; --muted: #58677e;
-      --glow: rgba(79,142,255,0.22); --glow2: rgba(124,58,255,0.18);
-      --grad: linear-gradient(135deg,var(--blue),var(--purple));
+      --bg-0:   #09080e;
+      --bg-1:   #0e0c15;
+      --bg-2:   #13101c;
+      --bg-3:   #1c1829;
+      --ln-0:   rgba(255,255,255,0.045);
+      --ln-1:   rgba(255,255,255,0.075);
+      --ln-2:   rgba(255,255,255,0.11);
+      --ln-v:   rgba(147,112,255,0.18);
+      --ln-vhi: rgba(147,112,255,0.38);
+      --t0: #ede9ff;
+      --t1: #a89ec4;
+      --t2: #665e7a;
+      --vio:    #9370ff;
+      --vio-hi: #b49aff;
+      --ind:    #6366f1;
+      --pur:    #7c4ff6;
+      --vio-g:  rgba(147,112,255,0.13);
+      --vio-d:  rgba(147,112,255,0.07);
+      --vio-s:  rgba(147,112,255,0.04);
+      --live:   #a78bfa;
+      --r: 14px;
+      --gap: clamp(80px,10vw,140px);
     }
-    *,*::before,*::after { margin:0; padding:0; box-sizing:border-box; }
-    html { scroll-behavior:smooth; }
-    body { background:var(--bg); color:var(--text); font-family:'DM Sans',sans-serif; overflow-x:hidden; }
+    *,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+    html{scroll-behavior:smooth}
+    body{background:var(--bg-0);color:var(--t0);font-family:'Outfit',sans-serif;font-weight:400;overflow-x:hidden;line-height:1.6}
 
-    /* ── NAV ── */
-    nav {
-      position:fixed; top:0; width:100%; z-index:200;
-      display:flex; align-items:center; justify-content:space-between;
-      padding:0 5%; height:64px;
-      background:rgba(4,6,15,0.88); backdrop-filter:blur(22px);
-      border-bottom:1px solid var(--border); transition:background .3s;
-    }
-    nav.scrolled { background:rgba(4,6,15,0.97); }
-    .nav-logo { display:flex; align-items:center; gap:9px; text-decoration:none; }
-    .logo-mark {
-      width:30px; height:30px; border-radius:8px;
-      background:var(--grad); display:flex; align-items:center; justify-content:center;
-      font-family:'Syne',sans-serif; font-weight:800; font-size:.9rem; color:#fff;
-      box-shadow:0 0 14px var(--glow);
-    }
-    .logo-word { font-family:'Syne',sans-serif; font-weight:800; font-size:1.1rem; color:var(--text); }
-    .logo-ver {
-      font-size:.58rem; padding:2px 6px;
-      background:rgba(79,142,255,.1); border:1px solid rgba(79,142,255,.25);
-      border-radius:20px; color:var(--blue); font-weight:700;
-    }
-    .nav-links { display:flex; gap:32px; list-style:none; }
-    .nav-links a { color:var(--text2); text-decoration:none; font-size:.87rem; transition:color .2s; }
-    .nav-links a:hover { color:var(--text); }
-    .nav-cta {
-      padding:9px 22px; background:var(--grad); color:#fff; border-radius:50px;
-      text-decoration:none; font-weight:700; font-family:'Syne',sans-serif; font-size:.85rem;
-      box-shadow:0 0 18px var(--glow); transition:opacity .2s,transform .2s;
-    }
-    .nav-cta:hover { opacity:.88; transform:translateY(-1px); }
-    .ham { display:none; background:none; border:none; color:var(--text2); cursor:pointer; font-size:1.2rem; }
+    /* GRAIN */
+    body::before{content:'';position:fixed;inset:0;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='260' height='260'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.78' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='260' height='260' filter='url(%23n)'/%3E%3C/svg%3E");opacity:.025;pointer-events:none;z-index:9999}
 
-    /* ── HERO ── */
-    .hero {
-      min-height:100vh; display:flex; flex-direction:column;
-      align-items:center; justify-content:center;
-      text-align:center; padding:120px 5% 80px; position:relative; overflow:hidden;
-    }
-    .hero-grid {
-      position:absolute; inset:0;
-      background-image: linear-gradient(rgba(79,142,255,.04) 1px,transparent 1px),
-        linear-gradient(90deg,rgba(79,142,255,.04) 1px,transparent 1px);
-      background-size:72px 72px;
-      mask-image:radial-gradient(ellipse 80% 80% at 50% 50%,black 40%,transparent 100%);
-      pointer-events:none;
-    }
-    .blob {
-      position:absolute; border-radius:50%; filter:blur(80px); pointer-events:none;
-    }
-    .blob-blue {
-      width:600px; height:600px; background:radial-gradient(circle,rgba(79,142,255,.11),transparent 70%);
-      top:50%; left:50%; transform:translate(-50%,-60%);
-    }
-    .blob-purple {
-      width:400px; height:400px; background:radial-gradient(circle,rgba(124,58,255,.08),transparent 70%);
-      bottom:-80px; right:-80px;
-    }
-    .hero-badge {
-      display:inline-flex; align-items:center; gap:8px;
-      padding:6px 16px; background:rgba(79,142,255,.08);
-      border:1px solid rgba(79,142,255,.22); border-radius:50px;
-      font-size:.77rem; color:var(--blue); margin-bottom:34px;
-      position:relative; z-index:1; animation:fadeUp .8s ease both;
-    }
-    .bdot { width:7px; height:7px; background:var(--green); border-radius:50%; animation:pulse 2s infinite; }
-    .hero h1 {
-      font-family:'Syne',sans-serif; font-size:clamp(2.8rem,7vw,5.6rem);
-      font-weight:800; line-height:1.02; letter-spacing:-2px; max-width:860px;
-      position:relative; z-index:1; animation:fadeUp .8s .1s ease both;
-    }
-    .hl { background:var(--grad); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text; }
-    .hero-sub {
-      margin-top:22px; color:var(--text2); font-size:1.07rem; max-width:520px;
-      line-height:1.75; position:relative; z-index:1; animation:fadeUp .8s .22s ease both;
-    }
-    .hero-btns {
-      margin-top:46px; display:flex; gap:14px; flex-wrap:wrap;
-      justify-content:center; position:relative; z-index:1; animation:fadeUp .8s .34s ease both;
-    }
-    .btn-primary {
-      padding:15px 38px; background:var(--grad); color:#fff; border-radius:50px;
-      text-decoration:none; font-weight:700; font-family:'Syne',sans-serif; font-size:.98rem;
-      box-shadow:0 0 34px var(--glow); transition:transform .2s,box-shadow .2s;
-      display:flex; align-items:center; gap:8px;
-    }
-    .btn-primary:hover { transform:translateY(-3px); box-shadow:0 0 56px var(--glow); }
-    .btn-ghost {
-      padding:15px 38px; border:1px solid var(--border2); color:var(--text);
-      border-radius:50px; text-decoration:none; font-size:.96rem;
-      transition:border-color .2s,background .2s; display:flex; align-items:center; gap:8px;
-    }
-    .btn-ghost:hover { border-color:rgba(79,142,255,.35); background:rgba(79,142,255,.04); }
-    .hero-stats {
-      margin-top:70px; display:flex; gap:52px; flex-wrap:wrap;
-      justify-content:center; position:relative; z-index:1; animation:fadeUp .8s .48s ease both;
-    }
-    .h-stat { text-align:center; }
-    .h-stat-num {
-      font-family:'Syne',sans-serif; font-size:2.3rem; font-weight:800;
-      background:var(--grad); -webkit-background-clip:text;
-      -webkit-text-fill-color:transparent; background-clip:text; line-height:1;
-    }
-    .h-stat-lbl { color:var(--muted); font-size:.78rem; margin-top:5px; }
+    /* SCROLLBAR */
+    ::-webkit-scrollbar{width:4px}::-webkit-scrollbar-track{background:transparent}::-webkit-scrollbar-thumb{background:var(--bg-3);border-radius:2px}
 
-    /* ── SECTIONS ── */
-    .section { padding:100px 5%; }
-    .section.dark { background:var(--surface); position:relative; }
-    .section.dark::before {
-      content:''; position:absolute; top:0; left:0; right:0; height:1px;
-      background:linear-gradient(90deg,transparent,rgba(79,142,255,.3),transparent);
-    }
-    .sec-hdr { text-align:center; margin-bottom:60px; }
-    .sec-eyebrow {
-      display:inline-flex; align-items:center; gap:7px;
-      font-size:.72rem; text-transform:uppercase; letter-spacing:.2em;
-      color:var(--blue); font-weight:700; margin-bottom:16px;
-    }
-    .sec-eyebrow::before,.sec-eyebrow::after {
-      content:''; display:block; width:22px; height:1px; background:rgba(79,142,255,.4);
-    }
-    .sec-title {
-      font-family:'Syne',sans-serif; font-size:clamp(1.9rem,4vw,3rem);
-      font-weight:800; letter-spacing:-.8px; line-height:1.1; margin-bottom:14px;
-    }
-    .sec-sub { color:var(--text2); font-size:.96rem; max-width:500px; margin:0 auto; line-height:1.7; }
+    /* PARTICLES */
+    #particles{position:fixed;inset:0;pointer-events:none;z-index:0}
 
-    /* ── FEATURES ── */
-    .feat-grid {
-      display:grid; grid-template-columns:repeat(3,1fr); gap:16px;
-      max-width:1060px; margin:0 auto;
-    }
-    .feat-card {
-      background:var(--surface); border:1px solid var(--border); border-radius:22px;
-      padding:28px; transition:border-color .25s,transform .25s; position:relative; overflow:hidden;
-    }
-    .feat-card:hover { transform:translateY(-4px); border-color:var(--border2); }
-    .feat-card.wide { grid-column:span 2; }
-    .fc-icon {
-      width:48px; height:48px; border-radius:13px;
-      display:flex; align-items:center; justify-content:center; font-size:1.3rem; margin-bottom:18px;
-    }
-    .fci-b { background:rgba(79,142,255,.1); border:1px solid rgba(79,142,255,.18); }
-    .fci-g { background:rgba(52,211,153,.1); border:1px solid rgba(52,211,153,.18); }
-    .fci-p { background:rgba(124,58,255,.1); border:1px solid rgba(124,58,255,.18); }
-    .fci-a { background:rgba(251,191,36,.1); border:1px solid rgba(251,191,36,.18); }
-    .fci-c { background:rgba(34,211,238,.1); border:1px solid rgba(34,211,238,.18); }
-    .fc-title { font-family:'Syne',sans-serif; font-weight:700; font-size:1rem; margin-bottom:8px; }
-    .fc-desc { color:var(--text2); font-size:.86rem; line-height:1.65; margin-bottom:14px; }
-    .fc-tag {
-      display:inline-flex; align-items:center; gap:5px;
-      font-size:.68rem; padding:4px 10px; border-radius:20px; font-weight:700; font-family:'Syne',sans-serif;
-    }
-    .fct-b { background:rgba(79,142,255,.08); color:var(--blue); }
-    .fct-g { background:rgba(52,211,153,.08); color:var(--green); }
-    .fct-p { background:rgba(124,58,255,.08); color:#a78bfa; }
-    .fct-a { background:rgba(251,191,36,.08); color:var(--amber); }
-    .fct-c { background:rgba(34,211,238,.08); color:var(--cyan); }
+    /* NAV */
+    nav{position:fixed;top:0;left:0;right:0;z-index:200;height:60px;display:flex;align-items:center;justify-content:space-between;padding:0 clamp(22px,6vw,90px);transition:background .4s,border-color .4s;border-bottom:1px solid transparent}
+    nav.scrolled{background:rgba(9,8,14,.9);backdrop-filter:blur(28px);-webkit-backdrop-filter:blur(28px);border-color:var(--ln-v)}
+    .nav-brand{display:flex;align-items:center;gap:10px;text-decoration:none}
+    .brand-mark{width:26px;height:26px;border-radius:7px;background:linear-gradient(135deg,#9370ff,#5b4fcf);display:flex;align-items:center;justify-content:center;font-family:'JetBrains Mono',monospace;font-size:11px;color:#fff;font-weight:700;box-shadow:0 0 16px rgba(147,112,255,.5)}
+    .brand-name{font-size:15px;font-weight:600;color:var(--t0);letter-spacing:.01em}
+    .brand-ver{font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--t2);padding:2px 7px;border:1px solid var(--ln-v);border-radius:20px}
+    .nav-links{display:flex;gap:34px;list-style:none}
+    .nav-links a{font-size:13.5px;color:var(--t2);text-decoration:none;transition:color .2s}
+    .nav-links a:hover{color:var(--t0)}
+    .nav-cta{display:flex;align-items:center;gap:8px;padding:8px 20px;border:1px solid var(--ln-v);border-radius:50px;color:var(--vio-hi);text-decoration:none;font-size:13px;font-weight:500;background:var(--vio-s);transition:background .2s,border-color .2s,box-shadow .2s}
+    .nav-cta:hover{background:var(--vio-d);border-color:var(--ln-vhi);box-shadow:0 0 22px rgba(147,112,255,.15)}
+    .pulse-dot{width:6px;height:6px;background:var(--live);border-radius:50%;animation:breathe 2.4s ease infinite;box-shadow:0 0 7px var(--live)}
+    @keyframes breathe{0%,100%{opacity:1}50%{opacity:.2}}
+    .nav-ham{display:none;background:none;border:none;color:var(--t1);cursor:pointer;font-size:18px}
 
-    /* ── STEPS ── */
-    .steps-grid {
-      display:grid; grid-template-columns:repeat(3,1fr);
-      gap:0; max-width:920px; margin:60px auto 0; position:relative;
-    }
-    .steps-grid::before {
-      content:''; position:absolute; top:24px;
-      left:calc(16.67% + 24px); right:calc(16.67% + 24px);
-      height:1px; background:linear-gradient(90deg,var(--blue),var(--purple)); opacity:.3;
-    }
-    .step { text-align:center; padding:0 22px; }
-    .step-num {
-      width:48px; height:48px; border-radius:50%; background:var(--grad);
-      display:flex; align-items:center; justify-content:center;
-      font-family:'Syne',sans-serif; font-weight:800; font-size:1rem; color:#fff;
-      margin:0 auto 22px; box-shadow:0 0 26px var(--glow); position:relative; z-index:1;
-    }
-    .step-title { font-family:'Syne',sans-serif; font-weight:700; font-size:1rem; margin-bottom:9px; }
-    .step-desc { color:var(--text2); font-size:.86rem; line-height:1.7; }
+    /* HERO */
+    .hero{min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:110px clamp(22px,7vw,100px) 80px;position:relative;overflow:hidden}
+    .hero-bg{position:absolute;inset:0;pointer-events:none;background:radial-gradient(ellipse 65% 55% at 50% -5%,rgba(100,35,210,.18) 0%,transparent 70%),radial-gradient(ellipse 40% 30% at 88% 82%,rgba(99,102,241,.08) 0%,transparent 60%),radial-gradient(ellipse 35% 28% at 6% 72%,rgba(147,112,255,.06) 0%,transparent 60%)}
+    .hero-grid{position:absolute;inset:0;pointer-events:none;background-image:linear-gradient(rgba(147,112,255,.03) 1px,transparent 1px),linear-gradient(90deg,rgba(147,112,255,.03) 1px,transparent 1px);background-size:80px 80px;mask-image:radial-gradient(ellipse 80% 80% at 50% 40%,black 15%,transparent 80%)}
+    .hero-orb{position:absolute;width:640px;height:640px;border-radius:50%;background:radial-gradient(circle,rgba(100,35,210,.11) 0%,rgba(99,102,241,.04) 40%,transparent 70%);top:50%;left:50%;transform:translate(-50%,-60%);pointer-events:none;animation:orbDrift 15s ease-in-out infinite alternate}
+    @keyframes orbDrift{from{transform:translate(-50%,-60%) scale(1);opacity:.7}to{transform:translate(-50%,-50%) scale(1.14);opacity:1}}
+    .hero-ring{position:absolute;border-radius:50%;border:1px solid rgba(147,112,255,.08);top:50%;left:50%;animation:ringPulse 9s ease-in-out infinite alternate;width:520px;height:520px;transform:translate(-50%,-60%)}
+    .hero-ring-2{width:340px;height:340px;border-color:rgba(147,112,255,.12);animation-delay:-4.5s}
+    @keyframes ringPulse{from{opacity:.4;transform:translate(-50%,-60%) scale(1)}to{opacity:1;transform:translate(-50%,-56%) scale(1.05)}}
 
-    /* ── REVIEWS ── */
-    .reviews-grid {
-      display:grid; grid-template-columns:repeat(3,1fr); gap:16px;
-      max-width:1060px; margin:60px auto 0;
-    }
-    .review-card {
-      background:var(--bg); border:1px solid var(--border); border-radius:18px;
-      padding:26px; display:flex; flex-direction:column; gap:14px;
-      transition:border-color .2s,transform .2s;
-    }
-    .review-card:hover { border-color:rgba(79,142,255,.2); transform:translateY(-3px); }
-    .stars { color:#f59e0b; font-size:.88rem; letter-spacing:2px; }
-    .review-text { color:var(--text2); font-size:.86rem; line-height:1.75; flex:1; font-style:italic; }
-    .reviewer { display:flex; align-items:center; gap:11px; }
-    .rev-av {
-      width:38px; height:38px; border-radius:50%; background:var(--grad);
-      display:flex; align-items:center; justify-content:center;
-      font-family:'Syne',sans-serif; font-weight:700; font-size:.78rem; flex-shrink:0;
-    }
-    .rev-name { font-weight:700; font-size:.86rem; }
-    .rev-handle { color:var(--muted); font-size:.7rem; }
+    .hero-eyebrow{display:inline-flex;align-items:center;gap:10px;font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.2em;text-transform:uppercase;color:var(--t2);margin-bottom:44px;position:relative;z-index:1;animation:fadeUp .9s ease both}
+    .hero-eyebrow::before,.hero-eyebrow::after{content:'';display:block;width:22px;height:1px;background:var(--ln-v)}
+    .hero-title{font-family:'Instrument Serif',serif;font-size:clamp(3rem,8.5vw,7.4rem);font-weight:400;line-height:1.01;letter-spacing:-.025em;max-width:900px;position:relative;z-index:1;animation:fadeUp .9s .08s ease both}
+    .hero-title em{font-style:italic;color:var(--t1)}
+    .vio-word{background:linear-gradient(135deg,#c4aaff,#9d71ff,#6366f1);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+    .hero-desc{margin-top:26px;font-size:16px;font-weight:300;line-height:1.85;color:var(--t2);max-width:430px;position:relative;z-index:1;animation:fadeUp .9s .18s ease both}
+    .hero-actions{margin-top:52px;display:flex;gap:12px;flex-wrap:wrap;justify-content:center;position:relative;z-index:1;animation:fadeUp .9s .28s ease both}
 
-    /* ── CTA ── */
-    .cta-inner { max-width:660px; margin:0 auto; position:relative; z-index:1; text-align:center; }
-    .cta-title {
-      font-family:'Syne',sans-serif; font-size:clamp(2.3rem,5vw,3.8rem);
-      font-weight:800; letter-spacing:-1.5px; line-height:1.05; margin-bottom:18px;
-    }
-    .cta-sub { color:var(--text2); font-size:.98rem; line-height:1.75; max-width:460px; margin:0 auto 40px; }
-    .cta-perks { display:flex; gap:20px; justify-content:center; flex-wrap:wrap; margin-bottom:40px; }
-    .cta-perk { display:flex; align-items:center; gap:6px; font-size:.8rem; color:var(--text2); }
-    .cta-perk::before { content:'✓'; color:var(--green); font-weight:700; }
+    .btn-primary{display:inline-flex;align-items:center;gap:8px;padding:13px 32px;background:linear-gradient(135deg,#7c4ff6,#5b41d0);color:#fff;border-radius:50px;border:none;cursor:pointer;font-family:'Outfit',sans-serif;font-size:14px;font-weight:600;text-decoration:none;letter-spacing:.01em;box-shadow:0 0 32px rgba(124,79,246,.45),0 4px 18px rgba(0,0,0,.35);transition:opacity .2s,transform .2s,box-shadow .2s}
+    .btn-primary:hover{opacity:.9;transform:translateY(-2px);box-shadow:0 0 48px rgba(124,79,246,.6),0 6px 26px rgba(0,0,0,.35)}
+    .btn-outline{display:inline-flex;align-items:center;gap:8px;padding:13px 30px;border:1px solid var(--ln-v);color:var(--t1);border-radius:50px;cursor:pointer;font-family:'Outfit',sans-serif;font-size:14px;text-decoration:none;background:var(--vio-s);transition:border-color .2s,color .2s,background .2s,box-shadow .2s}
+    .btn-outline:hover{border-color:var(--ln-vhi);color:var(--t0);background:var(--vio-d);box-shadow:0 0 20px rgba(147,112,255,.1)}
 
-    /* ── FOOTER ── */
-    footer {
-      background:var(--surface); border-top:1px solid var(--border);
-      padding:40px 5% 28px;
-    }
-    .footer-inner {
-      max-width:1060px; margin:0 auto;
-      display:grid; grid-template-columns:1.5fr 1fr 1fr 1fr;
-      gap:44px; margin-bottom:36px;
-    }
-    .footer-logo { display:flex; align-items:center; gap:9px; margin-bottom:13px; text-decoration:none; }
-    .footer-tagline { color:var(--text2); font-size:.82rem; line-height:1.6; max-width:210px; margin-bottom:18px; }
-    .footer-status {
-      display:inline-flex; align-items:center; gap:7px; padding:5px 12px;
-      background:rgba(52,211,153,.07); border:1px solid rgba(52,211,153,.18);
-      border-radius:20px; font-size:.67rem; color:var(--green); font-weight:600;
-    }
-    .footer-status::before { content:''; width:6px; height:6px; background:var(--green); border-radius:50%; animation:pulse 2s infinite; }
-    .footer-col-title {
-      font-family:'Syne',sans-serif; font-weight:700; font-size:.78rem;
-      text-transform:uppercase; letter-spacing:.12em; color:var(--muted); margin-bottom:14px;
-    }
-    .footer-links { display:flex; flex-direction:column; gap:9px; }
-    .footer-links a { color:var(--text2); text-decoration:none; font-size:.86rem; transition:color .2s; }
-    .footer-links a:hover { color:var(--text); }
-    .footer-bottom {
-      max-width:1060px; margin:0 auto; padding-top:22px;
-      border-top:1px solid var(--border);
-      display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:10px;
-    }
-    .footer-copy { color:var(--muted); font-size:.76rem; }
+    .hero-stats{margin-top:80px;display:grid;grid-template-columns:repeat(4,1fr);max-width:680px;position:relative;z-index:1;animation:fadeUp .9s .42s ease both;border:1px solid var(--ln-v);border-radius:16px;overflow:hidden;background:rgba(147,112,255,.03);backdrop-filter:blur(14px)}
+    .h-stat{padding:24px 16px;text-align:center}
+    .h-stat:not(:last-child){border-right:1px solid var(--ln-v)}
+    .h-stat-val{font-family:'Instrument Serif',serif;font-size:2.3rem;line-height:1;background:linear-gradient(135deg,#c4aaff,#9d71ff);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+    .h-stat-lbl{font-size:10.5px;color:var(--t2);margin-top:7px;letter-spacing:.04em}
+    @keyframes fadeUp{from{opacity:0;transform:translateY(22px)}to{opacity:1;transform:translateY(0)}}
 
-    /* ── SCROLL REVEAL ── */
-    .reveal { opacity:0; transform:translateY(24px); transition:opacity .7s ease,transform .7s ease; }
-    .reveal.visible { opacity:1; transform:translateY(0); }
+    /* SECTIONS */
+    .section{padding:var(--gap) clamp(22px,6vw,90px)}
+    .section-alt{background:var(--bg-1);position:relative}
+    .section-alt::before{content:'';position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,var(--ln-v),transparent)}
+    .sec-label{display:inline-flex;align-items:center;gap:9px;font-family:'JetBrains Mono',monospace;font-size:9.5px;letter-spacing:.2em;text-transform:uppercase;color:var(--vio-hi);margin-bottom:18px}
+    .sec-label::before{content:'';display:block;width:20px;height:1px;background:var(--ln-v)}
+    .sec-title{font-family:'Instrument Serif',serif;font-size:clamp(2rem,4.5vw,3.6rem);font-weight:400;line-height:1.08;letter-spacing:-.018em;margin-bottom:14px}
+    .sec-title em{font-style:italic;color:var(--t1)}
+    .sec-sub{color:var(--t2);font-size:15px;font-weight:300;max-width:430px;line-height:1.85}
 
-    /* ── ANIMATIONS ── */
-    @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.35} }
-    @keyframes fadeUp { from{opacity:0;transform:translateY(20px)} to{opacity:1;transform:translateY(0)} }
+    /* FEATURES */
+    .feat-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:var(--ln-v);border:1px solid var(--ln-v);border-radius:var(--r);overflow:hidden;max-width:1080px;margin:64px auto 0}
+    .feat-card{background:var(--bg-1);padding:36px 30px;position:relative;transition:background .3s;overflow:hidden}
+    .feat-card::before{content:'';position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,var(--vio),transparent);opacity:0;transition:opacity .4s}
+    .feat-card::after{content:'';position:absolute;top:-60px;left:0;right:0;height:100px;background:radial-gradient(ellipse 80% 100% at 50% 0%,rgba(147,112,255,.14) 0%,transparent 100%);opacity:0;transition:opacity .4s}
+    .feat-card:hover{background:var(--bg-2)}
+    .feat-card:hover::before,.feat-card:hover::after{opacity:1}
+    .feat-card.wide{grid-column:span 2}
+    .fc-glyph{font-size:18px;margin-bottom:22px;display:block;line-height:1;filter:drop-shadow(0 0 8px rgba(147,112,255,.5))}
+    .fc-title{font-size:14.5px;font-weight:600;margin-bottom:10px;letter-spacing:-.01em;color:var(--t0)}
+    .fc-desc{font-size:13px;color:var(--t2);line-height:1.8;margin-bottom:18px;font-weight:300}
+    .fc-badge{display:inline-flex;align-items:center;gap:5px;font-family:'JetBrains Mono',monospace;font-size:9.5px;color:var(--vio-hi);padding:4px 11px;border:1px solid var(--ln-v);border-radius:20px;background:var(--vio-d)}
 
-    /* ── MOBILE ── */
-    @media(max-width:900px) {
-      .feat-grid { grid-template-columns:1fr 1fr; }
-      .feat-card.wide { grid-column:span 2; }
-      .steps-grid { grid-template-columns:1fr; gap:36px; }
-      .steps-grid::before { display:none; }
-      .reviews-grid { grid-template-columns:1fr; }
-      .footer-inner { grid-template-columns:1fr 1fr; }
-      .nav-links { display:none; }
-      .ham { display:block; }
-    }
-    @media(max-width:600px) {
-      .feat-grid { grid-template-columns:1fr; }
-      .feat-card.wide { grid-column:span 1; }
-      .hero-stats { gap:28px; }
-      .footer-inner { grid-template-columns:1fr; gap:28px; }
-    }
+    /* PROCESS */
+    .steps-max{max-width:880px;margin:0 auto}
+    .steps-row{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:var(--ln-v);border:1px solid var(--ln-v);border-radius:var(--r);overflow:hidden;margin-top:64px}
+    .step-card{background:var(--bg-0);padding:42px 30px;position:relative;overflow:hidden}
+    .step-card::after{content:'';position:absolute;bottom:0;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,rgba(147,112,255,.5),transparent);opacity:0;transition:opacity .4s}
+    .step-card:hover::after{opacity:1}
+    .step-num{font-family:'Instrument Serif',serif;font-size:3.8rem;color:rgba(147,112,255,.12);line-height:1;margin-bottom:22px;display:block;transition:color .4s}
+    .step-card:hover .step-num{color:rgba(147,112,255,.26)}
+    .step-title{font-size:14.5px;font-weight:600;margin-bottom:10px}
+    .step-desc{font-size:13px;color:var(--t2);line-height:1.8;font-weight:300}
+
+    /* REVIEWS */
+    .reviews-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;max-width:1080px;margin:64px auto 0}
+    .review-card{background:var(--bg-1);border:1px solid var(--ln-0);border-radius:var(--r);padding:30px;transition:border-color .3s,transform .3s,box-shadow .3s;display:flex;flex-direction:column;position:relative;overflow:hidden}
+    .review-card::before{content:'';position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,rgba(147,112,255,.35),transparent);opacity:0;transition:opacity .3s}
+    .review-card:hover{border-color:var(--ln-v);transform:translateY(-4px);box-shadow:0 10px 36px rgba(100,35,210,.12)}
+    .review-card:hover::before{opacity:1}
+    .review-quote{font-family:'Instrument Serif',serif;font-size:1.05rem;font-style:italic;color:var(--t1);line-height:1.75;flex:1;margin-bottom:26px}
+    .review-meta{display:flex;align-items:center;gap:12px}
+    .review-av{width:34px;height:34px;border-radius:50%;background:linear-gradient(135deg,rgba(124,79,246,.2),rgba(99,102,241,.1));border:1px solid var(--ln-v);display:flex;align-items:center;justify-content:center;font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--vio-hi);flex-shrink:0}
+    .review-name{font-size:13px;font-weight:600;line-height:1.2}
+    .review-handle{font-size:11px;color:var(--t2);margin-top:2px}
+
+    /* CTA */
+    .cta-max{max-width:640px;margin:0 auto;text-align:center;position:relative;z-index:1}
+    .cta-glow{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:600px;height:400px;border-radius:50%;background:radial-gradient(ellipse,rgba(100,35,210,.14) 0%,transparent 70%);pointer-events:none}
+    .cta-perks{display:flex;justify-content:center;flex-wrap:wrap;gap:24px;margin:30px 0 44px}
+    .cta-perk{font-size:12.5px;color:var(--t2);display:flex;align-items:center;gap:6px}
+    .cta-perk::before{content:'✓';color:var(--vio-hi);font-size:11px;font-weight:700}
+
+    /* FOOTER */
+    footer{border-top:1px solid var(--ln-0);padding:52px clamp(22px,6vw,90px) 32px}
+    .footer-grid{display:grid;grid-template-columns:2fr 1fr 1fr 1fr;gap:52px;max-width:1080px;margin:0 auto 48px}
+    .footer-tagline{font-size:13px;color:var(--t2);line-height:1.7;margin-top:14px;max-width:195px;font-weight:300}
+    .footer-status{display:inline-flex;align-items:center;gap:7px;margin-top:18px;font-family:'JetBrains Mono',monospace;font-size:9.5px;color:var(--vio-hi)}
+    .footer-col-title{font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:.15em;text-transform:uppercase;color:var(--t2);margin-bottom:16px}
+    .footer-links{display:flex;flex-direction:column;gap:11px}
+    .footer-links a{font-size:13px;color:var(--t2);text-decoration:none;transition:color .2s;font-weight:300}
+    .footer-links a:hover{color:var(--vio-hi)}
+    .footer-bottom{max-width:1080px;margin:32px auto 0;padding-top:24px;border-top:1px solid var(--ln-0);display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px}
+    .footer-copy{font-size:12px;color:var(--t2)}
+
+    /* REVEAL */
+    .reveal{opacity:0;transform:translateY(16px);transition:opacity .75s ease,transform .75s ease}
+    .reveal.vis{opacity:1;transform:translateY(0)}
+    .d1{transition-delay:.1s}.d2{transition-delay:.2s}.d3{transition-delay:.3s}
+
+    /* RESPONSIVE */
+    @media(max-width:960px){.feat-grid{grid-template-columns:1fr 1fr}.feat-card.wide{grid-column:span 2}.steps-row{grid-template-columns:1fr}.reviews-grid{grid-template-columns:1fr;max-width:500px;margin-left:auto;margin-right:auto}.footer-grid{grid-template-columns:1fr 1fr;gap:32px}.nav-links{display:none}.nav-ham{display:block}.hero-stats{grid-template-columns:repeat(2,1fr);max-width:400px}.h-stat:nth-child(2){border-right:none}}
+    @media(max-width:580px){.feat-grid{grid-template-columns:1fr}.feat-card.wide{grid-column:span 1}.footer-grid{grid-template-columns:1fr;gap:24px}.hero-stats{max-width:320px}}
   </style>
 </head>
 <body>
+<canvas id="particles"></canvas>
 
-  <nav id="nav">
-    <a href="./index.html" class="nav-logo">
-      <div class="logo-mark">X</div>
-      <span class="logo-word">Xarvis AI</span>
-      <span class="logo-ver">v4</span>
-    </a>
-    <ul class="nav-links">
-      <li><a href="#features">Features</a></li>
-      <li><a href="#howitworks">How It Works</a></li>
-      <li><a href="#reviews">Reviews</a></li>
-    </ul>
-    <a href="./app.html" class="nav-cta">🚀 Launch App</a>
-    <button class="ham" id="ham">☰</button>
-  </nav>
+<!-- NAV -->
+<nav id="nav">
+  <a href="./index.html" class="nav-brand">
+    <div class="brand-mark">X</div>
+    <span class="brand-name">Xarvis AI</span>
+    <span class="brand-ver">v4</span>
+  </a>
+  <ul class="nav-links">
+    <li><a href="#features">Features</a></li>
+    <li><a href="#process">Process</a></li>
+    <li><a href="#reviews">Reviews</a></li>
+  </ul>
+  <a href="./app.html" class="nav-cta">
+    <span class="pulse-dot"></span>Launch App
+  </a>
+  <button class="nav-ham" id="ham">☰</button>
+</nav>
 
-  <!-- HERO -->
-  <section class="hero">
-    <div class="hero-grid"></div>
-    <div class="blob blob-blue"></div>
-    <div class="blob blob-purple"></div>
+<!-- HERO -->
+<section class="hero">
+  <div class="hero-bg"></div>
+  <div class="hero-grid"></div>
+  <div class="hero-orb"></div>
+  <div class="hero-ring"></div>
+  <div class="hero-ring hero-ring-2"></div>
 
-    <div class="hero-badge"><span class="bdot"></span>No waitlist — start free in 60 seconds</div>
-    <h1>Your AI Co-Founder<br>for <span class="hl">Going Viral.</span></h1>
-    <p class="hero-sub">Xarvis AI is the operating system every creator needs — writing hooks, planning content, building growth engines. No team required.</p>
+  <div class="hero-eyebrow">The Creator Operating System</div>
 
-    <div class="hero-btns">
-      <a href="./app.html" class="btn-primary">🚀 Launch App Free</a>
-      <a href="#features" class="btn-ghost">See Features ↓</a>
+  <h1 class="hero-title">
+    Your AI Co-Founder<br>for <span class="vio-word"><em>Going Viral.</em></span>
+  </h1>
+
+  <p class="hero-desc">
+    Xarvis AI handles everything — hooks, scripts, calendars, growth engines. No team. No guesswork. Just results.
+  </p>
+
+  <div class="hero-actions">
+    <a href="./app.html" class="btn-primary">Launch Free &nbsp;→</a>
+    <a href="#features" class="btn-outline">See Features</a>
+  </div>
+
+  <div class="hero-stats">
+    <div class="h-stat"><div class="h-stat-val">94%</div><div class="h-stat-lbl">Virality Accuracy</div></div>
+    <div class="h-stat"><div class="h-stat-val">12h</div><div class="h-stat-lbl">Saved Weekly</div></div>
+    <div class="h-stat"><div class="h-stat-val">4.2×</div><div class="h-stat-lbl">Avg Engagement</div></div>
+    <div class="h-stat"><div class="h-stat-val">8k+</div><div class="h-stat-lbl">Creators</div></div>
+  </div>
+</section>
+
+<!-- FEATURES -->
+<section class="section" id="features">
+  <div class="reveal">
+    <div class="sec-label">The Creator OS</div>
+    <h2 class="sec-title">Six tools. One <em>unstoppable</em> creator.</h2>
+    <p class="sec-sub">Everything to build, grow, and monetize your content — powered by AI that never sleeps.</p>
+  </div>
+  <div class="feat-grid">
+    <div class="feat-card wide reveal d1">
+      <span class="fc-glyph">⚡</span>
+      <div class="fc-title">Viral Content Generator</div>
+      <div class="fc-desc">Drop your idea. Get a scroll-stopping hook, full script, title variations, and a thumbnail concept — engineered for maximum retention and click-through.</div>
+      <span class="fc-badge">Output in under 30 seconds</span>
     </div>
+    <div class="feat-card reveal d1">
+      <span class="fc-glyph">◎</span>
+      <div class="fc-title">Post Next — AI Picks For You</div>
+      <div class="fc-desc">Xarvis analyzes your niche and surfaces the single idea most likely to go viral right now. Stop second-guessing.</div>
+      <span class="fc-badge">Data-driven · Daily</span>
+    </div>
+    <div class="feat-card reveal d2">
+      <span class="fc-glyph">▦</span>
+      <div class="fc-title">7-Day Content Calendar</div>
+      <div class="fc-desc">Topics, angles, and ready-to-use hooks for a full week. Plan your entire content strategy in sixty seconds.</div>
+      <span class="fc-badge">Full week · Instantly</span>
+    </div>
+    <div class="feat-card reveal d2">
+      <span class="fc-glyph">◈</span>
+      <div class="fc-title">Feedback Analyzer</div>
+      <div class="fc-desc">Paste any video idea. Xarvis scores it, identifies every weak point, and tells you exactly how to fix it before you post.</div>
+      <span class="fc-badge">Viral score out of 10</span>
+    </div>
+    <div class="feat-card reveal d3">
+      <span class="fc-glyph">↗</span>
+      <div class="fc-title">Agent Mode</div>
+      <div class="fc-desc">Give Xarvis a big goal. Get a complete phased execution roadmap — like having a co-founder who never sleeps.</div>
+      <span class="fc-badge">Multi-step deep planning</span>
+    </div>
+    <div class="feat-card reveal d3">
+      <span class="fc-glyph">◐</span>
+      <div class="fc-title">AI Advisor — Always On</div>
+      <div class="fc-desc">Ask anything. Growth strategy, monetization, trend intel, sponsorship scripts — Xarvis adapts to your niche and voice.</div>
+      <span class="fc-badge">Streaming responses</span>
+    </div>
+  </div>
+</section>
 
-    <div class="hero-stats">
-      <div class="h-stat"><div class="h-stat-num">94%</div><div class="h-stat-lbl">Virality Accuracy</div></div>
-      <div class="h-stat"><div class="h-stat-num">12hrs</div><div class="h-stat-lbl">Saved Weekly</div></div>
-      <div class="h-stat"><div class="h-stat-num">4.2×</div><div class="h-stat-lbl">Avg Engagement</div></div>
-      <div class="h-stat"><div class="h-stat-num">8k+</div><div class="h-stat-lbl">Creators</div></div>
+<!-- PROCESS -->
+<section class="section section-alt" id="process">
+  <div class="steps-max">
+    <div class="reveal">
+      <div class="sec-label">The Process</div>
+      <h2 class="sec-title">Three steps <em>to viral.</em></h2>
+      <p class="sec-sub">No complex setup. No learning curve. Fully operational in minutes.</p>
     </div>
-  </section>
-
-  <!-- FEATURES -->
-  <section class="section" id="features">
-    <div class="sec-hdr reveal">
-      <div class="sec-eyebrow">The Creator OS</div>
-      <div class="sec-title">Six tools. One <span class="hl">unstoppable</span> creator.</div>
-      <p class="sec-sub">Everything to build, grow, and monetize your content — powered by AI that never sleeps.</p>
-    </div>
-    <div class="feat-grid">
-      <div class="feat-card wide reveal">
-        <div class="fc-icon fci-b">🔥</div>
-        <div class="fc-title">Viral Content Generator</div>
-        <div class="fc-desc">Drop your idea — get a scroll-stopping hook, full script, title options, and thumbnail concept engineered for maximum retention and clicks.</div>
-        <span class="fc-tag fct-b">⚡ Output in under 30 seconds</span>
-      </div>
-      <div class="feat-card reveal">
-        <div class="fc-icon fci-g">🎯</div>
-        <div class="fc-title">Post Next — AI Picks For You</div>
-        <div class="fc-desc">Stop guessing. Xarvis analyzes your niche and tells you the ONE idea most likely to go viral right now.</div>
-        <span class="fc-tag fct-g">🎯 Data-driven, daily</span>
-      </div>
-      <div class="feat-card reveal">
-        <div class="fc-icon fci-p">📅</div>
-        <div class="fc-title">7-Day Content Calendar</div>
-        <div class="fc-desc">A full week of content — topics, unique angles, and ready-to-use hooks. Plan in 60 seconds.</div>
-        <span class="fc-tag fct-p">📅 Full week planned instantly</span>
-      </div>
-      <div class="feat-card reveal">
-        <div class="fc-icon fci-a">📊</div>
-        <div class="fc-title">Feedback Analyzer</div>
-        <div class="fc-desc">Paste any video idea. Xarvis scores it, finds weak points, and tells you exactly how to fix it before you post.</div>
-        <span class="fc-tag fct-a">📊 Viral score out of 10</span>
-      </div>
-      <div class="feat-card reveal">
-        <div class="fc-icon fci-c">🚀</div>
-        <div class="fc-title">Agent Mode</div>
-        <div class="fc-desc">Give Xarvis a big goal. Get a complete phased execution roadmap — like having a co-founder.</div>
-        <span class="fc-tag fct-c">🧠 Multi-step deep planning</span>
-      </div>
-      <div class="feat-card reveal">
-        <div class="fc-icon fci-b">💬</div>
-        <div class="fc-title">AI Advisor — Always On</div>
-        <div class="fc-desc">Ask anything. Growth strategy, monetization, trend intel, sponsorship scripts — Xarvis adapts to your niche.</div>
-        <span class="fc-tag fct-b">💡 Streaming responses</span>
-      </div>
-    </div>
-  </section>
-
-  <!-- HOW IT WORKS -->
-  <section class="section dark" id="howitworks">
-    <div class="sec-hdr reveal">
-      <div class="sec-eyebrow">The Process</div>
-      <div class="sec-title">Three Steps to <span class="hl">Viral</span></div>
-      <p class="sec-sub">No complex setup. No learning curve. Operational in minutes.</p>
-    </div>
-    <div class="steps-grid">
-      <div class="step reveal">
-        <div class="step-num">1</div>
+    <div class="steps-row">
+      <div class="step-card reveal d1">
+        <span class="step-num">01</span>
         <div class="step-title">Tell Xarvis Your Niche & Goals</div>
-        <p class="step-desc">Share your niche, platform, and what you're trying to achieve. Xarvis adapts to your voice and audience from day one.</p>
+        <p class="step-desc">Share your niche, platform, and what you're building toward. Xarvis adapts to your voice and audience from day one.</p>
       </div>
-      <div class="step reveal">
-        <div class="step-num">2</div>
+      <div class="step-card reveal d2">
+        <span class="step-num">02</span>
         <div class="step-title">Xarvis Builds Your Strategy</div>
-        <p class="step-desc">In seconds, get scripts, hooks, content calendars, growth plans, and monetization frameworks — all personalized.</p>
+        <p class="step-desc">In seconds: scripts, hooks, content calendars, growth plans, and monetization frameworks — all personalized to you.</p>
       </div>
-      <div class="step reveal">
-        <div class="step-num">3</div>
+      <div class="step-card reveal d3">
+        <span class="step-num">03</span>
         <div class="step-title">Post, Scale & Monetize</div>
-        <p class="step-desc">Execute the plan. Track growth. Come back daily for new content, new strategies, and a second brain that never sleeps.</p>
+        <p class="step-desc">Execute the plan. Return daily for new content, new strategies, and a second brain that compounds over time.</p>
       </div>
     </div>
-  </section>
+  </div>
+</section>
 
-  <!-- REVIEWS -->
-  <section class="section" id="reviews">
-    <div class="sec-hdr reveal">
-      <div class="sec-eyebrow">Creator Stories</div>
-      <div class="sec-title">Creators Are Already <span class="hl">Winning</span></div>
-      <p class="sec-sub">From solo creators to full-time influencers — Xarvis AI is changing how content gets made and monetized.</p>
+<!-- REVIEWS -->
+<section class="section" id="reviews">
+  <div class="reveal">
+    <div class="sec-label">Creator Stories</div>
+    <h2 class="sec-title">Creators are already <em>winning.</em></h2>
+    <p class="sec-sub">From solo creators to full-time influencers — Xarvis AI is reshaping how content gets made and monetized.</p>
+  </div>
+  <div class="reviews-grid">
+    <div class="review-card reveal d1">
+      <div class="review-quote">"Xarvis predicted which clip would go viral and it hit 2.1M views. I've never had that confidence posting before. It's like having a data scientist on call."</div>
+      <div class="review-meta"><div class="review-av">AK</div><div><div class="review-name">Alex Kim</div><div class="review-handle">@alexkim.creates · 890K followers</div></div></div>
     </div>
-    <div class="reviews-grid">
-      <div class="review-card reveal">
-        <div class="stars">★★★★★</div>
-        <p class="review-text">"Xarvis AI predicted which clip would go viral and it hit 2.1M views. I've never had that confidence posting before. It's like having a data scientist on my team."</p>
-        <div class="reviewer"><div class="rev-av">AK</div><div><div class="rev-name">Alex Kim</div><div class="rev-handle">@alexkim.creates · 890K followers</div></div></div>
-      </div>
-      <div class="review-card reveal">
-        <div class="stars">★★★★★</div>
-        <p class="review-text">"I went from 3 hours on captions to 10 minutes. Xarvis writes better hooks than I do. My engagement is up 340% in 6 weeks."</p>
-        <div class="reviewer"><div class="rev-av">SR</div><div><div class="rev-name">Sofia Reyes</div><div class="rev-handle">@sofiareyes · 1.2M followers</div></div></div>
-      </div>
-      <div class="review-card reveal">
-        <div class="stars">★★★★★</div>
-        <p class="review-text">"The content suggestions are insane. Xarvis told me to post a specific format 2 days before it blew up everywhere. Like having a team of strategists who never sleep."</p>
-        <div class="reviewer"><div class="rev-av">JM</div><div><div class="rev-name">Jake Monroe</div><div class="rev-handle">@jakemonroe · 450K followers</div></div></div>
-      </div>
+    <div class="review-card reveal d2">
+      <div class="review-quote">"I went from 3 hours on captions to 10 minutes. Xarvis writes better hooks than I do. My engagement is up 340% in just six weeks."</div>
+      <div class="review-meta"><div class="review-av">SR</div><div><div class="review-name">Sofia Reyes</div><div class="review-handle">@sofiareyes · 1.2M followers</div></div></div>
     </div>
-  </section>
+    <div class="review-card reveal d3">
+      <div class="review-quote">"Xarvis told me to post a specific format 2 days before it blew up everywhere. Like having a team of strategists who never sleep."</div>
+      <div class="review-meta"><div class="review-av">JM</div><div><div class="review-name">Jake Monroe</div><div class="review-handle">@jakemonroe · 450K followers</div></div></div>
+    </div>
+  </div>
+</section>
 
-  <!-- CTA -->
-  <section class="section dark">
-    <div class="cta-inner">
-      <div class="sec-eyebrow" style="justify-content:center;margin-bottom:20px">Ready to Scale</div>
-      <div class="cta-title reveal">Ready to <span class="hl">Scale<br>Your Content?</span></div>
-      <p class="cta-sub reveal">Join thousands of creators using Xarvis AI as their unfair advantage. Start free today.</p>
-      <div class="cta-perks reveal">
-        <span class="cta-perk">Instant onboarding</span>
-        <span class="cta-perk">No credit card</span>
-        <span class="cta-perk">Cancel anytime</span>
-        <span class="cta-perk">Real AI responses</span>
-      </div>
-      <a href="./app.html" class="btn-primary reveal" style="display:inline-flex;margin:0 auto;font-size:1rem;padding:17px 50px">🚀 Launch App Free</a>
+<!-- CTA -->
+<section class="section section-alt" style="position:relative;overflow:hidden">
+  <div class="cta-glow"></div>
+  <div class="cta-max">
+    <div class="sec-label reveal" style="justify-content:center">Ready to Scale</div>
+    <h2 class="sec-title reveal" style="margin-top:10px">Ready to scale<br><em>your content?</em></h2>
+    <p class="sec-sub reveal" style="margin:16px auto;text-align:center;max-width:380px">Join thousands of creators using Xarvis as their unfair advantage. Start free today — no credit card required.</p>
+    <div class="cta-perks reveal">
+      <span class="cta-perk">Instant onboarding</span>
+      <span class="cta-perk">No credit card</span>
+      <span class="cta-perk">Cancel anytime</span>
+      <span class="cta-perk">Real AI responses</span>
     </div>
-  </section>
+    <div style="display:flex;justify-content:center" class="reveal d1">
+      <a href="./app.html" class="btn-primary" style="font-size:15px;padding:15px 42px">Launch App Free &nbsp;→</a>
+    </div>
+  </div>
+</section>
 
-  <!-- FOOTER -->
-  <footer>
-    <div class="footer-inner">
-      <div>
-        <a href="./index.html" class="footer-logo">
-          <div class="logo-mark">X</div>
-          <span class="logo-word">Xarvis AI</span>
-        </a>
-        <p class="footer-tagline">Your AI co-founder for creators who are done playing small.</p>
-        <span class="footer-status">AI Online — Systems Nominal</span>
-      </div>
-      <div>
-        <div class="footer-col-title">Product</div>
-        <div class="footer-links">
-          <a href="#features">Features</a>
-          <a href="#howitworks">How It Works</a>
-          <a href="./app.html">Launch App</a>
-        </div>
-      </div>
-      <div>
-        <div class="footer-col-title">Tools</div>
-        <div class="footer-links">
-          <a href="./app.html">Viral Generator</a>
-          <a href="./app.html">Post Next</a>
-          <a href="./app.html">Content Calendar</a>
-          <a href="./app.html">Feedback Analyzer</a>
-        </div>
-      </div>
-      <div>
-        <div class="footer-col-title">Powered by</div>
-        <div class="footer-links">
-          <a href="https://xarvis-ai.onrender.com" target="_blank" rel="noopener">Render Backend</a>
-        </div>
+<!-- FOOTER -->
+<footer>
+  <div class="footer-grid">
+    <div>
+      <a href="./index.html" class="nav-brand" style="text-decoration:none">
+        <div class="brand-mark">X</div>
+        <span class="brand-name">Xarvis AI</span>
+      </a>
+      <p class="footer-tagline">Your AI co-founder for creators who are done playing small.</p>
+      <div class="footer-status"><span class="pulse-dot"></span>AI Systems Online</div>
+    </div>
+    <div>
+      <div class="footer-col-title">Product</div>
+      <div class="footer-links">
+        <a href="#features">Features</a>
+        <a href="#process">How It Works</a>
+        <a href="./app.html">Launch App</a>
       </div>
     </div>
-    <div class="footer-bottom">
-      <span class="footer-copy">© 2026 Xarvis AI · Built for creators who are done playing small.</span>
-      <span class="footer-copy">Backend: <strong style="color:var(--blue)">xarvis-ai.onrender.com</strong></span>
+    <div>
+      <div class="footer-col-title">Tools</div>
+      <div class="footer-links">
+        <a href="./app.html">Viral Generator</a>
+        <a href="./app.html">Post Next</a>
+        <a href="./app.html">Content Calendar</a>
+        <a href="./app.html">Feedback Analyzer</a>
+      </div>
     </div>
-  </footer>
+    <div>
+      <div class="footer-col-title">Infrastructure</div>
+      <div class="footer-links">
+        <a href="https://xarvis-ai.onrender.com" target="_blank" rel="noopener">Render Backend</a>
+      </div>
+    </div>
+  </div>
+  <div class="footer-bottom">
+    <span class="footer-copy">© 2026 Xarvis AI · Built for creators who are done playing small.</span>
+    <span class="footer-copy" style="font-family:'JetBrains Mono',monospace;font-size:10.5px;color:var(--vio-hi)">xarvis-ai.onrender.com</span>
+  </div>
+</footer>
 
-  <script>
-    // Nav scroll
-    const nav = document.getElementById('nav');
-    window.addEventListener('scroll', () => nav.classList.toggle('scrolled', scrollY > 40));
+<script>
+/* NAV */
+const nav=document.getElementById('nav');
+window.addEventListener('scroll',()=>nav.classList.toggle('scrolled',scrollY>28));
 
-    // Scroll reveal
-    const obs = new IntersectionObserver(entries => {
-      entries.forEach(e => { if (e.isIntersecting) { e.target.classList.add('visible'); obs.unobserve(e.target); } });
-    }, { threshold: 0.12 });
-    document.querySelectorAll('.reveal').forEach(el => obs.observe(el));
+/* REVEAL */
+const obs=new IntersectionObserver(es=>{es.forEach(e=>{if(e.isIntersecting){e.target.classList.add('vis');obs.unobserve(e.target)}})},{threshold:.08});
+document.querySelectorAll('.reveal').forEach(el=>obs.observe(el));
 
-    // Mobile nav
-    document.getElementById('ham')?.addEventListener('click', () => {
-      const nl = document.querySelector('.nav-links');
-      const open = nl.style.display === 'flex';
-      nl.style.cssText = open ? '' : 'display:flex;flex-direction:column;position:fixed;top:64px;left:0;right:0;background:rgba(4,6,15,.98);padding:20px 5%;gap:18px;border-bottom:1px solid rgba(255,255,255,.07);z-index:199';
+/* MOBILE NAV */
+let mOpen=false;const nl=document.querySelector('.nav-links');
+document.getElementById('ham')?.addEventListener('click',()=>{
+  mOpen=!mOpen;
+  nl.style.cssText=mOpen?`display:flex;flex-direction:column;position:fixed;top:60px;left:0;right:0;background:rgba(9,8,14,.97);backdrop-filter:blur(28px);padding:22px clamp(22px,6vw,90px);gap:18px;border-bottom:1px solid rgba(147,112,255,.12);z-index:199`:'';
+});
+
+/* PARTICLES */
+(function(){
+  const c=document.getElementById('particles'),ctx=c.getContext('2d');
+  let W,H,pts=[];
+  function resize(){W=c.width=window.innerWidth;H=c.height=window.innerHeight}
+  resize();window.addEventListener('resize',resize);
+  const cols=['147,112,255','99,102,241','167,139,250','124,79,246'];
+  function mk(){return{x:Math.random()*W,y:Math.random()*H,r:Math.random()*1.4+.3,vy:-(Math.random()*.28+.04),vx:(Math.random()-.5)*.12,a:Math.random()*.28+.04,da:(Math.random()*.0025+.0008)*(Math.random()>.5?1:-1),col:cols[Math.floor(Math.random()*cols.length)]}}
+  for(let i=0;i<60;i++)pts.push(mk());
+  function draw(){
+    ctx.clearRect(0,0,W,H);
+    pts.forEach((p,i)=>{
+      p.y+=p.vy;p.x+=p.vx;p.a+=p.da;
+      if(p.a<=0||p.a>=.32)p.da*=-1;
+      if(p.y<-10){pts[i]=mk();pts[i].y=H+10}
+      ctx.beginPath();ctx.arc(p.x,p.y,p.r,0,Math.PI*2);
+      ctx.fillStyle=`rgba(${p.col},${p.a.toFixed(2)})`;ctx.fill();
     });
-  </script>
+    requestAnimationFrame(draw);
+  }
+  draw();
+})();
+</script>
 </body>
 </html>
