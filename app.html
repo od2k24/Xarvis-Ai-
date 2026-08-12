@@ -100,7 +100,6 @@
       height: 100vh;
       overflow: hidden;
       position: relative;
-      /* no z-index: avoid trapping #sidebar below root-level #sidebar-overlay */
     }
 
     /* ─── SIDEBAR ─── */
@@ -630,7 +629,6 @@
       overflow: hidden;
     }
 
-    /* Projects sidebar */
     #clips-projects {
       width: 220px;
       flex-shrink: 0;
@@ -717,7 +715,6 @@
       border-top: 1px solid var(--glass-bd);
     }
 
-    /* Main clips area */
     #clips-main {
       flex: 1;
       display: flex;
@@ -777,7 +774,6 @@
       align-content: start;
     }
 
-    /* Empty state */
     .clips-empty {
       grid-column: 1 / -1;
       display: flex;
@@ -788,24 +784,10 @@
       text-align: center;
       gap: 14px;
     }
-    .clips-empty-icon {
-      font-size: 36px;
-      opacity: .35;
-    }
-    .clips-empty-title {
-      font-family: var(--font-head);
-      font-size: 16px;
-      font-weight: 600;
-      color: var(--t2);
-    }
-    .clips-empty-sub {
-      font-size: 13px;
-      color: var(--t3);
-      max-width: 260px;
-      line-height: 1.6;
-    }
+    .clips-empty-icon { font-size: 36px; opacity: .35; }
+    .clips-empty-title { font-family: var(--font-head); font-size: 16px; font-weight: 600; color: var(--t2); }
+    .clips-empty-sub { font-size: 13px; color: var(--t3); max-width: 260px; line-height: 1.6; }
 
-    /* Clip card */
     .clip-card {
       background: rgba(13,11,24,.65);
       border: 1px solid var(--glass-bd);
@@ -824,11 +806,7 @@
       box-shadow: 0 4px 20px rgba(0,0,0,.3);
     }
 
-    .clip-card-top {
-      display: flex;
-      align-items: flex-start;
-      gap: 10px;
-    }
+    .clip-card-top { display: flex; align-items: flex-start; gap: 10px; }
     .clip-platform-badge {
       width: 28px; height: 28px;
       border-radius: 7px;
@@ -867,10 +845,7 @@
       overflow: hidden;
       text-overflow: ellipsis;
     }
-    .clip-url a {
-      color: var(--t3);
-      text-decoration: none;
-    }
+    .clip-url a { color: var(--t3); text-decoration: none; }
     .clip-url a:hover { color: var(--accent-hi); text-decoration: underline; }
 
     .clip-note {
@@ -883,12 +858,7 @@
       border-left: 2px solid rgba(148,102,255,.3);
     }
 
-    /* Status track — the signature element */
-    .clip-status-track {
-      display: flex;
-      gap: 4px;
-      margin-top: 2px;
-    }
+    .clip-status-track { display: flex; gap: 4px; margin-top: 2px; }
     .status-step {
       flex: 1;
       padding: 5px 0;
@@ -911,11 +881,7 @@
     .status-step.active[data-s="edit"] { background: var(--s-edit-bg); border-color: var(--s-edit-bd); color: var(--accent-hi); }
     .status-step.active[data-s="posted"] { background: var(--s-posted-bg); border-color: var(--s-posted-bd); color: #68d391; }
 
-    .clip-tags {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 5px;
-    }
+    .clip-tags { display: flex; flex-wrap: wrap; gap: 5px; }
     .clip-tag {
       font-family: var(--font-mono);
       font-size: 9.5px;
@@ -927,28 +893,93 @@
     }
 
     /* ════════════════════════════════════════════
-       VIRAL CLIP FINDER
+       VIRAL CLIP FINDER — PREMIUM REDESIGN
     ════════════════════════════════════════════ */
-    .vcf-source-tabs {
-      display: flex;
-      gap: 6px;
-      margin-bottom: 16px;
+    .vcf-hero {
+      text-align: center;
+      max-width: 640px;
+      margin: 0 auto 32px;
     }
+    .vcf-hero-eyebrow {
+      display: inline-flex; align-items: center; gap: 7px;
+      font-family: var(--font-mono); font-size: 11px; color: var(--accent-hi);
+      background: rgba(148,102,255,.10); border: 1px solid rgba(148,102,255,.28);
+      padding: 5px 14px; border-radius: 100px; margin-bottom: 18px;
+    }
+    .vcf-hero-eyebrow .live-dot { width: 6px; height: 6px; }
+    .vcf-hero h1 {
+      font-family: var(--font-head); font-weight: 800; letter-spacing: -0.02em;
+      font-size: clamp(24px, 3.4vw, 34px); line-height: 1.15; margin-bottom: 12px;
+    }
+    .vcf-hero h1 .grad {
+      background: linear-gradient(135deg, var(--p400), var(--accent-hi), var(--i400));
+      -webkit-background-clip: text; background-clip: text; color: transparent;
+    }
+    .vcf-hero p {
+      color: var(--t2); font-size: 14px; line-height: 1.6;
+    }
+
+    .vcf-source-tabs { display: flex; gap: 6px; margin-bottom: 16px; justify-content: center; }
     .vcf-tab {
-      padding: 7px 16px;
-      border-radius: 20px;
+      padding: 8px 18px;
+      border-radius: 100px;
       border: 1px solid var(--glass-bd);
       background: rgba(5,4,10,.4);
       color: var(--t2);
-      font-size: 12.5px;
+      font-size: 13px;
       cursor: pointer;
       font-family: var(--font-body);
       transition: all .15s;
+      display: flex; align-items: center; gap: 7px;
     }
     .vcf-tab.active {
       border-color: rgba(148,102,255,.45);
       color: var(--accent-hi);
       background: rgba(148,102,255,.10);
+    }
+    .vcf-tab-disabled {
+      opacity: .45;
+      cursor: not-allowed;
+    }
+    .vcf-tab-disabled:hover { color: var(--t2); }
+    .vcf-soon-pill {
+      font-family: var(--font-mono); font-size: 9px;
+      background: rgba(255,255,255,.08); padding: 2px 7px; border-radius: 100px;
+      margin-left: 2px;
+    }
+    .vcf-yt-input-row {
+      display: flex; align-items: center; gap: 10px;
+      background: rgba(5,4,10,.5); border: 1px solid var(--glass-bdh);
+      border-radius: 100px; padding: 14px 20px;
+      transition: border-color .2s, box-shadow .2s;
+    }
+    .vcf-yt-input-row:focus-within {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(148,102,255,.1);
+    }
+    .vcf-yt-input-icon { color: var(--accent-hi); font-size: 14px; flex-shrink: 0; }
+    .vcf-yt-input-row input {
+      flex: 1; background: none; border: none; outline: none;
+      color: var(--t0); font-size: 14.5px; font-family: var(--font-mono);
+    }
+    .vcf-yt-input-row input::placeholder { color: var(--t3); font-family: var(--font-body); }
+    .vcf-yt-input-row.valid { border-color: rgba(52,211,153,.5); }
+    .vcf-yt-input-row.invalid { border-color: rgba(220,38,38,.4); }
+    .vcf-yt-hint {
+      font-size: 12px; color: var(--t3); margin-top: 10px; text-align: center;
+      font-family: var(--font-mono);
+    }
+    .vcf-yt-hint.valid { color: #68d391; }
+    .vcf-yt-hint.invalid { color: #fca5a5; }
+
+    .vcf-upload-card {
+      background: linear-gradient(180deg, rgba(148,102,255,.05), rgba(13,11,24,.6));
+      border: 1px solid var(--glass-bdh);
+      border-radius: 24px;
+      padding: 36px;
+      box-shadow: var(--glow-lg), 0 20px 60px -30px rgba(0,0,0,.6);
+      position: relative;
+      overflow: hidden;
     }
 
     #vcf-dropzone {
@@ -956,72 +987,128 @@
       flex-direction: column;
       align-items: center;
       justify-content: center;
-      gap: 6px;
+      gap: 8px;
       text-align: center;
-      padding: 36px 20px;
-      border: 1px dashed var(--glass-bdh);
-      border-radius: var(--r);
+      padding: 48px 20px;
+      border: 1.5px dashed var(--glass-bdh);
+      border-radius: 18px;
       background: rgba(5,4,10,.35);
       cursor: pointer;
-      transition: border-color .2s, background .2s;
+      transition: border-color .2s, background .2s, transform .2s;
     }
     #vcf-dropzone:hover, #vcf-dropzone.dragover {
-      border-color: rgba(148,102,255,.6);
-      background: rgba(148,102,255,.06);
+      border-color: var(--accent);
+      background: rgba(148,102,255,.07);
+      transform: translateY(-2px);
     }
-    .vcf-dropzone-icon { font-size: 22px; color: var(--accent-hi); opacity: .8; }
-    .vcf-dropzone-title { font-size: 13.5px; color: var(--t1); font-weight: 500; }
-    .vcf-dropzone-sub { font-size: 11.5px; color: var(--t3); font-family: var(--font-mono); }
+    .vcf-dropzone-icon {
+      width: 56px; height: 56px; border-radius: 16px;
+      background: linear-gradient(135deg, rgba(148,102,255,.25), rgba(99,102,241,.18));
+      border: 1px solid rgba(148,102,255,.3);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 22px; color: var(--accent-hi);
+      margin-bottom: 6px;
+      transition: transform .3s;
+    }
+    #vcf-dropzone:hover .vcf-dropzone-icon { transform: translateY(-3px); }
+    .vcf-dropzone-title { font-size: 15px; color: var(--t0); font-weight: 600; }
+    .vcf-dropzone-title span { color: var(--accent-hi); text-decoration: underline; text-underline-offset: 3px; }
+    .vcf-dropzone-sub { font-size: 12.5px; color: var(--t3); font-family: var(--font-mono); }
 
-    .vcf-soon-note {
-      font-size: 11.5px;
-      color: var(--t3);
-      margin-top: 8px;
-      font-family: var(--font-mono);
+    .vcf-preview-row {
+      display: none;
+      gap: 16px; align-items: center;
+      background: rgba(5,4,10,.5); border: 1px solid var(--glass-bdh);
+      border-radius: 16px; padding: 14px;
     }
+    .vcf-preview-row.active { display: flex; }
+    .vcf-preview-row video {
+      width: 110px; height: 70px; border-radius: 10px; object-fit: cover; background: #000; flex-shrink: 0;
+    }
+    .vcf-preview-meta { flex: 1; min-width: 0; }
+    .vcf-preview-name { font-size: 14px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .vcf-preview-info { font-size: 12px; color: var(--t3); font-family: var(--font-mono); margin-top: 3px; }
+    .vcf-preview-remove {
+      width: 30px; height: 30px; border-radius: 50%;
+      border: 1px solid var(--glass-bdh); background: none; color: var(--t2);
+      cursor: pointer; display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0; transition: all .15s;
+    }
+    .vcf-preview-remove:hover { border-color: #fca5a5; color: #fca5a5; background: rgba(220,38,38,.08); }
 
-    .vcf-stage-track {
-      display: flex;
-      gap: 8px;
-      margin-top: 4px;
+    .vcf-soon-note { font-size: 11.5px; color: var(--t3); margin-top: 10px; text-align: center; font-family: var(--font-mono); }
+
+    .vcf-meta-row {
+      display: flex; justify-content: center; gap: 22px; margin-top: 22px; flex-wrap: wrap;
+      font-size: 12px; color: var(--t3);
     }
+    .vcf-meta-row span { display: flex; align-items: center; gap: 6px; }
+
+    .vcf-submit-row { display: flex; justify-content: center; margin-top: 24px; }
+    .vcf-submit-btn {
+      padding: 14px 32px; border-radius: 100px; border: none; cursor: pointer;
+      background: linear-gradient(135deg, var(--p500), var(--i500));
+      color: #fff; font-weight: 700; font-family: var(--font-head); font-size: 14.5px;
+      box-shadow: var(--glow-md);
+      display: flex; align-items: center; gap: 9px;
+      transition: all .25s;
+    }
+    .vcf-submit-btn:disabled { opacity: .35; cursor: not-allowed; box-shadow: none; }
+    .vcf-submit-btn:not(:disabled):hover { transform: translateY(-2px); box-shadow: var(--glow-lg); }
+
+    .vcf-progress-card {
+      background: linear-gradient(180deg, rgba(148,102,255,.05), rgba(13,11,24,.6));
+      border: 1px solid var(--glass-bdh);
+      border-radius: 24px;
+      padding: 36px;
+      text-align: center;
+      box-shadow: var(--glow-lg);
+    }
+    .vcf-progress-wave {
+      display: flex; align-items: flex-end; justify-content: center; gap: 3px;
+      height: 40px; margin-bottom: 20px;
+    }
+    .vcf-progress-wave span {
+      width: 3px; border-radius: 3px;
+      background: linear-gradient(180deg, var(--accent-hi), var(--p500));
+      animation: vcf-wave 1.1s ease-in-out infinite;
+    }
+    @keyframes vcf-wave { 0%,100%{ height:6px; opacity:.4; } 50%{ height:34px; opacity:1; } }
+
+    .vcf-progress-title { font-family: var(--font-head); font-size: 18px; font-weight: 700; margin-bottom: 6px; }
+    .vcf-progress-sub { font-size: 12.5px; color: var(--t3); margin-bottom: 26px; }
+
+    .vcf-stage-track { display: flex; flex-direction: column; gap: 4px; text-align: left; max-width: 420px; margin: 0 auto; }
     .vcf-stage {
-      flex: 1;
-      display: flex;
-      align-items: center;
-      gap: 7px;
-      padding: 9px 12px;
-      border-radius: 10px;
-      border: 1px solid var(--glass-bd);
-      background: rgba(5,4,10,.4);
-      font-size: 12px;
-      color: var(--t3);
-      transition: all .2s;
+      display: flex; align-items: center; gap: 12px;
+      padding: 11px 14px; border-radius: 12px;
+      font-size: 13.5px; color: var(--t3);
+      transition: all .3s;
     }
+    .vcf-stage.current { background: rgba(148,102,255,.10); color: var(--t0); }
+    .vcf-stage.done { color: var(--t1); }
     .vcf-stage-dot {
-      width: 7px; height: 7px;
-      border-radius: 50%;
-      background: var(--t3);
-      flex-shrink: 0;
-      transition: all .2s;
-    }
-    .vcf-stage.done { color: var(--t1); border-color: rgba(148,102,255,.2); }
-    .vcf-stage.done .vcf-stage-dot { background: var(--accent); }
-    .vcf-stage.current {
-      color: var(--accent-hi);
-      border-color: rgba(148,102,255,.45);
-      background: rgba(148,102,255,.08);
+      width: 20px; height: 20px; border-radius: 50%; flex-shrink: 0;
+      border: 2px solid var(--glass-bdh);
+      display: flex; align-items: center; justify-content: center;
+      position: relative;
+      transition: all .3s;
     }
     .vcf-stage.current .vcf-stage-dot {
-      background: var(--accent);
-      box-shadow: 0 0 6px var(--accent);
-      animation: breathe 1.4s ease infinite;
+      border-color: var(--accent);
     }
-    .vcf-progress-hint {
-      font-size: 11.5px;
-      color: var(--t3);
-      margin-top: 12px;
+    .vcf-stage.current .vcf-stage-dot::after {
+      content: ''; position: absolute; inset: -4px; border-radius: 50%;
+      border: 2px solid transparent; border-top-color: var(--accent); border-right-color: var(--i400);
+      animation: vcf-spin .9s linear infinite;
     }
+    .vcf-stage.done .vcf-stage-dot {
+      background: linear-gradient(135deg, var(--p500), var(--i500)); border-color: transparent;
+    }
+    .vcf-stage.done .vcf-stage-dot svg { width: 10px; height: 10px; }
+    @keyframes vcf-spin { to { transform: rotate(360deg); } }
+
+    .vcf-progress-hint { font-size: 11.5px; color: var(--t3); margin-top: 22px; }
 
     .vcf-error {
       background: rgba(220,38,38,.10);
@@ -1033,28 +1120,48 @@
       margin-bottom: 14px;
     }
 
+    .vcf-results-head {
+      display: flex; align-items: center; justify-content: space-between;
+      margin-bottom: 18px; gap: 14px; flex-wrap: wrap;
+    }
+    .vcf-results-title { font-family: var(--font-head); font-size: 17px; font-weight: 700; }
+    .vcf-sample-badge {
+      display: inline-flex; align-items: center; gap: 6px;
+      font-size: 11px; color: var(--accent-hi); background: rgba(148,102,255,.10);
+      border: 1px solid rgba(148,102,255,.28); padding: 4px 11px; border-radius: 100px;
+      margin-left: 8px; vertical-align: middle; font-family: var(--font-mono);
+    }
+    .vcf-found-badge {
+      display: inline-flex; align-items: center; gap: 6px;
+      font-size: 11px; color: #68d391; background: rgba(52,211,153,.10);
+      border: 1px solid rgba(52,211,153,.3); padding: 4px 11px; border-radius: 100px;
+      margin-left: 8px; vertical-align: middle; font-family: var(--font-mono);
+    }
+
     #vcf-results {
       display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+      grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
       gap: 14px;
-      margin-top: 4px;
     }
 
     .vcf-card {
       background: rgba(13,11,24,.65);
       border: 1px solid var(--glass-bd);
-      border-radius: 14px;
+      border-radius: 16px;
       padding: 18px 20px;
       display: flex;
       flex-direction: column;
-      gap: 10px;
+      gap: 11px;
       transition: border-color .2s, transform .2s, box-shadow .2s;
     }
     .vcf-card:hover {
       border-color: rgba(148,102,255,.28);
-      transform: translateY(-1px);
-      box-shadow: 0 4px 20px rgba(0,0,0,.3);
+      transform: translateY(-2px);
+      box-shadow: 0 10px 30px -12px rgba(0,0,0,.5);
     }
+    .vcf-card.demo { opacity: .68; }
+    .vcf-card.demo:hover { opacity: 1; }
+
     .vcf-card-top { display: flex; align-items: flex-start; gap: 8px; }
     .vcf-rank {
       font-family: var(--font-mono);
@@ -1104,6 +1211,14 @@
       padding-left: 10px;
     }
     .vcf-reason { font-size: 12.5px; color: var(--t2); line-height: 1.55; }
+    .vcf-transcript {
+      font-size: 12px; color: var(--t3); line-height: 1.55;
+      background: rgba(5,4,10,.4); border-radius: 10px; padding: 10px 12px;
+    }
+    .vcf-transcript-label {
+      font-family: var(--font-mono); font-size: 9px; letter-spacing: .1em;
+      text-transform: uppercase; color: var(--t3); margin-bottom: 4px;
+    }
 
     .vcf-score-row { display: flex; gap: 10px; margin-top: 2px; }
     .vcf-score-block { flex: 1; }
@@ -1141,6 +1256,18 @@
       width: fit-content;
     }
 
+    .vcf-actions { display: flex; gap: 8px; margin-top: 4px; }
+    .vcf-action-btn {
+      flex: 1; padding: 9px 10px; border-radius: 10px; font-size: 12px; font-weight: 600;
+      border: 1px solid var(--glass-bd); background: rgba(255,255,255,.03); color: var(--t2);
+      cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 5px;
+      transition: all .2s;
+    }
+    .vcf-action-btn:hover:not(:disabled) { color: var(--t0); border-color: var(--accent); background: rgba(148,102,255,.1); }
+    .vcf-action-btn:disabled { opacity: .4; cursor: not-allowed; }
+    .vcf-action-btn.primary { background: linear-gradient(135deg, var(--p500), var(--i500)); color: #fff; border: none; }
+    .vcf-action-btn.primary:hover:not(:disabled) { filter: brightness(1.1); }
+
     .vcf-empty {
       text-align: center;
       padding: 50px 20px;
@@ -1148,6 +1275,20 @@
       font-size: 13px;
       grid-column: 1 / -1;
     }
+
+    .vcf-local-preview {
+      display: none;
+      grid-column: 1 / -1;
+      margin-bottom: 6px;
+    }
+    .vcf-local-preview.active { display: block; }
+    .vcf-local-preview video {
+      width: 100%; max-height: 320px; border-radius: 14px; background: #000;
+      border: 1px solid var(--glass-bd);
+    }
+
+    .vcf-reveal { opacity: 0; transform: translateY(14px); animation: vcf-reveal-in .55s ease forwards; }
+    @keyframes vcf-reveal-in { to { opacity: 1; transform: translateY(0); } }
 
     /* ─── ADD CLIP MODAL ─── */
     #clip-modal-overlay {
@@ -1179,9 +1320,7 @@
       margin-bottom: 22px;
     }
 
-    .modal-field-group {
-      margin-bottom: 14px;
-    }
+    .modal-field-group { margin-bottom: 14px; }
     .modal-label {
       font-family: var(--font-mono);
       font-size: 9px;
@@ -1192,12 +1331,7 @@
       display: block;
     }
 
-    .platform-select-row {
-      display: flex;
-      gap: 8px;
-      flex-wrap: wrap;
-      margin-bottom: 14px;
-    }
+    .platform-select-row { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 14px; }
     .platform-btn {
       flex: 1;
       min-width: 80px;
@@ -1263,23 +1397,11 @@
       align-items: center;
       justify-content: space-between;
     }
-    .drawer-title {
-      font-family: var(--font-head);
-      font-size: 14px;
-      font-weight: 600;
-    }
-    .drawer-close {
-      background: none; border: none;
-      color: var(--t2); font-size: 18px;
-      cursor: pointer;
-    }
+    .drawer-title { font-family: var(--font-head); font-size: 14px; font-weight: 600; }
+    .drawer-close { background: none; border: none; color: var(--t2); font-size: 18px; cursor: pointer; }
     .drawer-close:hover { color: var(--t0); }
 
-    .drawer-body {
-      flex: 1;
-      overflow-y: auto;
-      padding: 18px 20px;
-    }
+    .drawer-body { flex: 1; overflow-y: auto; padding: 18px 20px; }
 
     .ai-context-label {
       font-family: var(--font-mono);
@@ -1289,20 +1411,9 @@
       color: var(--t3);
       margin-bottom: 6px;
     }
-    .ai-context-title {
-      font-size: 14px;
-      font-weight: 500;
-      color: var(--t1);
-      margin-bottom: 16px;
-      line-height: 1.4;
-    }
+    .ai-context-title { font-size: 14px; font-weight: 500; color: var(--t1); margin-bottom: 16px; line-height: 1.4; }
 
-    .ai-quick-btns {
-      display: flex;
-      flex-direction: column;
-      gap: 7px;
-      margin-bottom: 18px;
-    }
+    .ai-quick-btns { display: flex; flex-direction: column; gap: 7px; margin-bottom: 18px; }
     .ai-quick-btn {
       width: 100%;
       padding: 10px 14px;
@@ -1341,11 +1452,7 @@
       animation: blink .65s infinite;
       color: var(--accent);
     }
-    .drawer-output.empty {
-      color: var(--t3);
-      font-style: italic;
-      font-size: 12.5px;
-    }
+    .drawer-output.empty { color: var(--t3); font-style: italic; font-size: 12.5px; }
 
     /* ─── MOBILE ─── */
     @media(max-width: 720px) {
@@ -1374,6 +1481,8 @@
       #clips-projects { display: none; }
       #clips-projects.mobile-open { display: flex; position: fixed; inset: 0; z-index: 300; width: 240px; }
       #ai-drawer { width: 100%; top: 54px; }
+      .vcf-upload-card, .vcf-progress-card { padding: 24px 18px; }
+      #vcf-results { grid-template-columns: 1fr; }
     }
 
     @media(max-width: 480px) {
@@ -1475,15 +1584,12 @@
 
       <!-- ══ CLIP WORKSPACE ══ -->
       <div id="view-clips" class="view active">
-        <!-- Project rail -->
         <div id="clips-projects">
           <div class="cp-header">
             <span class="cp-header-title">Projects</span>
             <button class="cp-add-btn" onclick="openProjModal()" title="New project">+</button>
           </div>
-          <div id="projects-list">
-            <!-- rendered by JS -->
-          </div>
+          <div id="projects-list"></div>
           <div class="cp-all-clips">
             <button class="project-item" id="all-clips-btn" onclick="selectProject('__all__',this)" style="border-radius:8px;width:100%">
               <span class="project-icon">◧</span>
@@ -1492,7 +1598,6 @@
           </div>
         </div>
 
-        <!-- Clips main -->
         <div id="clips-main">
           <div id="clips-toolbar">
             <div class="ct-project-name" id="ct-project-name">All clips</div>
@@ -1505,56 +1610,86 @@
             </div>
             <button class="btn btn-ghost btn-sm" onclick="openClipModal()">+ Add Clip</button>
           </div>
-          <div id="clips-grid">
-            <!-- rendered by JS -->
-          </div>
+          <div id="clips-grid"></div>
         </div>
       </div>
 
-      <!-- ══ VIRAL CLIP FINDER ══ -->
+      <!-- ══ VIRAL CLIP FINDER — PREMIUM ══ -->
       <div id="view-viralfinder" class="view">
-        <div class="tool-view" style="max-width:960px">
-          <div class="tool-header">
-            <div class="tool-title">◈ Viral Clip Finder</div>
-            <div class="tool-subtitle">Upload a long-form video — Xarvis extracts the audio, transcribes it, and finds the moments most likely to stop someone scrolling.</div>
+        <div class="tool-view" style="max-width:1040px">
+
+          <div class="vcf-hero">
+            <div class="vcf-hero-eyebrow"><span class="live-dot"></span> AI finds your best moments automatically</div>
+            <h1>Turn one long video into <span class="grad">your next viral clips</span></h1>
+            <p>Upload a podcast, stream, or talk. Xarvis transcribes it, reads the room, and hands you the exact moments worth cutting — scored, explained, and ready to post.</p>
           </div>
 
-          <div class="card">
-            <div class="vcf-source-tabs">
-              <button class="vcf-tab active" id="vcf-tab-upload" onclick="vcfSelectTab('upload')">Upload Video</button>
-              <button class="vcf-tab" id="vcf-tab-youtube" onclick="vcfSelectTab('youtube')">Paste YouTube Link</button>
-            </div>
+          <div class="vcf-source-tabs">
+            <button class="vcf-tab active" id="vcf-tab-upload" onclick="vcfSelectTab('upload')">⤒ Upload video</button>
+            <button class="vcf-tab" id="vcf-tab-youtube" onclick="vcfSelectTab('youtube')">▶ Paste YouTube link</button>
+          </div>
+
+          <div class="vcf-upload-card" id="vcf-upload-card">
 
             <div id="vcf-panel-upload">
               <label id="vcf-dropzone" for="vcf-file-input">
-                <input type="file" id="vcf-file-input" accept="video/*" onchange="vcfFileChosen(this)" hidden />
+                <input type="file" id="vcf-file-input" accept="video/*,.mp4,.mov,.avi,.mkv,.webm,.m4v" onchange="vcfFileChosen(this)" hidden />
                 <div class="vcf-dropzone-icon">⤒</div>
-                <div class="vcf-dropzone-title" id="vcf-dropzone-title">Drop a video file here, or click to browse</div>
-                <div class="vcf-dropzone-sub">MP4, MOV, or WEBM · up to 200MB</div>
+                <div class="vcf-dropzone-title" id="vcf-dropzone-title">Drop your video, or <span>browse files</span></div>
+                <div class="vcf-dropzone-sub">MP4, MOV, AVI, MKV, or WEBM · up to 200MB</div>
               </label>
+
+              <div class="vcf-preview-row" id="vcf-preview-row">
+                <video id="vcf-preview-video" muted></video>
+                <div class="vcf-preview-meta">
+                  <div class="vcf-preview-name" id="vcf-preview-name">video.mp4</div>
+                  <div class="vcf-preview-info" id="vcf-preview-info">—</div>
+                </div>
+                <button class="vcf-preview-remove" id="vcf-preview-remove" title="Remove">✕</button>
+              </div>
             </div>
 
             <div id="vcf-panel-youtube" style="display:none">
-              <input class="field" id="vcf-youtube-input" placeholder="https://youtube.com/watch?v=…" disabled />
-              <div class="vcf-soon-note">YouTube link ingestion is coming soon — upload the video file directly for now.</div>
+              <div class="vcf-yt-input-row">
+                <span class="vcf-yt-input-icon">▶</span>
+                <input class="field" id="vcf-youtube-input" placeholder="https://youtube.com/watch?v=…" oninput="vcfYoutubeInputChanged()" onpaste="setTimeout(vcfYoutubeInputChanged, 0)" />
+              </div>
+              <div class="vcf-yt-hint" id="vcf-yt-hint">Paste a public YouTube link — videos up to 2 hours long.</div>
             </div>
 
-            <button class="btn btn-primary" style="margin-top:14px" onclick="vcfSubmit()" id="vcf-submit-btn" disabled>◈ Find Viral Clips</button>
-          </div>
-
-          <div class="card" id="vcf-progress-card" style="display:none">
-            <div class="card-label">Analyzing</div>
-            <div class="vcf-stage-track">
-              <div class="vcf-stage" data-stage="extracting_audio"><span class="vcf-stage-dot"></span>Extracting audio</div>
-              <div class="vcf-stage" data-stage="transcribing"><span class="vcf-stage-dot"></span>Transcribing</div>
-              <div class="vcf-stage" data-stage="analyzing"><span class="vcf-stage-dot"></span>Finding spikes</div>
+            <div class="vcf-meta-row">
+              <span>⏱ Est. 1–4 min processing</span>
+              <span>◎ Private — deleted after analysis</span>
+              <span>⚡ Powered by Groq</span>
             </div>
-            <div class="vcf-progress-hint">This can take a few minutes for longer videos — feel free to switch tabs, it'll keep running.</div>
+
+            <div class="vcf-submit-row">
+              <button class="vcf-submit-btn" onclick="vcfSubmit()" id="vcf-submit-btn" disabled>
+                ◈ Find Viral Clips
+              </button>
+            </div>
           </div>
 
-          <div id="vcf-error" class="vcf-error" style="display:none"></div>
+          <div class="vcf-progress-card" id="vcf-progress-card" style="display:none; margin-top:20px;">
+            <div class="vcf-progress-wave" id="vcf-progress-wave"></div>
+            <div class="vcf-progress-title">Xarvis is watching your video</div>
+            <div class="vcf-progress-sub" id="vcf-progress-sub">Feel free to switch tabs — this keeps running in the background.</div>
+            <div class="vcf-stage-track" id="vcf-stage-track"></div>
+            <div class="vcf-progress-hint" id="vcf-progress-hint"></div>
+          </div>
 
-          <div id="vcf-results"></div>
+          <div id="vcf-error" class="vcf-error" style="display:none; margin-top:20px;"></div>
+
+          <div style="margin-top:32px;">
+            <div class="vcf-results-head">
+              <div class="vcf-results-title" id="vcf-results-title">See what Xarvis finds <span class="vcf-sample-badge">Example output</span></div>
+            </div>
+            <div class="vcf-local-preview" id="vcf-local-preview-wrap">
+              <video id="vcf-local-preview-video" controls></video>
+            </div>
+            <div id="vcf-results"></div>
+          </div>
+
         </div>
       </div>
 
@@ -1804,7 +1939,7 @@
 var API_BASE = "https://jarvis-rxir.onrender.com";
 
 /* ══════════════════════════════════════════════
-   EXISTING STATE (untouched)
+   EXISTING STATE (unchanged)
 ══════════════════════════════════════════════ */
 var userMemory = {};
 var chatHistory = [];
@@ -1826,25 +1961,19 @@ var selectedFormat = "YouTube Shorts";
 })();
 
 /* ══════════════════════════════════════════════
-   CLIP WORKSPACE STATE
+   CLIP WORKSPACE STATE (unchanged)
 ══════════════════════════════════════════════ */
 var CW = {
-  projects: [],   // [{id, name, icon}]
-  clips: [],      // [{id, projectId, title, url, platform, note, tags, status, createdAt}]
+  projects: [],
+  clips: [],
   activeProject: '__all__',
   activeFilter: 'all',
-  activeClipId: null,   // for AI drawer
+  activeClipId: null,
   newClipPlatform: 'youtube'
 };
 
-var PLATFORM_ICONS = {
-  youtube: '▶',
-  tiktok: '♪',
-  instagram: '◉',
-  other: '✦'
-};
+var PLATFORM_ICONS = { youtube: '▶', tiktok: '♪', instagram: '◉', other: '✦' };
 
-// ── Persistence ──
 function cwSave() {
   try { localStorage.setItem('xarvis_clips_v1', JSON.stringify({ projects: CW.projects, clips: CW.clips })); } catch(e) {}
 }
@@ -1858,12 +1987,8 @@ function cwLoad() {
   } catch(e) {}
 }
 
-// ── ID gen ──
 function uid() { return Date.now().toString(36) + Math.random().toString(36).slice(2,6); }
 
-/* ══════════════════════════════════════════════
-   PROJECTS
-══════════════════════════════════════════════ */
 function openProjModal() {
   document.getElementById('proj-name-input').value = '';
   document.getElementById('proj-icon-input').value = '';
@@ -1899,8 +2024,6 @@ function renderProjects() {
     btn.onclick = function(){ selectProject(p.id, btn); };
     list.appendChild(btn);
   });
-
-  // sync all-clips btn
   var allBtn = document.getElementById('all-clips-btn');
   if (allBtn) allBtn.className = 'project-item' + (CW.activeProject === '__all__' ? ' active' : '');
 }
@@ -1918,11 +2041,7 @@ function selectProject(id, btn) {
   renderClips();
 }
 
-/* ══════════════════════════════════════════════
-   CLIPS
-══════════════════════════════════════════════ */
 function openClipModal() {
-  // reset
   document.getElementById('clip-url-input').value = '';
   document.getElementById('clip-title-input').value = '';
   document.getElementById('clip-note-input').value = '';
@@ -2057,9 +2176,6 @@ function renderClips() {
   });
 }
 
-/* ══════════════════════════════════════════════
-   AI ASSIST DRAWER
-══════════════════════════════════════════════ */
 function openAiDrawer(clipId) {
   CW.activeClipId = clipId;
   var clip = CW.clips.find(function(c){ return c.id === clipId; });
@@ -2097,54 +2213,162 @@ function aiAssist(type) {
 }
 
 /* ══════════════════════════════════════════════
-   VIRAL CLIP FINDER
+   VIRAL CLIP FINDER — REWIRED
+   Real upload → poll → result flow only.
+   Sample cards are clearly labeled and only shown
+   before the first real submission.
 ══════════════════════════════════════════════ */
 var VCF = {
+  activeTab: 'upload',
   file: null,
+  youtubeUrl: '',
   jobId: null,
   pollTimer: null,
+  pollAttempts: 0,
+  MAX_POLL_ATTEMPTS: 240, // ~12 min at 3s/poll — a YouTube download + long video can legitimately take a while
   stageOrder: ['extracting_audio', 'transcribing', 'analyzing']
 };
 
+// Mirrors YOUTUBE_URL_PATTERN in server.js — kept in sync so the button
+// only ever enables for a link the backend will actually accept.
+var YOUTUBE_URL_PATTERN = /^(https?:\/\/)?(www\.)?(youtube\.com\/(watch\?v=|shorts\/|live\/)|youtu\.be\/)[\w-]{6,}/i;
+
+var VCF_UPLOAD_STAGES = ['validating', 'extracting_audio', 'transcribing', 'analyzing', 'generating_hooks'];
+var VCF_YOUTUBE_STAGES = ['retrieving_video', 'validating', 'extracting_audio', 'transcribing', 'analyzing', 'generating_hooks'];
+
+var VCF_STAGE_LABELS = {
+  retrieving_video: 'Retrieving video from YouTube',
+  validating: 'Validating file',
+  extracting_audio: 'Extracting audio',
+  transcribing: 'Transcribing with Whisper',
+  analyzing: 'Finding viral moments',
+  generating_hooks: 'Generating hooks'
+};
+
+var VCF_TYPE_LABELS = {
+  emotional_shift: 'Emotional shift', opinion_change: 'Opinion change',
+  contradiction: 'Contradiction', surprise_reveal: 'Surprise reveal',
+  conflict_start: 'Conflict', punchline: 'Punchline',
+  story_twist: 'Story twist', curiosity_gap: 'Curiosity gap'
+};
+
+var VCF_DEMO_CLIPS = [
+  { rank: 1, attention_type: 'surprise_reveal', start: '00:12:04', end: '00:12:42',
+    title: 'I almost quit three days before it blew up', hook: 'I almost quit three days before it blew up.',
+    reason: 'A sharp emotional pivot right after a slow build — the pause before the reveal creates a strong curiosity gap.',
+    attention_score: 94, confidence: 91 },
+  { rank: 2, attention_type: 'contradiction', start: '00:27:41', end: '00:28:33',
+    title: 'Everyone told me to niche down. I did the opposite.', hook: 'Everyone told me to niche down. I did the opposite.',
+    reason: 'Directly contradicts common advice, which tends to spike attention and drive replies/comments.',
+    attention_score: 89, confidence: 86 },
+  { rank: 3, attention_type: 'punchline', start: '00:41:12', end: '00:41:41',
+    title: "That's not a bug. That's the whole business model.", hook: "That's not a bug. That's the whole business model.",
+    reason: 'Fast setup-to-payoff with a clean, quotable punchline — strong standalone clip potential.',
+    attention_score: 83, confidence: 88 },
+];
+
 function vcfSelectTab(tab) {
+  VCF.activeTab = tab;
   document.getElementById('vcf-tab-upload').classList.toggle('active', tab === 'upload');
   document.getElementById('vcf-tab-youtube').classList.toggle('active', tab === 'youtube');
   document.getElementById('vcf-panel-upload').style.display = tab === 'upload' ? '' : 'none';
   document.getElementById('vcf-panel-youtube').style.display = tab === 'youtube' ? '' : 'none';
-  var submitBtn = document.getElementById('vcf-submit-btn');
-  submitBtn.disabled = tab === 'youtube' ? true : !VCF.file;
+  vcfRefreshSubmitState();
 }
+
+function vcfRefreshSubmitState() {
+  var btn = document.getElementById('vcf-submit-btn');
+  if (VCF.activeTab === 'youtube') {
+    btn.disabled = !YOUTUBE_URL_PATTERN.test(VCF.youtubeUrl.trim());
+  } else {
+    btn.disabled = !VCF.file;
+  }
+}
+
+function vcfYoutubeInputChanged() {
+  var input = document.getElementById('vcf-youtube-input');
+  var row = input.parentElement;
+  var hint = document.getElementById('vcf-yt-hint');
+  VCF.youtubeUrl = input.value;
+  row.classList.remove('valid', 'invalid');
+  hint.classList.remove('valid', 'invalid');
+
+  var val = VCF.youtubeUrl.trim();
+  if (!val) {
+    hint.textContent = 'Paste a public YouTube link — videos up to 2 hours long.';
+  } else if (YOUTUBE_URL_PATTERN.test(val)) {
+    row.classList.add('valid');
+    hint.classList.add('valid');
+    hint.textContent = '✓ Looks like a valid YouTube link.';
+  } else {
+    row.classList.add('invalid');
+    hint.classList.add('invalid');
+    hint.textContent = 'That doesn\u2019t look like a YouTube URL yet — paste the full link (youtube.com/watch?v=… or youtu.be/…).';
+  }
+  vcfRefreshSubmitState();
+}
+
+var VCF_SUPPORTED_EXTENSIONS = ['.mp4', '.mov', '.avi', '.mkv', '.webm', '.m4v'];
 
 function vcfFileChosen(input) {
   var file = input.files && input.files[0];
   if (!file) return;
+
+  var name = file.name || '';
+  var ext = name.slice(name.lastIndexOf('.')).toLowerCase();
+  var looksLikeVideoByMime = file.type && file.type.indexOf('video/') === 0;
+  var looksLikeVideoByExt = VCF_SUPPORTED_EXTENSIONS.indexOf(ext) !== -1;
+
+  // Some browsers report an empty MIME type for less common containers
+  // (.mkv especially, sometimes .avi) — trust the extension in that case
+  // rather than rejecting a genuinely valid file.
+  if (!looksLikeVideoByMime && !looksLikeVideoByExt) {
+    showToast('"' + file.name + '" isn\u2019t a supported video file — use MP4, MOV, AVI, MKV, or WEBM.');
+    input.value = '';
+    return;
+  }
+
   VCF.file = file;
-  document.getElementById('vcf-dropzone-title').textContent = file.name;
-  document.getElementById('vcf-submit-btn').disabled = false;
+  document.getElementById('vcf-dropzone').style.display = 'none';
+  var row = document.getElementById('vcf-preview-row');
+  row.classList.add('active');
+  var video = document.getElementById('vcf-preview-video');
+  video.src = URL.createObjectURL(file);
+  document.getElementById('vcf-preview-name').textContent = file.name;
+  document.getElementById('vcf-preview-info').textContent = (file.size / 1024 / 1024).toFixed(1) + ' MB';
+  vcfRefreshSubmitState();
+}
+
+function vcfRemoveFile() {
+  VCF.file = null;
+  document.getElementById('vcf-file-input').value = '';
+  document.getElementById('vcf-preview-row').classList.remove('active');
+  document.getElementById('vcf-dropzone').style.display = '';
+  vcfRefreshSubmitState();
 }
 
 (function vcfWireDropzone() {
   document.addEventListener('DOMContentLoaded', function() {
     var zone = document.getElementById('vcf-dropzone');
-    if (!zone) return;
-    ['dragenter', 'dragover'].forEach(function(evt) {
-      zone.addEventListener(evt, function(e) {
-        e.preventDefault();
-        zone.classList.add('dragover');
+    if (zone) {
+      ['dragenter', 'dragover'].forEach(function(evt) {
+        zone.addEventListener(evt, function(e) { e.preventDefault(); zone.classList.add('dragover'); });
       });
-    });
-    ['dragleave', 'drop'].forEach(function(evt) {
-      zone.addEventListener(evt, function(e) {
-        e.preventDefault();
-        zone.classList.remove('dragover');
+      ['dragleave', 'drop'].forEach(function(evt) {
+        zone.addEventListener(evt, function(e) { e.preventDefault(); zone.classList.remove('dragover'); });
       });
-    });
-    zone.addEventListener('drop', function(e) {
-      var file = e.dataTransfer.files && e.dataTransfer.files[0];
-      if (!file) return;
-      document.getElementById('vcf-file-input').files = e.dataTransfer.files;
-      vcfFileChosen(document.getElementById('vcf-file-input'));
-    });
+      zone.addEventListener('drop', function(e) {
+        var file = e.dataTransfer.files && e.dataTransfer.files[0];
+        if (!file) return;
+        document.getElementById('vcf-file-input').files = e.dataTransfer.files;
+        vcfFileChosen(document.getElementById('vcf-file-input'));
+      });
+    }
+    var removeBtn = document.getElementById('vcf-preview-remove');
+    if (removeBtn) removeBtn.addEventListener('click', vcfRemoveFile);
+
+    // Render sample/demo cards immediately so the results area is never empty.
+    vcfRenderResults(VCF_DEMO_CLIPS, true);
   });
 })();
 
@@ -2153,8 +2377,20 @@ function vcfShowError(msg) {
   el.textContent = '⚠️ ' + msg;
   el.style.display = 'block';
 }
-function vcfClearError() {
-  document.getElementById('vcf-error').style.display = 'none';
+function vcfClearError() { document.getElementById('vcf-error').style.display = 'none'; }
+
+function vcfBuildStageTrack() {
+  var track = document.getElementById('vcf-stage-track');
+  track.innerHTML = VCF.stageOrder.map(function(s) {
+    return '<div class="vcf-stage" data-stage="' + s + '">' +
+      '<div class="vcf-stage-dot"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3"><path d="M5 13l4 4L19 7"/></svg></div>' +
+      '<span>' + VCF_STAGE_LABELS[s] + '</span>' +
+      '</div>';
+  }).join('');
+  var wave = document.getElementById('vcf-progress-wave');
+  wave.innerHTML = Array.from({ length: 20 }).map(function(_, i) {
+    return '<span style="animation-delay:' + (i * 0.05) + 's"></span>';
+  }).join('');
 }
 
 function vcfSetStage(stage) {
@@ -2166,40 +2402,115 @@ function vcfSetStage(stage) {
     if (stage === 'done' || (currentIdx !== -1 && stageIdx < currentIdx)) el.classList.add('done');
     else if (s === stage) el.classList.add('current');
   });
+  var hint = document.getElementById('vcf-progress-hint');
+  if (hint) {
+    hint.textContent = stage === 'done'
+      ? 'Done.'
+      : (VCF_STAGE_LABELS[stage] ? VCF_STAGE_LABELS[stage] + '…' : 'Getting started…');
+  }
 }
 
 function vcfSubmit() {
+  var submitBtn = document.getElementById('vcf-submit-btn');
+
+  if (VCF.activeTab === 'youtube') {
+    var url = VCF.youtubeUrl.trim();
+    if (!YOUTUBE_URL_PATTERN.test(url)) { showToast('Paste a valid YouTube link first.'); return; }
+
+    console.log('[VCF] submit → YouTube URL:', url, 'to', API_BASE + '/api/clips/from-url');
+    VCF.stageOrder = VCF_YOUTUBE_STAGES;
+    vcfClearError();
+    vcfBuildStageTrack();
+    submitBtn.disabled = true;
+    document.getElementById('vcf-progress-card').style.display = '';
+    VCF.pollAttempts = 0;
+    vcfSetStage(VCF.stageOrder[0]);
+
+    fetch(API_BASE + '/api/clips/from-url', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ url: url })
+    })
+      .then(function(r) {
+        console.log('[VCF] from-url response status:', r.status);
+        return r.json().catch(function() {
+          throw new Error('Server returned a non-JSON response (HTTP ' + r.status + '). Check that the backend is deployed and reachable at ' + API_BASE + '.');
+        });
+      })
+      .then(function(d) {
+        console.log('[VCF] from-url response body:', d);
+        if (!d.success) throw new Error(d.error || 'Could not start processing that link.');
+        VCF.jobId = d.jobId;
+        vcfPoll();
+      })
+      .catch(function(err) {
+        console.error('[VCF] from-url failed:', err);
+        vcfShowError(err.message);
+        document.getElementById('vcf-progress-card').style.display = 'none';
+        submitBtn.disabled = false;
+      });
+    return;
+  }
+
+  // Upload tab
   if (!VCF.file) { showToast('Choose a video file first.'); return; }
+  console.log('[VCF] submit → uploading', VCF.file.name, (VCF.file.size / 1024 / 1024).toFixed(1) + 'MB to', API_BASE + '/api/clips/upload');
+  VCF.stageOrder = VCF_UPLOAD_STAGES;
   vcfClearError();
-  document.getElementById('vcf-results').innerHTML = '';
-  document.getElementById('vcf-submit-btn').disabled = true;
+  submitBtn.disabled = true;
   document.getElementById('vcf-progress-card').style.display = '';
-  vcfSetStage('extracting_audio');
+  VCF.pollAttempts = 0;
+
+  // Real state: the browser is genuinely transferring bytes right now, so
+  // this isn't simulated progress — the stage track for backend processing
+  // only appears once the server has confirmed it actually has the file.
+  document.getElementById('vcf-stage-track').innerHTML = '';
+  document.getElementById('vcf-progress-sub').textContent = 'Uploading your video…';
 
   var fd = new FormData();
   fd.append('video', VCF.file);
 
   fetch(API_BASE + '/api/clips/upload', { method: 'POST', body: fd })
-    .then(function(r) { return r.json(); })
+    .then(function(r) {
+      console.log('[VCF] upload response status:', r.status);
+      return r.json().catch(function() {
+        throw new Error('Server returned a non-JSON response (HTTP ' + r.status + '). Check that the backend is deployed and reachable at ' + API_BASE + '.');
+      });
+    })
     .then(function(d) {
+      console.log('[VCF] upload response body:', d);
       if (!d.success) throw new Error(d.error || 'Upload failed.');
       VCF.jobId = d.jobId;
+      vcfBuildStageTrack();
+      vcfSetStage(VCF.stageOrder[0]);
       vcfPoll();
     })
     .catch(function(err) {
+      console.error('[VCF] upload failed:', err);
       vcfShowError(err.message);
       document.getElementById('vcf-progress-card').style.display = 'none';
-      document.getElementById('vcf-submit-btn').disabled = false;
+      submitBtn.disabled = false;
     });
 }
 
 function vcfPoll() {
   clearTimeout(VCF.pollTimer);
+
+  VCF.pollAttempts++;
+  if (VCF.pollAttempts > VCF.MAX_POLL_ATTEMPTS) {
+    vcfShowError('This is taking much longer than expected. The server may have restarted mid-job — please try uploading again.');
+    document.getElementById('vcf-progress-card').style.display = 'none';
+    document.getElementById('vcf-submit-btn').disabled = false;
+    return;
+  }
+
   fetch(API_BASE + '/api/clips/status/' + VCF.jobId)
     .then(function(r) { return r.json(); })
     .then(function(d) {
+      console.log('[VCF] poll #' + VCF.pollAttempts + ':', d);
       if (!d.success) throw new Error(d.error || 'Status check failed.');
       if (d.status === 'error') {
+        console.error('[VCF] job failed server-side:', d.error);
         vcfShowError(d.error || 'Analysis failed.');
         document.getElementById('vcf-progress-card').style.display = 'none';
         document.getElementById('vcf-submit-btn').disabled = false;
@@ -2213,6 +2524,7 @@ function vcfPoll() {
       }
     })
     .catch(function(err) {
+      console.error('[VCF] poll failed:', err);
       vcfShowError(err.message);
       document.getElementById('vcf-progress-card').style.display = 'none';
       document.getElementById('vcf-submit-btn').disabled = false;
@@ -2227,7 +2539,21 @@ function vcfFetchResults() {
       vcfSetStage('done');
       document.getElementById('vcf-progress-card').style.display = 'none';
       document.getElementById('vcf-submit-btn').disabled = false;
-      vcfRenderResults(d.clips || []);
+
+      var clips = d.clips || [];
+      var titleEl = document.getElementById('vcf-results-title');
+      titleEl.innerHTML = 'Your Viral Clips <span class="vcf-found-badge">' + clips.length + ' clip' + (clips.length === 1 ? '' : 's') + ' found</span>';
+
+      // Local in-browser preview: uses the file already in memory, no
+      // backend export needed. Real functionality, not a mock.
+      if (VCF.file) {
+        var previewWrap = document.getElementById('vcf-local-preview-wrap');
+        var previewVideo = document.getElementById('vcf-local-preview-video');
+        previewVideo.src = URL.createObjectURL(VCF.file);
+        previewWrap.classList.add('active');
+      }
+
+      vcfRenderResults(clips, false);
     })
     .catch(function(err) {
       vcfShowError(err.message);
@@ -2236,58 +2562,77 @@ function vcfFetchResults() {
     });
 }
 
-var VCF_TYPE_LABELS = {
-  emotional_shift: 'Emotional shift', opinion_change: 'Opinion change',
-  contradiction: 'Contradiction', surprise_reveal: 'Surprise reveal',
-  conflict_start: 'Conflict', punchline: 'Punchline',
-  story_twist: 'Story twist', curiosity_gap: 'Curiosity gap'
-};
+function vcfTimestampSeconds(ts) {
+  if (!ts) return 0;
+  var parts = ts.split(':').map(Number);
+  while (parts.length < 3) parts.unshift(0);
+  return parts[0] * 3600 + parts[1] * 60 + parts[2];
+}
 
-function vcfRenderResults(clips) {
+function vcfPreviewClip(start) {
+  var previewWrap = document.getElementById('vcf-local-preview-wrap');
+  var previewVideo = document.getElementById('vcf-local-preview-video');
+  if (!VCF.file) {
+    showToast('Local preview needs the original upload still open in this tab.');
+    return;
+  }
+  if (!previewVideo.src) previewVideo.src = URL.createObjectURL(VCF.file);
+  previewWrap.classList.add('active');
+  previewWrap.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  previewVideo.currentTime = vcfTimestampSeconds(start);
+  previewVideo.play().catch(function() {});
+}
+
+function vcfRenderResults(clips, isDemo) {
   var grid = document.getElementById('vcf-results');
-  if (!clips.length) {
+  if (!clips || !clips.length) {
     grid.innerHTML = '<div class="vcf-empty">No strong attention spikes found in this video. Try a different clip or a longer upload.</div>';
     return;
   }
 
-  grid.innerHTML = '';
-  clips.forEach(function(clip) {
-    var card = document.createElement('div');
-    card.className = 'vcf-card';
-
-    var typeLabel = VCF_TYPE_LABELS[clip.attention_type] || clip.attention_type || '';
-    var typeBadge = typeLabel ? '<span class="vcf-type-badge">' + escHtml(typeLabel) + '</span>' : '';
+  grid.innerHTML = clips.map(function(clip, i) {
+    var typeLabel = VCF_TYPE_LABELS[clip.attention_type] || 'Notable moment';
     var score = Math.max(0, Math.min(100, Number(clip.attention_score) || 0));
     var confidence = Math.max(0, Math.min(100, Number(clip.confidence) || 0));
     var tsText = clip.start + ' – ' + clip.end;
+    var hookEsc = String(clip.hook || '').replace(/"/g, '&quot;');
 
-    card.innerHTML =
-      '<div class="vcf-card-top">' +
-        '<span class="vcf-rank">#' + clip.rank + '</span>' +
-        '<div class="vcf-title">' + escHtml(clip.title) + '</div>' +
-      '</div>' +
-      typeBadge +
-      '<div class="vcf-timestamp-row">' +
-        '<span>' + escHtml(tsText) + '</span>' +
-        '<button class="vcf-copy-btn" onclick="vcfCopyTimestamp(this,\'' + escHtml(tsText) + '\')">Copy</button>' +
-      '</div>' +
-      (clip.hook ? '<div class="vcf-hook">“' + escHtml(clip.hook) + '”</div>' : '') +
-      (clip.reason ? '<div class="vcf-reason">' + escHtml(clip.reason) + '</div>' : '') +
-      '<div class="vcf-score-row">' +
-        '<div class="vcf-score-block">' +
-          '<div class="vcf-score-label">Viral Score</div>' +
-          '<div class="vcf-score-bar"><div class="vcf-score-fill" style="width:' + score + '%"></div></div>' +
-          '<div class="vcf-score-value">' + score + '/100</div>' +
+    return (
+      '<div class="vcf-card' + (isDemo ? ' demo' : '') + ' vcf-reveal" style="animation-delay:' + (i * 0.05) + 's">' +
+        '<div class="vcf-card-top">' +
+          '<span class="vcf-rank">#' + clip.rank + '</span>' +
+          '<div class="vcf-title">' + escHtml(clip.title) + '</div>' +
         '</div>' +
-        '<div class="vcf-score-block">' +
-          '<div class="vcf-score-label">Confidence</div>' +
-          '<div class="vcf-score-bar"><div class="vcf-score-fill" style="width:' + confidence + '%"></div></div>' +
-          '<div class="vcf-score-value">' + confidence + '/100</div>' +
+        '<span class="vcf-type-badge">' + escHtml(typeLabel) + '</span>' +
+        '<div class="vcf-timestamp-row">' +
+          '<span>' + escHtml(tsText) + '</span>' +
+          '<button class="vcf-copy-btn" onclick="vcfCopyTimestamp(this,\'' + escHtml(tsText) + '\')">Copy</button>' +
         '</div>' +
-      '</div>';
-
-    grid.appendChild(card);
-  });
+        (clip.hook ? '<div class="vcf-hook">\u201C' + escHtml(clip.hook) + '\u201D</div>' : '') +
+        (clip.reason ? '<div class="vcf-reason">' + escHtml(clip.reason) + '</div>' : '') +
+        (clip.transcript_preview ? '<div class="vcf-transcript"><div class="vcf-transcript-label">Transcript</div>' + escHtml(clip.transcript_preview) + '</div>' : '') +
+        '<div class="vcf-score-row">' +
+          '<div class="vcf-score-block">' +
+            '<div class="vcf-score-label">Viral Score</div>' +
+            '<div class="vcf-score-bar"><div class="vcf-score-fill" style="width:' + score + '%"></div></div>' +
+            '<div class="vcf-score-value">' + score + '/100</div>' +
+          '</div>' +
+          '<div class="vcf-score-block">' +
+            '<div class="vcf-score-label">Confidence</div>' +
+            '<div class="vcf-score-bar"><div class="vcf-score-fill" style="width:' + confidence + '%"></div></div>' +
+            '<div class="vcf-score-value">' + confidence + '/100</div>' +
+          '</div>' +
+        '</div>' +
+        '<div class="vcf-actions">' +
+          '<button class="vcf-action-btn" onclick="navigator.clipboard.writeText(\'' + hookEsc + '\')">Copy hook</button>' +
+          (isDemo
+            ? '<button class="vcf-action-btn primary" disabled title="Upload a video to preview real clips">Preview</button>'
+            : '<button class="vcf-action-btn primary" onclick="vcfPreviewClip(\'' + escHtml(clip.start) + '\')">Preview</button>') +
+          '<button class="vcf-action-btn" disabled title="Clip export isn\u2019t built yet — coming soon">Download</button>' +
+        '</div>' +
+      '</div>'
+    );
+  }).join('');
 }
 
 function vcfCopyTimestamp(btn, text) {
@@ -2305,7 +2650,7 @@ function vcfCopyTimestamp(btn, text) {
 }
 
 /* ══════════════════════════════════════════════
-   UTILS
+   UTILS (unchanged)
 ══════════════════════════════════════════════ */
 function escHtml(s) {
   return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
@@ -2651,7 +2996,6 @@ document.addEventListener('keydown', function(e) {
     closeProjModal();
     closeAiDrawer();
   }
-  // Cmd/Ctrl+K to add clip when in workspace
   if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
     var clipView = document.getElementById('view-clips');
     if (clipView && clipView.classList.contains('active')) {
@@ -2661,7 +3005,6 @@ document.addEventListener('keydown', function(e) {
   }
 });
 
-// Close modals on overlay click
 document.getElementById('clip-modal-overlay').addEventListener('click', function(e) {
   if (e.target === this) closeClipModal();
 });
@@ -2673,12 +3016,10 @@ document.getElementById('proj-modal-overlay').addEventListener('click', function
    INIT
 ══════════════════════════════════════════════ */
 document.addEventListener("DOMContentLoaded", function() {
-  // Load clips data
   cwLoad();
   renderProjects();
   selectProject('__all__', null);
 
-  // Seed demo data if fresh install
   if (CW.projects.length === 0 && CW.clips.length === 0) {
     CW.projects = [
       { id: 'demo-1', name: 'Fitness Series', icon: '💪' },
