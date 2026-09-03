@@ -1,3 +1,4 @@
+```js
 import express from "express";
 import cors from "cors";
 import dotenv from "dotenv";
@@ -10,31 +11,32 @@ const app = express();
 // ─────────────────────────────────────────────
 // BASIC CONFIG
 // ─────────────────────────────────────────────
-app.use(express.json());
+app.use(express.json({ limit: "1mb" }));
 
-app.use(cors({
-  origin: "*",
-  methods: ["GET", "POST"],
-  allowedHeaders: ["Content-Type"]
-}));
+app.use(
+  cors({
+    origin: "*",
+    methods: ["GET", "POST"],
+    allowedHeaders: ["Content-Type"],
+  })
+);
 
 // ─────────────────────────────────────────────
-// DEBUG STARTUP
+// GROQ CONFIG
 // ─────────────────────────────────────────────
+const GROQ_API_KEY = process.env.GROQ_API_KEY;
+const GROQ_MODEL =
+  process.env.GROQ_MODEL || "llama-3.3-70b-versatile";
+
 console.log("🚀 Starting Xarvis AI Server...");
-console.log("✅ API KEY EXISTS:", !!process.env.GROQ_API_KEY);
+console.log("🔑 Groq API key configured:", !!GROQ_API_KEY);
+console.log("🧠 Groq model:", GROQ_MODEL);
 
-if (!process.env.GROQ_API_KEY) {
-  console.error("❌ FATAL: Missing GROQ_API_KEY");
-  process.exit(1);
-}
-
-// ─────────────────────────────────────────────
-// GROQ CLIENT
-// ─────────────────────────────────────────────
-const groq = new Groq({
-  apiKey: process.env.GROQ_API_KEY,
-});
+const groq = GROQ_API_KEY
+  ? new Groq({
+      apiKey: GROQ_API_KEY,
+    })
+  : null;
 
 // ─────────────────────────────────────────────
 // SYSTEM PROMPT
@@ -55,146 +57,188 @@ Always give actionable answers.
 `;
 
 // ─────────────────────────────────────────────
-// TEST GROQ CONNECTION
+// GROQ HELPER
 // ─────────────────────────────────────────────
-async function testGroq() {
-  try {
-    const res = await groq.chat.completions.create({
-      model: "llama-3.3-70b-versatile",
-      messages: [
-        {
-          role: "user",
-          content: "Say: Groq connection successful"
-        }
-      ],
-      max_tokens: 20,
-    });
-
-    console.log("✅ Groq API key is valid.");
-    console.log("🧠 Test Response:",
-      res?.choices?.[0]?.message?.content
-    );
-
-  } catch (err) {
-    console.error("❌ FATAL: GROQ CONNECTION FAILED");
-    console.error(err);
-
-    process.exit(1);
+async function askGroq(messages, maxTokens = 1000) {
+  if (!groq) {
+    const error = new Error("Groq API is not configured.");
+    error.status = 503;
+    throw error;
   }
-}
-
-await testGroq();
-
-// ─────────────────────────────────────────────
-// ASK GROQ
-// ─────────────────────────────────────────────
-async function askGroq(messages, max_tokens = 1000) {
 
   const completion = await groq.chat.completions.create({
-    model: "llama-3.3-70b-versatile",
-
+    model: GROQ_MODEL,
     messages: [
       {
         role: "system",
-        content: SYSTEM_PROMPT
+        content: SYSTEM_PROMPT,
       },
-      ...messages
+      ...messages,
     ],
-
     temperature: 0.7,
-    max_tokens,
+    max_tokens: maxTokens,
   });
 
-  return (
-    completion?.choices?.[0]?.message?.content ||
-    "No response generated."
-  );
+  const reply = completion?.choices?.[0]?.message?.content;
+
+  if (!reply) {
+    throw new Error("Groq returned an empty response.");
+  }
+
+  return reply;
 }
 
 // ─────────────────────────────────────────────
-// HEALTH ROUTES
+// ROOT
 // ─────────────────────────────────────────────
 app.get("/", (req, res) => {
   res.json({
     status: "online",
-    message: "🚀 Xarvis AI Backend Running"
+    message: "Xarvis AI Backend Running",
+  });
+});
+
+// ─────────────────────────────────────────────
+// HEALTH
+// ─────────────────────────────────────────────
+app.get("/health", (req, res) => {
+  res.json({
+    ok: true,
+    service: "xarvis-ai-backend",
+    groqConfigured: !!GROQ_API_KEY,
+    model: GROQ_MODEL,
+    timestamp: new Date().toISOString(),
   });
 });
 
 app.get("/api/health", (req, res) => {
   res.json({
     ok: true,
-    groq: true,
-    timestamp: new Date().toISOString()
+    service: "xarvis-ai-backend",
+    groqConfigured: !!GROQ_API_KEY,
+    model: GROQ_MODEL,
+    timestamp: new Date().toISOString(),
   });
 });
 
 // ─────────────────────────────────────────────
 // CHAT
+// Supports both:
+//
+// { message: "...", history: [...] }
+//
+// and the frontend format:
+//
+// { messages: [...], systemPrompt: "..." }
 // ─────────────────────────────────────────────
 app.post("/api/chat", async (req, res) => {
-
   try {
+    const { message, history, messages, systemPrompt } = req.body;
 
-    const { message, history = [] } = req.body;
+    let chatMessages = [];
 
-    if (!message) {
+    // Frontend format: { messages: [...] }
+    if (Array.isArray(messages)) {
+      chatMessages = messages
+        .filter(
+          (item) =>
+            item &&
+            (item.role === "user" ||
+              item.role === "assistant" ||
+              item.role === "system") &&
+            typeof item.content === "string"
+        )
+        .slice(-20);
+    }
+
+    // Alternative format: { message, history }
+    else {
+      const validHistory = Array.isArray(history)
+        ? history
+            .filter(
+              (item) =>
+                item &&
+                (item.role === "user" ||
+                  item.role === "assistant" ||
+                  item.role === "system") &&
+                typeof item.content === "string"
+            )
+            .slice(-20)
+        : [];
+
+      if (validHistory.length > 0) {
+        chatMessages = [...validHistory];
+      }
+
+      if (typeof message === "string" && message.trim()) {
+        chatMessages.push({
+          role: "user",
+          content: message.trim(),
+        });
+      }
+    }
+
+    if (chatMessages.length === 0) {
       return res.status(400).json({
-        error: "Message is required"
+        success: false,
+        error: "A message or messages array is required.",
       });
     }
 
-    const messages = [
-      ...history.slice(-10),
-      {
-        role: "user",
-        content: message
-      }
-    ];
+    // Only use a frontend system prompt if supplied.
+    // Otherwise askGroq uses Xarvis's default system prompt.
+    if (typeof systemPrompt === "string" && systemPrompt.trim()) {
+      chatMessages = [
+        {
+          role: "system",
+          content: systemPrompt.trim(),
+        },
+        ...chatMessages.filter((item) => item.role !== "system"),
+      ];
+    }
 
-    const reply = await askGroq(messages, 900);
+    const reply = await askGroq(chatMessages, 900);
 
     res.json({
       success: true,
-      reply
+      reply,
     });
-
   } catch (err) {
+    console.error("❌ CHAT ERROR:", err);
 
-    console.error("❌ CHAT ERROR:");
-    console.error(err);
+    const status = err?.status || 500;
 
-    res.status(500).json({
+    res.status(status).json({
       success: false,
-      error: err.message,
-      type: err?.type || null,
+      error:
+        status === 503
+          ? "Groq AI is not configured on the backend."
+          : "Xarvis AI could not generate a response.",
     });
   }
 });
 
 // ─────────────────────────────────────────────
-// GENERATE CONTENT
+// CONTENT GENERATION
 // ─────────────────────────────────────────────
 app.post("/api/generate", async (req, res) => {
-
   try {
-
     const {
       type,
       topic,
       platform,
       content,
-      goal
+      goal,
     } = req.body;
 
     let prompt = "";
 
     switch (type) {
-
       case "viral":
         prompt = `
-Create a viral ${platform} content idea about:
-${topic}
+Create a viral ${platform || "social media"} content idea about:
+
+${topic || ""}
 
 Include:
 - hook
@@ -207,7 +251,8 @@ Include:
       case "calendar":
         prompt = `
 Create a 7-day content calendar for:
-${topic}
+
+${topic || ""}
 `;
         break;
 
@@ -215,7 +260,7 @@ ${topic}
         prompt = `
 Analyse this content and improve it:
 
-${content}
+${content || ""}
 `;
         break;
 
@@ -223,37 +268,43 @@ ${content}
         prompt = `
 Create an execution plan for this goal:
 
-${goal}
+${goal || ""}
 `;
         break;
 
       default:
         prompt = `
 Help with this topic:
-${topic}
+
+${topic || ""}
 `;
     }
 
-    const reply = await askGroq([
-      {
-        role: "user",
-        content: prompt
-      }
-    ], 1400);
+    const reply = await askGroq(
+      [
+        {
+          role: "user",
+          content: prompt,
+        },
+      ],
+      1400
+    );
 
     res.json({
       success: true,
-      reply
+      reply,
     });
-
   } catch (err) {
+    console.error("❌ GENERATE ERROR:", err);
 
-    console.error("❌ GENERATE ERROR:");
-    console.error(err);
+    const status = err?.status || 500;
 
-    res.status(500).json({
+    res.status(status).json({
       success: false,
-      error: err.message
+      error:
+        status === 503
+          ? "Groq AI is not configured on the backend."
+          : "Content generation failed.",
     });
   }
 });
@@ -262,14 +313,35 @@ ${topic}
 // STREAM CHAT
 // ─────────────────────────────────────────────
 app.post("/api/chat/stream", async (req, res) => {
-
   try {
+    const { message, messages } = req.body;
 
-    const { message } = req.body;
+    let chatMessages = [];
 
-    if (!message) {
+    if (Array.isArray(messages)) {
+      chatMessages = messages
+        .filter(
+          (item) =>
+            item &&
+            (item.role === "user" ||
+              item.role === "assistant" ||
+              item.role === "system") &&
+            typeof item.content === "string"
+        )
+        .slice(-20);
+    } else if (typeof message === "string" && message.trim()) {
+      chatMessages = [
+        {
+          role: "user",
+          content: message.trim(),
+        },
+      ];
+    }
+
+    if (chatMessages.length === 0) {
       return res.status(400).json({
-        error: "Message required"
+        success: false,
+        error: "A message or messages array is required.",
       });
     }
 
@@ -277,38 +349,28 @@ app.post("/api/chat/stream", async (req, res) => {
     res.setHeader("Cache-Control", "no-cache");
     res.setHeader("Connection", "keep-alive");
 
-    const reply = await askGroq([
-      {
-        role: "user",
-        content: message
-      }
-    ], 900);
+    const reply = await askGroq(chatMessages, 900);
 
     for (const char of reply) {
-
       res.write(
         `data: ${JSON.stringify({
           type: "delta",
-          content: char
+          content: char,
         })}\n\n`
       );
 
-      await new Promise(r => setTimeout(r, 5));
+      await new Promise((resolve) => setTimeout(resolve, 5));
     }
 
-    res.write(`data: [DONE]\n\n`);
-
+    res.write("data: [DONE]\n\n");
     res.end();
-
   } catch (err) {
-
-    console.error("❌ STREAM ERROR:");
-    console.error(err);
+    console.error("❌ STREAM ERROR:", err);
 
     res.write(
       `data: ${JSON.stringify({
         type: "error",
-        message: err.message
+        message: "Xarvis AI could not generate a response.",
       })}\n\n`
     );
 
@@ -321,15 +383,17 @@ app.post("/api/chat/stream", async (req, res) => {
 // ─────────────────────────────────────────────
 app.use((req, res) => {
   res.status(404).json({
-    error: "Route not found"
+    success: false,
+    error: "Route not found",
   });
 });
 
 // ─────────────────────────────────────────────
 // START SERVER
 // ─────────────────────────────────────────────
-const PORT = process.env.PORT || 3001;
+const PORT = Number(process.env.PORT) || 3001;
 
 app.listen(PORT, () => {
   console.log(`🚀 Xarvis AI running on port ${PORT}`);
 });
+```
