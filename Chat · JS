@@ -1,153 +1,279 @@
-/**
- * XARVIS AI — CHAT FETCH LAYER
- * Fixed: history passing, SSE parsing, real error propagation,
- *        no silent swallow of stream errors
- */
+// frontend/js/chat.js
 
 import { CONFIG } from "./config.js";
 
-// ─────────────────────────────────────────────────────────────
-// SAFE FETCH — with timeout + smart retry
-// Only retries on genuine network failures, NOT on 4xx/5xx
-// ─────────────────────────────────────────────────────────────
-async function fetchWithRetry(url, options = {}, retries = CONFIG.RETRY_ATTEMPTS) {
-  const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), CONFIG.REQUEST_TIMEOUT);
+// ==================================================
+// HELPERS
+// ==================================================
 
+function sleep(ms) {
+  return new Promise((resolve) => {
+    setTimeout(resolve, ms);
+  });
+}
+
+async function readJson(response) {
   try {
-    const res = await fetch(url, { ...options, signal: controller.signal });
-    clearTimeout(timeoutId);
+    return await response.json();
+  } catch {
+    return {};
+  }
+}
 
-    if (!res.ok) {
-      let errorMessage = `Server error ${res.status}`;
-      try {
-        const data = await res.json();
-        errorMessage = data?.error || errorMessage;
-      } catch {
-        // Response wasn't JSON (Render may return HTML on 502/503)
+// ==================================================
+// NORMAL CHAT
+// ==================================================
+
+export async function sendChat(
+  message,
+  history = []
+) {
+  if (
+    typeof message !== "string" ||
+    !message.trim()
+  ) {
+    throw new Error(
+      "Chat message cannot be empty."
+    );
+  }
+
+  const safeHistory =
+    Array.isArray(history)
+      ? history.slice(-CONFIG.MAX_HISTORY)
+      : [];
+
+  const response = await fetch(
+    `${CONFIG.API_BASE}${CONFIG.ROUTES.CHAT}`,
+    {
+      method: "POST",
+
+      headers: {
+        "Content-Type": "application/json",
+      },
+
+      body: JSON.stringify({
+        message: message.trim(),
+        history: safeHistory,
+      }),
+    }
+  );
+
+  const data = await readJson(response);
+
+  if (!response.ok) {
+    throw new Error(
+      data?.error ||
+        `Chat request failed (${response.status})`
+    );
+  }
+
+  return data;
+}
+
+// ==================================================
+// RETRY CHAT
+// ==================================================
+
+export async function fetchWithRetry(
+  url,
+  options = {},
+  attempts = CONFIG.RETRY_ATTEMPTS
+) {
+  let lastError;
+
+  for (
+    let attempt = 0;
+    attempt <= attempts;
+    attempt++
+  ) {
+    try {
+      const response =
+        await fetch(url, options);
+
+      if (
+        response.ok ||
+        attempt === attempts
+      ) {
+        return response;
       }
 
-      // ✅ Don't retry on definitive server errors (4xx/5xx) — they won't fix themselves
-      // Only retry on genuine network blips (handled in catch below)
-      const error = new Error(errorMessage);
-      error.status = res.status;
-      throw error;
+      await sleep(CONFIG.RETRY_DELAY);
+    } catch (error) {
+      lastError = error;
+
+      if (attempt === attempts) {
+        throw error;
+      }
+
+      await sleep(CONFIG.RETRY_DELAY);
     }
+  }
 
-    return res;
-  } catch (err) {
-    clearTimeout(timeoutId);
+  throw (
+    lastError ||
+    new Error("Request failed.")
+  );
+}
 
-    if (err.name === "AbortError") {
+// ==================================================
+// STREAM CHAT
+// ==================================================
+
+export async function streamChat(
+  message,
+  history = [],
+  onChunk = () => {}
+) {
+  if (
+    typeof message !== "string" ||
+    !message.trim()
+  ) {
+    throw new Error(
+      "Chat message cannot be empty."
+    );
+  }
+
+  const safeHistory =
+    Array.isArray(history)
+      ? history.slice(-CONFIG.MAX_HISTORY)
+      : [];
+
+  const controller =
+    new AbortController();
+
+  const timeoutId = setTimeout(() => {
+    controller.abort();
+  }, CONFIG.REQUEST_TIMEOUT);
+
+  try {
+    const response =
+      await fetchWithRetry(
+        `${CONFIG.API_BASE}${CONFIG.ROUTES.STREAM}`,
+        {
+          method: "POST",
+
+          headers: {
+            "Content-Type": "application/json",
+            Accept: "text/event-stream",
+          },
+
+          body: JSON.stringify({
+            message: message.trim(),
+            history: safeHistory,
+          }),
+
+          signal: controller.signal,
+        }
+      );
+
+    if (!response.ok) {
+      const data = await readJson(response);
+
       throw new Error(
-        "Request timed out. The server may be waking up from sleep — try again in 30 seconds."
+        data?.error ||
+          `Stream request failed (${response.status})`
       );
     }
 
-    // Retry only on genuine network-level failures (no status code = fetch never completed)
-    const isNetworkFailure = !err.status && err.message?.toLowerCase().includes("fetch");
-    if (isNetworkFailure && retries > 0) {
-      console.warn(`[Xarvis] Network failure, retrying... (${retries} left)`);
-      await new Promise((r) => setTimeout(r, CONFIG.RETRY_DELAY));
-      return fetchWithRetry(url, options, retries - 1);
+    if (!response.body) {
+      throw new Error(
+        "Streaming is not supported by this response."
+      );
     }
 
-    throw err;
-  }
-}
+    const reader =
+      response.body.getReader();
 
-// ─────────────────────────────────────────────────────────────
-// SEND CHAT — Non-streaming fallback
-// ─────────────────────────────────────────────────────────────
-export async function sendChat(message, history = []) {
-  const res = await fetchWithRetry(`${CONFIG.API_BASE}/api/chat`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      message,
-      // ✅ FIX: Don't slice(-0) which returns empty. Properly limit history.
-      history: history.slice(-CONFIG.MAX_HISTORY),
-    }),
-  });
+    const decoder =
+      new TextDecoder("utf-8");
 
-  const data = await res.json().catch(() => ({}));
+    let buffer = "";
+    let fullText = "";
 
-  if (!data.reply) {
-    throw new Error("Empty response from server");
-  }
-
-  return data.reply;
-}
-
-// ─────────────────────────────────────────────────────────────
-// STREAM CHAT — SSE with robust parsing
-// ─────────────────────────────────────────────────────────────
-export async function streamChat(message, history = [], onChunk) {
-  const res = await fetchWithRetry(`${CONFIG.API_BASE}/api/chat/stream`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      message,
-      history: history.slice(-CONFIG.MAX_HISTORY),
-    }),
-  });
-
-  if (!res.body) {
-    throw new Error("Server does not support streaming. Will use standard mode.");
-  }
-
-  const reader = res.body.getReader();
-  const decoder = new TextDecoder();
-  let buffer = "";
-  let fullText = "";
-
-  try {
     while (true) {
-      const { value, done } = await reader.read();
-      if (done) break;
+      const {
+        value,
+        done,
+      } = await reader.read();
 
-      buffer += decoder.decode(value, { stream: true });
+      if (done) {
+        break;
+      }
 
-      // Split on double-newline (SSE event boundary)
-      const events = buffer.split("\n\n");
-      buffer = events.pop() ?? ""; // Keep incomplete last event in buffer
+      buffer += decoder.decode(
+        value,
+        { stream: true }
+      );
+
+      const events =
+        buffer.split("\n\n");
+
+      buffer =
+        events.pop() || "";
 
       for (const event of events) {
-        // Each event may have multiple lines; find the data line
-        const dataLine = event.split("\n").find((l) => l.startsWith("data: "));
-        if (!dataLine) continue;
+        const lines =
+          event.split("\n");
 
-        const raw = dataLine.slice(6).trim();
-        if (!raw || raw === "[DONE]") continue;
-
-        try {
-          const parsed = JSON.parse(raw);
-
-          if (parsed.type === "delta" && parsed.content) {
-            fullText += parsed.content;
-            onChunk?.(fullText);
+        for (const line of lines) {
+          if (
+            !line.startsWith("data:")
+          ) {
+            continue;
           }
 
-          if (parsed.type === "done") {
+          const raw =
+            line.slice(5).trim();
+
+          if (!raw) {
+            continue;
+          }
+
+          if (raw === "[DONE]") {
             return fullText;
           }
 
-          if (parsed.type === "error") {
-            throw new Error(parsed.message || "Stream error from server");
+          let parsed;
+
+          try {
+            parsed = JSON.parse(raw);
+          } catch {
+            continue;
           }
-        } catch (parseErr) {
-          // Only re-throw real errors, not JSON parse failures on malformed chunks
-          if (parseErr.message?.includes("Stream error")) throw parseErr;
+
+          if (
+            parsed.type === "error"
+          ) {
+            throw new Error(
+              parsed.error ||
+                "Xarvis streaming error."
+            );
+          }
+
+          if (
+            parsed.type === "done"
+          ) {
+            continue;
+          }
+
+          const chunk =
+            parsed.delta ??
+            parsed.content ??
+            "";
+
+          if (!chunk) {
+            continue;
+          }
+
+          fullText += chunk;
+
+          onChunk(chunk);
         }
       }
     }
-  } finally {
-    try {
-      reader.releaseLock();
-    } catch {
-      // Already released — safe to ignore
-    }
-  }
 
-  return fullText;
+    return fullText;
+  } finally {
+    clearTimeout(timeoutId);
+  }
 }
