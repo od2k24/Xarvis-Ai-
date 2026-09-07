@@ -3,11 +3,12 @@
 const PROD_BACKEND = "https://xarvis-ai.onrender.com";
 const DEV_BACKEND = "http://localhost:3001";
 
+// Detect local development
 const isLocalhost =
   location.hostname === "localhost" ||
   location.hostname === "127.0.0.1";
 
-// Export this because app.js imports API_BASE directly.
+// Select the correct backend automatically
 export const API_BASE = isLocalhost ? DEV_BACKEND : PROD_BACKEND;
 
 export const CONFIG = {
