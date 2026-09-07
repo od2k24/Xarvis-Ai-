@@ -1,5 +1,3 @@
-// backend/server.js
-
 require("dotenv").config();
 
 const express = require("express");
@@ -8,13 +6,17 @@ const Groq = require("groq-sdk");
 
 const app = express();
 
+// --------------------------------------------------
+// CONFIGURATION
+// --------------------------------------------------
+
 const PORT = process.env.PORT || 3001;
 const GROQ_API_KEY = process.env.GROQ_API_KEY;
 const GROQ_MODEL =
   process.env.GROQ_MODEL || "llama-3.3-70b-versatile";
 
 if (!GROQ_API_KEY) {
-  console.warn("⚠️ GROQ_API_KEY is not configured.");
+  console.warn("WARNING: GROQ_API_KEY is not configured.");
 }
 
 const groq = GROQ_API_KEY
@@ -45,12 +47,18 @@ function safeHistory(history) {
     return [];
   }
 
+  const allowedRoles = new Set([
+    "user",
+    "assistant",
+    "system",
+  ]);
+
   return history
     .filter(
       (item) =>
         item &&
         typeof item === "object" &&
-        typeof item.role === "string" &&
+        allowedRoles.has(item.role) &&
         typeof item.content === "string"
     )
     .slice(-20)
@@ -62,8 +70,12 @@ function safeHistory(history) {
 
 function requireGroq() {
   if (!groq) {
-    const error = new Error("Groq AI is not configured.");
+    const error = new Error(
+      "Groq AI is not configured."
+    );
+
     error.status = 503;
+
     throw error;
   }
 
@@ -73,14 +85,28 @@ function requireGroq() {
 async function askGroq(messages) {
   const client = requireGroq();
 
-  const response = await client.chat.completions.create({
-    model: GROQ_MODEL,
-    messages,
-    temperature: 0.7,
-    max_tokens: 2048,
-  });
+  const response =
+    await client.chat.completions.create({
+      model: GROQ_MODEL,
+      messages,
+      temperature: 0.7,
+      max_tokens: 2048,
+    });
 
-  return response?.choices?.[0]?.message?.content || "";
+  const reply =
+    response?.choices?.[0]?.message?.content;
+
+  if (typeof reply !== "string") {
+    const error = new Error(
+      "Groq returned an empty response."
+    );
+
+    error.status = 502;
+
+    throw error;
+  }
+
+  return reply;
 }
 
 function buildSystemPrompt() {
@@ -90,6 +116,7 @@ You are Xarvis AI.
 You are an intelligent AI co-founder and strategic assistant.
 
 Your job is to help the user:
+
 - build projects
 - create content
 - develop ideas
@@ -108,6 +135,40 @@ If you do not know something, say so.
 
 Give the user clear actionable steps.
 `.trim();
+}
+
+function getErrorStatus(error) {
+  const status = Number(error?.status);
+
+  if (
+    Number.isInteger(status) &&
+    status >= 400 &&
+    status < 600
+  ) {
+    return status;
+  }
+
+  return 500;
+}
+
+function getPublicError(status) {
+  if (status === 401) {
+    return "Groq authentication failed. Check the GROQ_API_KEY.";
+  }
+
+  if (status === 429) {
+    return "Groq rate limit reached. Please try again shortly.";
+  }
+
+  if (status === 503) {
+    return "Groq AI is not configured on the server.";
+  }
+
+  if (status === 502) {
+    return "Groq returned an invalid response.";
+  }
+
+  return "Xarvis AI could not process the request.";
 }
 
 // --------------------------------------------------
@@ -155,20 +216,24 @@ app.post("/api/chat", async (req, res) => {
       systemPrompt,
     } = req.body || {};
 
-    let chatMessages = [];
+    let chatMessages;
 
     // Frontend format:
     // { message, history }
 
-    if (typeof message === "string" && message.trim()) {
-      const safe = safeHistory(history);
-
+    if (
+      typeof message === "string" &&
+      message.trim()
+    ) {
       chatMessages = [
         {
           role: "system",
-          content: systemPrompt || buildSystemPrompt(),
+          content:
+            systemPrompt || buildSystemPrompt(),
         },
-        ...safe,
+
+        ...safeHistory(history),
+
         {
           role: "user",
           content: message.trim(),
@@ -180,44 +245,44 @@ app.post("/api/chat", async (req, res) => {
     // { messages, systemPrompt }
 
     else if (Array.isArray(messages)) {
-      const safe = safeHistory(messages);
-
       chatMessages = [
         {
           role: "system",
-          content: systemPrompt || buildSystemPrompt(),
+          content:
+            systemPrompt || buildSystemPrompt(),
         },
-        ...safe,
+
+        ...safeHistory(messages),
       ];
     }
 
     else {
       return res.status(400).json({
-        error: "message or messages is required",
+        error:
+          "message or messages is required",
       });
     }
 
     const reply = await askGroq(chatMessages);
 
-    res.json({
+    return res.json({
       reply,
       content: reply,
       message: reply,
     });
-  } catch (error) {
+  }
+
+  catch (error) {
     console.error("Groq chat error:", {
-      name: error.name,
-      message: error.message,
-      status: error.status,
+      name: error?.name,
+      message: error?.message,
+      status: error?.status,
     });
 
-    const status = error.status || 500;
+    const status = getErrorStatus(error);
 
-    res.status(status).json({
-      error:
-        status === 401
-          ? "Groq authentication failed. Check the GROQ_API_KEY."
-          : "Xarvis AI could not process the request.",
+    return res.status(status).json({
+      error: getPublicError(status),
     });
   }
 });
@@ -226,132 +291,179 @@ app.post("/api/chat", async (req, res) => {
 // STREAM CHAT
 // --------------------------------------------------
 
-app.post("/api/chat/stream", async (req, res) => {
-  try {
-    const {
-      message,
-      history,
-      messages,
-      systemPrompt,
-    } = req.body || {};
+app.post(
+  "/api/chat/stream",
+  async (req, res) => {
+    try {
+      const {
+        message,
+        history,
+        messages,
+        systemPrompt,
+      } = req.body || {};
 
-    let chatMessages = [];
+      let chatMessages;
 
-    if (typeof message === "string" && message.trim()) {
-      chatMessages = [
-        {
-          role: "system",
-          content: systemPrompt || buildSystemPrompt(),
-        },
-        ...safeHistory(history),
-        {
-          role: "user",
-          content: message.trim(),
-        },
-      ];
-    }
+      if (
+        typeof message === "string" &&
+        message.trim()
+      ) {
+        chatMessages = [
+          {
+            role: "system",
+            content:
+              systemPrompt ||
+              buildSystemPrompt(),
+          },
 
-    else if (Array.isArray(messages)) {
-      chatMessages = [
-        {
-          role: "system",
-          content: systemPrompt || buildSystemPrompt(),
-        },
-        ...safeHistory(messages),
-      ];
-    }
+          ...safeHistory(history),
 
-    else {
-      return res.status(400).json({
-        error: "message or messages is required",
-      });
-    }
+          {
+            role: "user",
+            content: message.trim(),
+          },
+        ];
+      }
 
-    res.setHeader("Content-Type", "text/event-stream");
-    res.setHeader("Cache-Control", "no-cache");
-    res.setHeader("Connection", "keep-alive");
-    res.flushHeaders();
+      else if (Array.isArray(messages)) {
+        chatMessages = [
+          {
+            role: "system",
+            content:
+              systemPrompt ||
+              buildSystemPrompt(),
+          },
 
-    const reply = await askGroq(chatMessages);
+          ...safeHistory(messages),
+        ];
+      }
 
-    // Send the response in chunks so the existing
-    // frontend streaming code can consume it.
+      else {
+        return res.status(400).json({
+          error:
+            "message or messages is required",
+        });
+      }
 
-    const chunkSize = 12;
+      res.setHeader(
+        "Content-Type",
+        "text/event-stream"
+      );
 
-    for (let i = 0; i < reply.length; i += chunkSize) {
-      const chunk = reply.slice(i, i + chunkSize);
+      res.setHeader(
+        "Cache-Control",
+        "no-cache"
+      );
+
+      res.setHeader(
+        "Connection",
+        "keep-alive"
+      );
+
+      res.flushHeaders();
+
+      const reply =
+        await askGroq(chatMessages);
+
+      const chunkSize = 12;
+
+      for (
+        let i = 0;
+        i < reply.length;
+        i += chunkSize
+      ) {
+        const chunk = reply.slice(
+          i,
+          i + chunkSize
+        );
+
+        res.write(
+          `data: ${JSON.stringify({
+            type: "delta",
+            content: chunk,
+            delta: chunk,
+          })}\n\n`
+        );
+
+        await new Promise((resolve) =>
+          setTimeout(resolve, 5)
+        );
+      }
 
       res.write(
         `data: ${JSON.stringify({
-          type: "delta",
-          content: chunk,
-          delta: chunk,
+          type: "done",
         })}\n\n`
       );
 
-      await new Promise((resolve) =>
-        setTimeout(resolve, 5)
+      res.write(
+        "data: [DONE]\n\n"
       );
+
+      return res.end();
     }
 
-    res.write(
-      `data: ${JSON.stringify({
-        type: "done",
-      })}\n\n`
-    );
+    catch (error) {
+      console.error(
+        "Groq stream error:",
+        {
+          name: error?.name,
+          message: error?.message,
+          status: error?.status,
+        }
+      );
 
-    res.write("data: [DONE]\n\n");
+      if (!res.headersSent) {
+        const status =
+          getErrorStatus(error);
 
-    res.end();
-  } catch (error) {
-    console.error("Groq stream error:", {
-      name: error.name,
-      message: error.message,
-      status: error.status,
-    });
+        return res.status(status).json({
+          error:
+            "Xarvis AI streaming failed.",
+        });
+      }
 
-    if (!res.headersSent) {
-      return res.status(error.status || 500).json({
-        error: "Xarvis AI streaming failed.",
-      });
+      res.write(
+        `data: ${JSON.stringify({
+          type: "error",
+          error:
+            "Xarvis AI streaming failed.",
+        })}\n\n`
+      );
+
+      return res.end();
     }
-
-    res.write(
-      `data: ${JSON.stringify({
-        type: "error",
-        error: "Xarvis AI streaming failed.",
-      })}\n\n`
-    );
-
-    res.end();
   }
-});
+);
 
 // --------------------------------------------------
 // GENERATE
 // --------------------------------------------------
 
-app.post("/api/generate", async (req, res) => {
-  try {
-    const {
-      type,
-      topic,
-      platform,
-      memory,
-      content,
-      goal,
-    } = req.body || {};
+app.post(
+  "/api/generate",
+  async (req, res) => {
+    try {
+      const {
+        type,
+        topic,
+        platform,
+        memory,
+        content,
+        goal,
+      } = req.body || {};
 
-    let prompt;
+      let prompt;
 
-    switch (type) {
-      // --------------------------------------------
-      // VIRAL CONTENT
-      // --------------------------------------------
+      switch (type) {
 
-      case "viral":
-        prompt = `
+        // ------------------------------
+        // VIRAL
+        // ------------------------------
+
+        case "viral":
+
+          prompt = `
 Create a high-quality viral content idea.
 
 Topic:
@@ -361,9 +473,14 @@ Platform:
 ${platform || "General"}
 
 User memory/context:
-${JSON.stringify(memory || {}, null, 2)}
+${JSON.stringify(
+  memory || {},
+  null,
+  2
+)}
 
 Return:
+
 1. Hook
 2. Main idea
 3. Structure
@@ -372,19 +489,25 @@ Return:
 
 Make it practical and ready to use.
 `;
-        break;
 
-      // --------------------------------------------
-      // POST NEXT
-      // --------------------------------------------
+          break;
 
-      case "postnext":
-        prompt = `
+        // ------------------------------
+        // POST NEXT
+        // ------------------------------
+
+        case "postnext":
+
+          prompt = `
 Based on the creator's context and memory below,
 decide what they should post next.
 
 Memory/context:
-${JSON.stringify(memory || {}, null, 2)}
+${JSON.stringify(
+  memory || {},
+  null,
+  2
+)}
 
 Return:
 
@@ -398,21 +521,28 @@ Return:
 
 Make the recommendation specific and actionable.
 `;
-        break;
 
-      // --------------------------------------------
-      // CONTENT CALENDAR
-      // --------------------------------------------
+          break;
 
-      case "calendar":
-        prompt = `
+        // ------------------------------
+        // CALENDAR
+        // ------------------------------
+
+        case "calendar":
+
+          prompt = `
 Create a practical content calendar based on the
 creator's memory and goals.
 
 Memory/context:
-${JSON.stringify(memory || {}, null, 2)}
+${JSON.stringify(
+  memory || {},
+  null,
+  2
+)}
 
 Create a useful posting plan with:
+
 - day
 - platform
 - content idea
@@ -422,14 +552,16 @@ Create a useful posting plan with:
 
 Keep it realistic and actionable.
 `;
-        break;
 
-      // --------------------------------------------
-      // FEEDBACK
-      // --------------------------------------------
+          break;
 
-      case "feedback":
-        prompt = `
+        // ------------------------------
+        // FEEDBACK
+        // ------------------------------
+
+        case "feedback":
+
+          prompt = `
 Analyze the following content and provide useful
 creator feedback.
 
@@ -437,7 +569,11 @@ Content:
 ${content || "No content provided"}
 
 Creator memory/context:
-${JSON.stringify(memory || {}, null, 2)}
+${JSON.stringify(
+  memory || {},
+  null,
+  2
+)}
 
 Return:
 
@@ -448,25 +584,32 @@ Return:
 5. A stronger structure
 6. A practical next step
 `;
-        break;
 
-      // --------------------------------------------
-      // AGENT
-      // --------------------------------------------
+          break;
 
-      case "agent":
-        prompt = `
+        // ------------------------------
+        // AGENT
+        // ------------------------------
+
+        case "agent":
+
+          prompt = `
 Act as Xarvis AI Agent.
 
 User goal:
 ${goal || "No goal provided"}
 
 User memory/context:
-${JSON.stringify(memory || {}, null, 2)}
+${JSON.stringify(
+  memory || {},
+  null,
+  2
+)}
 
 Break the goal into practical steps.
 
 Give:
+
 1. Immediate next action
 2. Short-term actions
 3. Important decisions
@@ -474,73 +617,203 @@ Give:
 5. Best strategy
 6. Clear next step
 `;
-        break;
 
-      // --------------------------------------------
-      // UNKNOWN
-      // --------------------------------------------
+          break;
 
-      default:
-        return res.status(400).json({
-          error: `Unknown generation type: ${type || "missing"}`,
-        });
+        // ------------------------------
+        // UNKNOWN
+        // ------------------------------
+
+        default:
+
+          return res.status(400).json({
+            error:
+              `Unknown generation type: ${
+                type || "missing"
+              }`,
+          });
+      }
+
+      const reply = await askGroq([
+        {
+          role: "system",
+          content: buildSystemPrompt(),
+        },
+
+        {
+          role: "user",
+          content: prompt.trim(),
+        },
+      ]);
+
+      return res.json({
+        success: true,
+        type,
+        result: reply,
+        content: reply,
+        reply,
+      });
+    }
+
+    catch (error) {
+      console.error(
+        "Generate error:",
+        {
+          name: error?.name,
+          message: error?.message,
+          status: error?.status,
+        }
+      );
+
+      const status =
+        getErrorStatus(error);
+
+      return res.status(status).json({
+        success: false,
+        error:
+          "Xarvis AI could not generate the requested content.",
+      });
+    }
+  }
+);
+
+// --------------------------------------------------
+// SCORE
+// --------------------------------------------------
+
+async function scoreContent(req, res) {
+  try {
+    const body = req.body || {};
+
+    const text =
+      typeof body.content === "string"
+        ? body.content
+        : typeof body.text === "string"
+          ? body.text
+          : typeof body.idea === "string"
+            ? body.idea
+            : typeof body.message === "string"
+              ? body.message
+              : "";
+
+    if (!text.trim()) {
+      return res.status(400).json({
+        error:
+          "content, text, idea, or message is required",
+      });
     }
 
     const reply = await askGroq([
       {
         role: "system",
-        content: buildSystemPrompt(),
+        content: `
+You are Xarvis AI content scoring assistant.
+
+Evaluate the submitted content fairly and practically.
+
+Return:
+
+- overall score out of 100
+- hook score out of 100
+- clarity score out of 100
+- value score out of 100
+- engagement score out of 100
+- strengths
+- weaknesses
+- specific improvements
+
+Do not claim that the content was tested,
+published, or validated with real audience data.
+`.trim(),
       },
+
       {
         role: "user",
-        content: prompt.trim(),
+        content: text.trim(),
       },
     ]);
 
-    res.json({
+    return res.json({
       success: true,
-      type,
+      score: reply,
       result: reply,
       content: reply,
       reply,
     });
-  } catch (error) {
-    console.error("Generate error:", {
-      name: error.name,
-      message: error.message,
-      status: error.status,
-    });
+  }
 
-    res.status(error.status || 500).json({
+  catch (error) {
+    console.error(
+      "Score error:",
+      {
+        name: error?.name,
+        message: error?.message,
+        status: error?.status,
+      }
+    );
+
+    const status =
+      getErrorStatus(error);
+
+    return res.status(status).json({
       success: false,
-      error: "Xarvis AI could not generate the requested content.",
+      error: getPublicError(status),
     });
   }
+}
+
+app.post(
+  "/score",
+  scoreContent
+);
+
+app.post(
+  "/api/score",
+  scoreContent
+);
+
+// --------------------------------------------------
+// 404 HANDLER
+// --------------------------------------------------
+
+app.use((req, res) => {
+  res.status(404).json({
+    error: "Route not found.",
+    path: req.originalUrl,
+  });
 });
 
 // --------------------------------------------------
 // GLOBAL ERROR HANDLER
 // --------------------------------------------------
 
-app.use((err, req, res, next) => {
-  console.error("Unhandled server error:", {
-    name: err.name,
-    message: err.message,
-  });
+app.use(
+  (err, req, res, next) => {
+    console.error(
+      "Unhandled server error:",
+      {
+        name: err?.name,
+        message: err?.message,
+      }
+    );
 
-  if (res.headersSent) {
-    return next(err);
+    if (res.headersSent) {
+      return next(err);
+    }
+
+    return res.status(500).json({
+      error:
+        "Internal server error.",
+    });
   }
-
-  res.status(500).json({
-    error: "Internal server error.",
-  });
-});
+);
 
 // --------------------------------------------------
 // START SERVER
 // --------------------------------------------------
 
 app.listen(PORT, () => {
-  console.log(`Xarvis AI backend running on port ${PORT}`);
+  console.log(
+    `Xarvis AI backend running on port ${PORT}`
+  );
 });
