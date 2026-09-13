@@ -12,13 +12,16 @@ const app = express();
 
 const PORT = process.env.PORT || 3001;
 const GROQ_API_KEY = process.env.GROQ_API_KEY;
-const GROQ_MODEL = process.env.GROQ_MODEL || "llama-3.3-70b-versatile";
+const GROQ_MODEL =
+  process.env.GROQ_MODEL || "llama-3.3-70b-versatile";
 
 if (!GROQ_API_KEY) {
   console.warn("WARNING: GROQ_API_KEY is not configured.");
 }
 
-const groq = GROQ_API_KEY ? new Groq({ apiKey: GROQ_API_KEY }) : null;
+const groq = GROQ_API_KEY
+  ? new Groq({ apiKey: GROQ_API_KEY })
+  : null;
 
 // --------------------------------------------------
 // MIDDLEWARE
@@ -45,7 +48,10 @@ function safeHistory(history) {
         typeof item.content === "string"
     )
     .slice(-20)
-    .map((item) => ({ role: item.role, content: item.content }));
+    .map((item) => ({
+      role: item.role,
+      content: item.content,
+    }));
 }
 
 function requireGroq() {
@@ -54,6 +60,7 @@ function requireGroq() {
     error.status = 503;
     throw error;
   }
+
   return groq;
 }
 
@@ -78,8 +85,6 @@ async function askGroq(messages) {
   return reply;
 }
 
-// True token-by-token Groq streaming. Yields each text delta as it
-// arrives from the Groq API instead of waiting for the full completion.
 async function* streamGroq(messages) {
   const client = requireGroq();
 
@@ -137,18 +142,32 @@ Give the user clear actionable steps.
 `.trim();
 }
 
-function buildChatMessages({ message, history, messages, systemPrompt }) {
+function buildChatMessages({
+  message,
+  history,
+  messages,
+  systemPrompt,
+}) {
   if (typeof message === "string" && message.trim()) {
     return [
-      { role: "system", content: systemPrompt || buildSystemPrompt() },
+      {
+        role: "system",
+        content: systemPrompt || buildSystemPrompt(),
+      },
       ...safeHistory(history),
-      { role: "user", content: message.trim() },
+      {
+        role: "user",
+        content: message.trim(),
+      },
     ];
   }
 
   if (Array.isArray(messages)) {
     return [
-      { role: "system", content: systemPrompt || buildSystemPrompt() },
+      {
+        role: "system",
+        content: systemPrompt || buildSystemPrompt(),
+      },
       ...safeHistory(messages),
     ];
   }
@@ -158,15 +177,35 @@ function buildChatMessages({ message, history, messages, systemPrompt }) {
 
 function getErrorStatus(error) {
   const status = Number(error?.status);
-  if (Number.isInteger(status) && status >= 400 && status < 600) return status;
+
+  if (
+    Number.isInteger(status) &&
+    status >= 400 &&
+    status < 600
+  ) {
+    return status;
+  }
+
   return 500;
 }
 
 function getPublicError(status) {
-  if (status === 401) return "Groq authentication failed. Check the GROQ_API_KEY.";
-  if (status === 429) return "Groq rate limit reached. Please try again shortly.";
-  if (status === 503) return "Groq AI is not configured on the server.";
-  if (status === 502) return "Groq returned an invalid response.";
+  if (status === 401) {
+    return "Groq authentication failed. Check the GROQ_API_KEY.";
+  }
+
+  if (status === 429) {
+    return "Groq rate limit reached. Please try again shortly.";
+  }
+
+  if (status === 503) {
+    return "Groq AI is not configured on the server.";
+  }
+
+  if (status === 502) {
+    return "Groq returned an invalid response.";
+  }
+
   return "Xarvis AI could not process the request.";
 }
 
@@ -195,7 +234,10 @@ app.get("/", (req, res) => {
 // --------------------------------------------------
 
 app.get("/health", (req, res) => {
-  res.json({ status: "ok", service: "xarvis-backend" });
+  res.json({
+    status: "ok",
+    service: "xarvis-backend",
+  });
 });
 
 app.get("/api/health", (req, res) => {
@@ -208,7 +250,7 @@ app.get("/api/health", (req, res) => {
 });
 
 // --------------------------------------------------
-// CHAT   (matches chat.js: { message, history })
+// CHAT
 // --------------------------------------------------
 
 app.post("/api/chat", async (req, res) => {
@@ -216,21 +258,35 @@ app.post("/api/chat", async (req, res) => {
     const chatMessages = buildChatMessages(req.body || {});
 
     if (!chatMessages) {
-      return res.status(400).json({ error: "message or messages is required" });
+      return res
+        .status(400)
+        .json({
+          error: "message or messages is required",
+        });
     }
 
     const reply = await askGroq(chatMessages);
 
-    return res.json({ reply, content: reply, message: reply });
+    return res.json({
+      reply,
+      content: reply,
+      message: reply,
+    });
   } catch (error) {
     logError("Groq chat error:", error);
+
     const status = getErrorStatus(error);
-    return res.status(status).json({ error: getPublicError(status) });
+
+    return res
+      .status(status)
+      .json({
+        error: getPublicError(status),
+      });
   }
 });
 
 // --------------------------------------------------
-// STREAM CHAT   (matches chat.js/agents.js SSE parsing)
+// STREAM CHAT
 // --------------------------------------------------
 
 app.post("/api/chat/stream", async (req, res) => {
@@ -238,23 +294,44 @@ app.post("/api/chat/stream", async (req, res) => {
     const chatMessages = buildChatMessages(req.body || {});
 
     if (!chatMessages) {
-      return res.status(400).json({ error: "message or messages is required" });
+      return res
+        .status(400)
+        .json({
+          error: "message or messages is required",
+        });
     }
 
-    res.setHeader("Content-Type", "text/event-stream");
-    res.setHeader("Cache-Control", "no-cache");
-    res.setHeader("Connection", "keep-alive");
+    res.setHeader(
+      "Content-Type",
+      "text/event-stream"
+    );
+    res.setHeader(
+      "Cache-Control",
+      "no-cache"
+    );
+    res.setHeader(
+      "Connection",
+      "keep-alive"
+    );
+
     res.flushHeaders();
 
-    // Real Groq streaming: forward each delta to the client as it
-    // arrives, rather than waiting for the full completion first.
     for await (const delta of streamGroq(chatMessages)) {
       res.write(
-        `data: ${JSON.stringify({ type: "delta", content: delta, delta })}\n\n`
+        `data: ${JSON.stringify({
+          type: "delta",
+          content: delta,
+          delta,
+        })}\n\n`
       );
     }
 
-    res.write(`data: ${JSON.stringify({ type: "done" })}\n\n`);
+    res.write(
+      `data: ${JSON.stringify({
+        type: "done",
+      })}\n\n`
+    );
+
     res.write("data: [DONE]\n\n");
 
     return res.end();
@@ -263,11 +340,19 @@ app.post("/api/chat/stream", async (req, res) => {
 
     if (!res.headersSent) {
       const status = getErrorStatus(error);
-      return res.status(status).json({ error: "Xarvis AI streaming failed." });
+
+      return res
+        .status(status)
+        .json({
+          error: "Xarvis AI streaming failed.",
+        });
     }
 
     res.write(
-      `data: ${JSON.stringify({ type: "error", error: "Xarvis AI streaming failed." })}\n\n`
+      `data: ${JSON.stringify({
+        type: "error",
+        error: "Xarvis AI streaming failed.",
+      })}\n\n`
     );
 
     return res.end();
@@ -275,12 +360,19 @@ app.post("/api/chat/stream", async (req, res) => {
 });
 
 // --------------------------------------------------
-// GENERATE   (matches generate.js + agents.js fallback)
+// GENERATE
 // --------------------------------------------------
 
 app.post("/api/generate", async (req, res) => {
   try {
-    const { type, topic, platform, memory, content, goal } = req.body || {};
+    const {
+      type,
+      topic,
+      platform,
+      memory,
+      content,
+      goal,
+    } = req.body || {};
 
     let prompt;
 
@@ -398,31 +490,48 @@ Give:
       default:
         return res
           .status(400)
-          .json({ error: `Unknown generation type: ${type || "missing"}` });
+          .json({
+            error: `Unknown generation type: ${
+              type || "missing"
+            }`,
+          });
     }
 
     const reply = await askGroq([
-      { role: "system", content: buildSystemPrompt() },
-      { role: "user", content: prompt.trim() },
+      {
+        role: "system",
+        content: buildSystemPrompt(),
+      },
+      {
+        role: "user",
+        content: prompt.trim(),
+      },
     ]);
 
-    return res.json({ success: true, type, result: reply, content: reply, reply });
+    return res.json({
+      success: true,
+      type,
+      result: reply,
+      content: reply,
+      reply,
+    });
   } catch (error) {
     logError("Generate error:", error);
+
     const status = getErrorStatus(error);
-    return res.status(status).json({
-      success: false,
-      error: "Xarvis AI could not generate the requested content.",
-    });
+
+    return res
+      .status(status)
+      .json({
+        success: false,
+        error:
+          "Xarvis AI could not generate the requested content.",
+      });
   }
 });
 
 // --------------------------------------------------
 // SCORE
-// NOTE: not confirmed to be called by any frontend file
-// I've inspected (chat.js, agents.js, generate.js). Kept
-// here because it was already implemented; harmless if
-// unused. Remove if app.html/config.js confirm it's dead.
 // --------------------------------------------------
 
 async function scoreContent(req, res) {
@@ -443,7 +552,10 @@ async function scoreContent(req, res) {
     if (!text.trim()) {
       return res
         .status(400)
-        .json({ error: "content, text, idea, or message is required" });
+        .json({
+          error:
+            "content, text, idea, or message is required",
+        });
     }
 
     const reply = await askGroq([
@@ -465,18 +577,33 @@ Return:
 - weaknesses
 - specific improvements
 
-Do not claim that the content was tested, published, or validated with real
-audience data.
+Do not claim that the content was tested, published, or validated with real audience data.
 `.trim(),
       },
-      { role: "user", content: text.trim() },
+      {
+        role: "user",
+        content: text.trim(),
+      },
     ]);
 
-    return res.json({ success: true, score: reply, result: reply, content: reply, reply });
+    return res.json({
+      success: true,
+      score: reply,
+      result: reply,
+      content: reply,
+      reply,
+    });
   } catch (error) {
     logError("Score error:", error);
+
     const status = getErrorStatus(error);
-    return res.status(status).json({ success: false, error: getPublicError(status) });
+
+    return res
+      .status(status)
+      .json({
+        success: false,
+        error: getPublicError(status),
+      });
   }
 }
 
@@ -488,7 +615,10 @@ app.post("/api/score", scoreContent);
 // --------------------------------------------------
 
 app.use((req, res) => {
-  res.status(404).json({ error: "Route not found.", path: req.originalUrl });
+  res.status(404).json({
+    error: "Route not found.",
+    path: req.originalUrl,
+  });
 });
 
 // --------------------------------------------------
@@ -496,11 +626,20 @@ app.use((req, res) => {
 // --------------------------------------------------
 
 app.use((err, req, res, next) => {
-  console.error("Unhandled server error:", { name: err?.name, message: err?.message });
+  console.error("Unhandled server error:", {
+    name: err?.name,
+    message: err?.message,
+  });
 
-  if (res.headersSent) return next(err);
+  if (res.headersSent) {
+    return next(err);
+  }
 
-  return res.status(500).json({ error: "Internal server error." });
+  return res
+    .status(500)
+    .json({
+      error: "Internal server error.",
+    });
 });
 
 // --------------------------------------------------
@@ -508,5 +647,7 @@ app.use((err, req, res, next) => {
 // --------------------------------------------------
 
 app.listen(PORT, () => {
-  console.log(`Xarvis AI backend running on port ${PORT}`);
+  console.log(
+    `Xarvis AI backend running on port ${PORT}`
+  );
 });
