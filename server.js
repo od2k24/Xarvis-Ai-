@@ -614,8 +614,18 @@ Do not claim that the content was tested, published, or validated with real audi
   }
 }
 
+
 app.post("/score", scoreContent);
 app.post("/api/score", scoreContent);
+
+
+// --------------------------------------------------
+// CLIP FINDER — VIDEO UPLOAD
+// --------------------------------------------------
+
+// THE REAL UPLOAD CODE GOES HERE
+// It will define the /api/clips/upload route.
+
 
 // --------------------------------------------------
 // 404 HANDLER
@@ -642,12 +652,11 @@ app.use((err, req, res, next) => {
     return next(err);
   }
 
-  return res
-    .status(500)
-    .json({
-      error: "Internal server error.",
-    });
+  return res.status(500).json({
+    error: "Internal server error.",
+  });
 });
+
 
 // --------------------------------------------------
 // START SERVER
