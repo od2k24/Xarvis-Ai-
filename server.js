@@ -86,11 +86,7 @@ app.post("/api/chat", async (req, res) => {
 
     return res.json({ reply });
   } catch (error) {
-    console.error(
-      "Chat error:",
-      error.status || "",
-      error.message || error
-    );
+    console.error("Chat error:", error);
 
     return res.status(500).json({
       error: "Xarvis couldn't process your message.",
@@ -136,11 +132,7 @@ app.post("/api/chat/stream", async (req, res) => {
       res.end();
     }
   } catch (error) {
-    console.error(
-      "Streaming error:",
-      error.status || "",
-      error.message || error
-    );
+    console.error("Streaming error:", error);
 
     if (!res.headersSent) {
       return res.status(500).json({
@@ -159,6 +151,6 @@ app.post("/api/chat/stream", async (req, res) => {
 
 app.listen(PORT, () => {
   console.log(`Xarvis backend running on port ${PORT}`);
-  console.log(`AI provider: Groq`);
+  console.log("AI provider: Groq");
   console.log(`AI model: ${MODEL}`);
 });
